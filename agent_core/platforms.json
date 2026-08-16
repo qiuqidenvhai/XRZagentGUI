@@ -1,0 +1,347 @@
+{
+  "deepseek": {
+    "platform": "deepseek",
+    "name": "DeepSeek",
+    "url": "https://chat.deepseek.com",
+    "chat_url": "https://chat.deepseek.com",
+    "input_selector": "textarea",
+    "send_selector": "button[type='submit']",
+    "upload_button_selector": "",
+    "thinking_toggle_selectors": [
+      "div[class*='ds-toggle-button']:has-text('深度思考')",
+      "div.ds-toggle-button:has-text('深度思考')",
+      "[class*='ds-toggle-button']:has-text('深度思考')"
+    ],
+    "thinking_mode": "toggle",
+    "attach_button_selector": "",
+    "multi_file": true,
+    "response_selector": "[class*='message']:last-child",
+    "thinking_selector": "",
+    "generating_selector": ".loading, [class*='generating']",
+    "login_texts": [
+      "登录",
+      "Login"
+    ],
+    "viewport_width": 1280,
+    "viewport_height": 900,
+    "display": "DeepSeek",
+    "icon": "💭"
+  },
+  "tongyi": {
+    "platform": "tongyi",
+    "name": "通义千问",
+    "url": "https://chat.qwen.ai/",
+    "chat_url": "https://chat.qwen.ai/",
+    "input_selector": "textarea, [contenteditable='true']",
+    "send_selector": "",
+    "upload_button_selector": "",
+    "thinking_toggle_selectors": [
+      "div[class*='qwen-select-thinking'] .ant-select-selector",
+      "div.qwen-select-thinking .ant-select-selector",
+      "div.qwen-select-thinking",
+      "div.qwen-thinking-selector"
+    ],
+    "thinking_mode": "select",
+    "attach_button_selector": "",
+    "multi_file": true,
+    "response_selector": "[class*='message'], [data-testid*='message']",
+    "thinking_selector": "[class*='thinking'], [class*='reasoning'], [class*='think'], [data-testid*='thinking'], details:has(summary)",
+    "generating_selector": ".stop-button",
+    "login_texts": [
+      "登录",
+      "Login"
+    ],
+    "viewport_width": 1280,
+    "viewport_height": 900,
+    "display": "通义千问",
+    "icon": "💬"
+  },
+  "doubao": {
+    "platform": "doubao",
+    "name": "豆包",
+    "url": "https://www.doubao.com/chat/",
+    "chat_url": "https://www.doubao.com/chat/",
+    "input_selector": "textarea.semi-input-textarea",
+    "send_selector": "",
+    "upload_button_selector": "",
+    "thinking_toggle_selectors": [
+      "button:has-text('深入研究')",
+      "button:has-text('深度思考')",
+      "[class*='deep-research']",
+      "[class*='deepResearch']",
+      "[class*='deepthink']",
+      "div[role='switch']:has-text('深度')"
+    ],
+    "thinking_mode": "toggle",
+    "attach_button_selector": "",
+    "multi_file": true,
+    "response_selector": "[class*='message'], [class*='answer']",
+    "thinking_selector": "[class*='thinking'], [class*='reasoning'], [class*='think']",
+    "generating_selector": ".stop-button, [class*='stop']",
+    "login_texts": [
+      "登录",
+      "Log in"
+    ],
+    "viewport_width": 1280,
+    "viewport_height": 900,
+    "display": "豆包",
+    "icon": "🤖"
+  },
+  "yuanbao": {
+    "platform": "yuanbao",
+    "name": "元宝",
+    "url": "https://yuanbao.tencent.com/chat/",
+    "chat_url": "https://yuanbao.tencent.com/chat/",
+    "input_selector": "[contenteditable].ql-editor.ql-blank",
+    "send_selector": "",
+    "upload_button_selector": "span.icon-upload",
+    "thinking_toggle_selectors": [
+      "button:has-text('深度思考')",
+      "[class*='think']",
+      "div[role='switch']:has-text('深度')",
+      ".ant-select-selector",
+      "button:has-text('深思')",
+      "[class*='reasoning'] button",
+      "[class*='deep'] button"
+    ],
+    "thinking_mode": "toggle",
+    "attach_button_selector": ".UploadFileSelector_iconContainer__6Wpsp, .UploadFileSelector_iconButton__LEwqk, [class*='UploadFileSelector']",
+    "multi_file": true,
+    "response_selector": "[class*='message'], [class*='answer']",
+    "thinking_selector": "[class*='thinking'], [class*='reasoning'], [class*='think']",
+    "generating_selector": ".stop-button, [class*='stop'], [class*='generating']",
+    "login_texts": [
+      "登录",
+      "Log in"
+    ],
+    "viewport_width": 1280,
+    "viewport_height": 900,
+    "display": "元宝",
+    "icon": "✨"
+  },
+  "chatgpt": {
+    "platform": "chatgpt",
+    "name": "ChatGPT",
+    "url": "https://chatgpt.com",
+    "chat_url": "https://chatgpt.com",
+    "input_selector": "textarea#prompt-textarea, #prompt-textarea, div[contenteditable='true']",
+    "send_selector": "",
+    "upload_button_selector": "",
+    "thinking_toggle_selectors": [
+      "button:has-text('Thinking')",
+      "button[aria-label*='reasoning' i]",
+      "[aria-label*='think' i]",
+      "button:has-text('Think longer')"
+    ],
+    "thinking_mode": "toggle",
+    "attach_button_selector": "",
+    "multi_file": true,
+    "response_selector": "[data-message-author-role='assistant'], [class*='message']",
+    "thinking_selector": "[class*='reasoning'], [data-testid='thought'], [class*='think']",
+    "generating_selector": "button[data-testid='stop-button'], [aria-label*='Stop' i]",
+    "login_texts": [
+      "Log in",
+      "Sign up",
+      "Login"
+    ],
+    "viewport_width": 1280,
+    "viewport_height": 900,
+    "display": "ChatGPT",
+    "icon": "🤖"
+  },
+  "gemini": {
+    "platform": "gemini",
+    "name": "Gemini",
+    "url": "https://gemini.google.com/app",
+    "chat_url": "https://gemini.google.com/app",
+    "input_selector": "div.ql-editor[contenteditable='true'], rich-textarea > div, textarea",
+    "send_selector": "button[aria-label='发送'], button[aria-label='Send']",
+    "upload_button_selector": "",
+    "thinking_toggle_selectors": [
+      "button:has-text('思考')",
+      "button:has-text('Deep Research')",
+      "[aria-label*='think' i]",
+      "button:has-text('Deep Think')"
+    ],
+    "thinking_mode": "toggle",
+    "attach_button_selector": "",
+    "multi_file": true,
+    "response_selector": "message-content, [class*='message-content'], [class*='response-container']",
+    "thinking_selector": "[class*='thinking'], [class*='reasoning']",
+    "generating_selector": "button[aria-label='停止'], button[aria-label='Stop']",
+    "login_texts": [
+      "登录",
+      "Sign in",
+      "Log in"
+    ],
+    "viewport_width": 1280,
+    "viewport_height": 900,
+    "display": "Gemini",
+    "icon": "🔷"
+  },
+  "kimi": {
+    "platform": "kimi",
+    "name": "Kimi (月之暗面)",
+    "url": "https://kimi.moonshot.cn",
+    "chat_url": "https://kimi.moonshot.cn",
+    "input_selector": "textarea, [contenteditable='true']",
+    "send_selector": "",
+    "upload_button_selector": "",
+    "thinking_toggle_selectors": [
+      "button:has-text('深度思考')",
+      "[class*='deep-think']",
+      "[aria-label*='think' i]"
+    ],
+    "thinking_mode": "toggle",
+    "attach_button_selector": "",
+    "multi_file": true,
+    "response_selector": "[class*='message'], [class*='chat-message'], [class*='message-item']",
+    "thinking_selector": "[class*='thinking'], [class*='reasoning']",
+    "generating_selector": "[class*='stop'], button:has-text('停止')",
+    "login_texts": [
+      "登录",
+      "Log in"
+    ],
+    "viewport_width": 1280,
+    "viewport_height": 900,
+    "display": "Kimi (月之暗面)",
+    "icon": "🌊"
+  },
+  "claude": {
+    "platform": "claude",
+    "name": "Claude",
+    "url": "https://claude.ai/new",
+    "chat_url": "https://claude.ai/new",
+    "input_selector": "[contenteditable='true'], div[role='textbox'], textarea",
+    "send_selector": "",
+    "upload_button_selector": "",
+    "thinking_toggle_selectors": [
+      "button:has-text('Think')",
+      "button[aria-label*='think' i]",
+      "[aria-label*='reasoning' i]"
+    ],
+    "thinking_mode": "toggle",
+    "attach_button_selector": "",
+    "multi_file": true,
+    "response_selector": "[class*='message'], [data-testid='message'], [data-testid='conversation-turn']",
+    "thinking_selector": "[class*='thinking'], [class*='reasoning'], details:has(summary)",
+    "generating_selector": "button[aria-label='Stop'], button:has-text('Stop')",
+    "login_texts": [
+      "Log in",
+      "Sign in"
+    ],
+    "viewport_width": 1280,
+    "viewport_height": 900,
+    "display": "Claude",
+    "icon": "🎭"
+  },
+  "wenxin": {
+    "platform": "wenxin",
+    "name": "文心一言",
+    "url": "https://yiyan.baidu.com",
+    "chat_url": "https://yiyan.baidu.com",
+    "input_selector": "textarea, [contenteditable='true']",
+    "send_selector": "",
+    "upload_button_selector": "",
+    "thinking_toggle_selectors": [
+      "button:has-text('深度思考')",
+      "[class*='deep-think']"
+    ],
+    "thinking_mode": "toggle",
+    "attach_button_selector": "",
+    "multi_file": true,
+    "response_selector": "[class*='message'], [class*='answer'], [class*='chat-item']",
+    "thinking_selector": "[class*='thinking'], [class*='reasoning']",
+    "generating_selector": "[class*='stop'], button:has-text('停止')",
+    "login_texts": [
+      "登录",
+      "Log in"
+    ],
+    "viewport_width": 1280,
+    "viewport_height": 900,
+    "display": "文心一言",
+    "icon": "🅑"
+  },
+  "zhipu": {
+    "platform": "zhipu",
+    "name": "智谱清言",
+    "url": "https://chat.zhipuai.cn",
+    "chat_url": "https://chat.zhipuai.cn",
+    "input_selector": "textarea, [contenteditable='true']",
+    "send_selector": "",
+    "upload_button_selector": "",
+    "thinking_toggle_selectors": [
+      "button:has-text('深度思考')",
+      "[class*='deep-think']"
+    ],
+    "thinking_mode": "toggle",
+    "attach_button_selector": "",
+    "multi_file": true,
+    "response_selector": "[class*='message'], [class*='chat-list'] > *, [class*='answer']",
+    "thinking_selector": "[class*='thinking'], [class*='reasoning']",
+    "generating_selector": "[class*='stop'], button:has-text('停止')",
+    "login_texts": [
+      "登录",
+      "Log in"
+    ],
+    "viewport_width": 1280,
+    "viewport_height": 900,
+    "display": "智谱清言",
+    "icon": "🧠"
+  },
+  "grok": {
+    "platform": "grok",
+    "name": "Grok (xAI)",
+    "url": "https://grok.com",
+    "chat_url": "https://grok.com",
+    "input_selector": "textarea, [contenteditable='true']",
+    "send_selector": "",
+    "upload_button_selector": "",
+    "thinking_toggle_selectors": [
+      "button:has-text('Think')",
+      "[aria-label*='think' i]",
+      "button:has-text('Reasoning')"
+    ],
+    "thinking_mode": "toggle",
+    "attach_button_selector": "",
+    "multi_file": true,
+    "response_selector": "[class*='message'], [data-testid='message'], [class*='response']",
+    "thinking_selector": "[class*='thinking'], [class*='reasoning']",
+    "generating_selector": "button:has-text('Stop'), [aria-label*='stop' i]",
+    "login_texts": [
+      "Sign in",
+      "Log in"
+    ],
+    "viewport_width": 1280,
+    "viewport_height": 900,
+    "display": "Grok (xAI)",
+    "icon": "🚀"
+  },
+  "perplexity": {
+    "platform": "perplexity",
+    "name": "Perplexity",
+    "url": "https://www.perplexity.ai",
+    "chat_url": "https://www.perplexity.ai",
+    "input_selector": "textarea, [contenteditable='true']",
+    "send_selector": "",
+    "upload_button_selector": "",
+    "thinking_toggle_selectors": [
+      "button:has-text('Pro')",
+      "button:has-text('Reasoning')"
+    ],
+    "thinking_mode": "toggle",
+    "attach_button_selector": "",
+    "multi_file": true,
+    "response_selector": "[class*='answer'], [class*='message'], [class*='prose']",
+    "thinking_selector": "[class*='thinking'], [class*='reasoning']",
+    "generating_selector": "button:has-text('Stop'), [aria-label*='stop' i]",
+    "login_texts": [
+      "Sign in",
+      "Log in"
+    ],
+    "viewport_width": 1280,
+    "viewport_height": 900,
+    "display": "Perplexity",
+    "icon": "🔍"
+  }
+}

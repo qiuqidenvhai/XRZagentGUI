@@ -1,0 +1,362 @@
+[
+  {
+    "platform": "DeepSeek",
+    "url": "https://chat.deepseek.com",
+    "timestamp": "2026-06-28T08:42:52.406123",
+    "load_status": "ok",
+    "screenshot": "D:\\软件\\XianRenZhangAgent\\agent_core\\platform_research\\screenshots\\deepseek_screenshot.png",
+    "input_boxes": [],
+    "send_buttons": [
+      {
+        "tag": "div",
+        "className": "ds-button ds-button--primary ds-button--text ds-button--capsule ds-button--m ds-button--icon-relative-m ds-verify-code-input-countdown",
+        "innerText": "发送验证码",
+        "ariaLabel": "",
+        "disabled": null,
+        "parentClass": "ds-input__suffix",
+        "rect": {
+          "x": 581,
+          "y": 339,
+          "w": 70,
+          "h": 22
+        }
+      }
+    ],
+    "file_upload": [],
+    "file_inputs": [],
+    "login_status": {
+      "detected": false,
+      "indicators": []
+    },
+    "iframe_info": [
+      {
+        "src": "https://open.weixin.qq.com/connect/qrconnect?appid=wx932d4fdaf46d5611&scope=snsapi_login&redirect_uri=https%3A%2F%2Fchat.deepseek.com%2Fapi%2Fv0%2Fusers%2Foauth%2Fwechat%2Fcallback&state=&login_type=jssdk&self_redirect=false&styletype=&sizetype=&bgcolor=&rst=&ts=1782607363007&stylelite=1&fast_login=0",
+        "className": ""
+      }
+    ],
+    "page_info": {
+      "title": "DeepSeek - 探索未至之境",
+      "url": "https://chat.deepseek.com/sign_in",
+      "width": 1280,
+      "height": 800,
+      "bodyClassName": "zh_CN light"
+    },
+    "body_html_preview": "<div id=\"root\"><div class=\"c994dda2\"><div class=\"_47c279e\"></div><div class=\"_99ad066\"><div class=\"ds-auth-form-wrapper ds-sign-in-form-wrapper\"><div class=\"ds-sign-in-form__icon\"><div><svg width=\"182\" height=\"29\" viewBox=\"0 0 182 29\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\" style=\"color: var(--dsw-alias-brand-primary);\"><path d=\"M100.136 23.7767H98.1371V20.6775H100.136C101.374 20.6775 102.625 20.3688 103.431 19.5112C104.237 18.6535 104.542 17.3378 104.542 16.0229C104.542 14.708 104.25 13.3923 103.431 12.5354C102.613 11.6777 101.374 11.3691 100.136 11.3691C98.8981 11.3691 97.6471 11.6777 96.84 12.5354C96.0335 13.393 95.7291 14.708 95.7291 16.0229V28.7513H92.2224V8.28192H95.7291V9.58548H96.372C96.4417 9.50512 96.5114 9.43685 96.5818 9.36858C97.4594 8.56781 98.8028 8.28192 100.123 8.28192C102.193 8.28192 104.261 8.7968 105.617 10.2262C106.973 11.6557 107.452 13.851 107.452 16.0357C107.452 18.2204 106.961 20.4044 105.617 21.8452C104.273 23.286 102.193 23.7781 100.136 23.7781V23.7767Z\" fill=\"currentColor\"></path><path d=\"M46.7705 8.83322H48.7689V11.9325H46.7705C45.5317 11.9325 44.2815 12.2411 43.475 13.0988C42.6685 13.9564 42.3649 15.2721 42.3649 16.587C42.3649 17.9019 42.6572 19.2169 43.475 20.0745C44.2928 20.9322 45.5317 21.2408 46.7705 21.2408C48.0094 21.2408 49.2603 20.9322 50.0668 20.0745C50.8732 19.2169 51.1769 17.9019 51.1769 16.587V3.84727H54.6829V24.3287H51.1769V23.0252H50.534C50.4636 23.1048 50.3939 23.1738 50.3235 23.2421C49.4466 24.0421 48.1025 24.3287 46.7819 24.3287C44.7131 24.3287 42.6444 23.8145 41.2889 22.3851C39.9334 20.9557 39.4541 18.7596 39.4541 16.5756C39.4541 14.3917 39.9448 12.207 41.2889 10.7662C42.6444 9.33672 44.7131 8.83322 46.7705 8.83322Z\" fill=\"currentColor\"></path><path d=\"M72.2712 16.3098V17.5565H62.9329V15.0753H69.1271C68.987 14.1721 68.6599 13.3258 68.0753 12.7078C67.234 11.816 65.9362 11.496 64.6511 11.496C63.366 11.496 62.0682 11.816 61.2269 12.7078C60.3856 13.5996 60.0812 14.9608 60.0812 16.3106C60.0812 17.6603 60.3848 19.0322",
+    "playwright_findings": {
+      "pw_textareas": [],
+      "pw_contenteditables": [],
+      "pw_buttons": []
+    }
+  },
+  {
+    "platform": "通义千问",
+    "url": "https://tongyi.aliyun.com/qianwen/",
+    "timestamp": "2026-06-28T08:43:10.907575",
+    "load_status": "ok",
+    "screenshot": "D:\\软件\\XianRenZhangAgent\\agent_core\\platform_research\\screenshots\\qianwen_screenshot.png",
+    "input_boxes": [
+      {
+        "tag": "[contenteditable]",
+        "className": "relative min-h-[24px] w-full whitespace-pre-wrap break-words text-left [&::-webkit-scrollbar]:hidden border-none bg-transparent px-2 text-16 leading-[26px] text-primary outline-none placeholder:text-disabled",
+        "id": "",
+        "innerText": "﻿\n\n向千问提问",
+        "ariaLabel": "",
+        "role": "textbox",
+        "parentClass": "relative w-full",
+        "visible": true
+      },
+      {
+        "tag": "[contenteditable]",
+        "className": "pointer-events-none absolute inset-x-0 top-0 select-none text-inherit opacity-35",
+        "id": "",
+        "innerText": "向千问提问",
+        "ariaLabel": "",
+        "role": "",
+        "parentClass": "",
+        "visible": true
+      },
+      {
+        "tag": "div[role=textbox]",
+        "className": "relative min-h-[24px] w-full whitespace-pre-wrap break-words text-left [&::-webkit-scrollbar]:hidden border-none bg-transparent px-2 text-16 leading-[26px] text-primary outline-none placeholder:text-disabled",
+        "ariaLabel": "",
+        "parentClass": "relative w-full",
+        "visible": true
+      }
+    ],
+    "send_buttons": [
+      {
+        "tag": "button",
+        "className": "inline-flex size-8 shrink-0 items-center justify-center rounded-full border-0 p-0 text-16 leading-none outline-none transition-[background-color,color,opacity] duration-200 [&_span[data-role=\"icon\"]]:size-4 [&_svg]:size-4 cursor-not-allowed bg-[--ty-text-disabled] text-[--ty-line-circle] [&>*]:!cursor-not-allowed [&_svg]:!cursor-not-allowed [&_*]:!cursor-not-allowed",
+        "innerText": "",
+        "ariaLabel": "发送消息",
+        "disabled": true,
+        "parentClass": "flex shrink-0 items-center gap-2",
+        "rect": {
+          "x": 1100,
+          "y": 420,
+          "w": 32,
+          "h": 32
+        }
+      }
+    ],
+    "file_upload": [
+      {
+        "tag": "button",
+        "className": "inline-flex size-8 shrink-0 items-center justify-center rounded-full transition-colors outline-none text-primary hover:bg-option disabled:cursor-not-allowed disabled:text-disabled disabled:hover:bg-transparent",
+        "innerText": "",
+        "ariaLabel": "添加附件",
+        "parentClass": "shrink-0"
+      }
+    ],
+    "file_inputs": [],
+    "login_status": {
+      "detected": false,
+      "indicators": []
+    },
+    "iframe_info": [
+      {
+        "src": "https://passport.qianwen.com/havanaone/login/login.htm?bizPassParams=%26x-platform%3DexternalH5&bizEntrance=tongyi&bizName=tongyi&redirectType=topRedirect&lang=zh_CN&utdid=undefined&platform=web&appVersion=undefined&returnUrl=https%3A%2F%2Fwww.qianwen.com%2Fqianwen%2F",
+        "className": "StyledIframe-tongyi-login-8096__sc-senahr-2 eUomDP"
+      }
+    ],
+    "page_info": {
+      "title": "千问-阿里 AI 助手",
+      "url": "https://www.qianwen.com/",
+      "width": 1280,
+      "height": 800,
+      "bodyClassName": ""
+    },
+    "body_html_preview": "<svg aria-hidden=\"true\" style=\"position: absolute; width: 0px; height: 0px; overflow: hidden;\"><symbol id=\"qwpcicon-sidebarLeft\" viewBox=\"0 0 1024 1024\"><path d=\"M192 64c-35.328 0-65.536 12.48-90.496 37.504C76.544 126.464 64 156.672 64 192v640c0 35.328 12.48 65.536 37.504 90.496 24.96 24.96 55.168 37.504 90.496 37.504h640c35.328 0 65.536-12.48 90.496-37.504 24.96-24.96 37.504-55.168 37.504-90.496V192c0-35.328-12.48-65.536-37.504-90.496A123.328 123.328 0 0 0 832 64H192z m0 64h192v768H192a61.632 61.632 0 0 1-45.248-18.752A61.696 61.696 0 0 1 128 832V192c0-17.664 6.272-32.768 18.752-45.248A61.696 61.696 0 0 1 192 128z m640 768H448V128h384c17.664 0 32.768 6.272 45.248 18.752A61.632 61.632 0 0 1 896 192v640a61.632 61.632 0 0 1-18.752 45.248A61.632 61.632 0 0 1 832 896zM567.424 545.92l148.672 148.672 45.248-45.248L624 512l137.344-137.408-45.248-45.248L567.424 478.08q-14.08 14.08-14.08 33.92 0 19.84 14.08 33.92z\"></path></symbol><symbol id=\"qwpcicon-newDialogue\" viewBox=\"0 0 1024 1024\"><path d=\"M156.16 188.16C137.28 206.784 128 229.44 128 256v640l200.512-150.4c8.576-6.4 18.176-9.6 28.8-9.6H800c26.496 0 49.152-9.344 67.84-28.16 18.816-18.688 28.16-41.344 28.16-67.84V480h64V640c0 44.16-15.616 81.92-46.848 113.152a154.176 154.176 0 0 1-113.152 46.848H362.688L140.8 966.4a44.736 44.736 0 0 1-50.24 4.48A44.736 44.736 0 0 1 64 928V256c0-44.16 15.616-81.92 46.848-113.152A154.176 154.176 0 0 1 224 96H576v64H224c-26.496 0-49.152 9.344-67.84 28.16zM768 416v-128h-128v-64h128v-128h64v128h128v64h-128v128h-64z\"></path></symbol><symbol id=\"qwpcicon-temporaryDialogue\" viewBox=\"0 0 1024 1024\"><path d=\"M128 585.6V864l200.576-150.336 6.464-4.096a48.32 48.32 0 0 1 7.36-3.072v76.8L140.8 934.4A48 48 0 0 1 64 896V585.6h64zM598.4 768h-172.8v-64h172.8v64zM960 608a160 160 0 0 1-160 160h-118.4v-64h118.4A96 96 0 0 0 896 608v-22.4h64v22.4zM960 502.4h-64v-172.8h64v172.8zM128 329.6v172.8H64v-172.8h64zM800 64A160 160 0 0 1 960 224v22.4h-64V224A96 96 0 0 0 800 128h-118.4V64h118.4zM342.4 128H224A96 96 0 0 0",
+    "playwright_findings": {
+      "pw_textareas": [],
+      "pw_contenteditables": [
+        {
+          "selector": "[contenteditable]",
+          "className": "relative min-h-[24px] w-full whitespace-pre-wrap break-words text-left [&::-webkit-scrollbar]:hidden border-none bg-transparent px-2 text-16 leading-[26px] text-primary outline-none placeholder:text-disabled",
+          "boundingBox": {
+            "x": 398,
+            "y": 369.5,
+            "width": 734,
+            "height": 49.390625
+          }
+        },
+        {
+          "selector": "[contenteditable]",
+          "className": "pointer-events-none absolute inset-x-0 top-0 select-none text-inherit opacity-35",
+          "boundingBox": {
+            "x": 406,
+            "y": 369.5,
+            "width": 718,
+            "height": 26
+          }
+        }
+      ],
+      "pw_buttons": [
+        {
+          "textContent": "",
+          "className": "inline-flex size-8 shrink-0 items-center justify-center rounded-full border-0 p-0 text-16 leading-no",
+          "rect": {
+            "x": 1100,
+            "y": 419.5,
+            "width": 32,
+            "height": 32
+          }
+        }
+      ]
+    }
+  },
+  {
+    "platform": "豆包",
+    "url": "https://www.doubao.com/chat/",
+    "timestamp": "2026-06-28T08:43:25.867501",
+    "load_status": "ok",
+    "screenshot": "D:\\软件\\XianRenZhangAgent\\agent_core\\platform_research\\screenshots\\doubao_screenshot.png",
+    "input_boxes": [
+      {
+        "tag": "textarea",
+        "className": "semi-input-textarea semi-input-textarea-autosize",
+        "id": "",
+        "placeholder": "发消息...",
+        "name": "",
+        "ariaLabel": "",
+        "role": "",
+        "parentClass": "container-kxxSU4 flex-1 w-0 min-w-0 !border-none !bg-transparent max-h-[calc(var(--input-guidance-input-container-max-height)-var(--custom-area-height,0px)-36px-16px-14px-10px)] textarea-BnKyIt custom-scrollbar-stmEIo semi-input-textarea-wrapper semi-input-textarea-wrapper-focus",
+        "visible": true
+      }
+    ],
+    "send_buttons": [],
+    "file_upload": [],
+    "file_inputs": [
+      {
+        "accept": ".pdf, .txt, .csv, .docx, .doc, .xlsx, .xls, .pptx, .ppt, .md, .mobi, .epub, .png, .jpeg, .jpg, .webp,",
+        "multiple": true,
+        "name": "",
+        "className": "hidden"
+      }
+    ],
+    "login_status": {
+      "detected": false,
+      "indicators": []
+    },
+    "iframe_info": [],
+    "page_info": {
+      "title": "豆包 - 字节跳动旗下 AI 智能助手",
+      "url": "https://www.doubao.com/chat/",
+      "width": 1280,
+      "height": 800,
+      "bodyClassName": ""
+    },
+    "body_html_preview": "<div id=\"root\"><div id=\"chat-route-layout\" class=\"w-full h-full flex overflow-hidden bg-s-color-bg-body\" style=\"--content-max-width: 800px; --chat-area-max-width: 800px; --transition-duration-slow: 0.3s; --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1); --s-color-bg-mask: rgba(0, 0, 0, 0.3); --scrollbar-color: #ccc; --scrollbar-hover-color: #999; --input-guidance-input-caret-color: var(--s-color-accents-blue); --input-guidance-input-container-max-height: 300px; --input-guidance-input-container-min-height: 140px; --input-guidance-input-text-area-max-height: 240px; --input-guidance-input-container-padding: 6px; --input-guidance-input-container-radius: 20px; --input-guidance-input-container-border-color: var(--s-color-border-secondary); --input-guidance-input-container-background: var(--s-color-bg-float); --input-guidance-input-container-gap: 6px; --input-guidance-input-editor-min-height: 56px; --input-guidance-input-editor-color: var(--s-color-text-secondary); --input-guidance-input-editor-placeholder-color: var(--s-color-text-quaternary); --input-guidance-input-bottom-height: 36px; --input-icon-size-full: 32px; --input-icon-size-small: 28px; --chat-input-icon-size: 18px; --chat-input-icon-size-small: 16px; --chat-input-skill-button-padding: 3px 6px; --chat-input-skill-border-radius: 20px; --tool-button-bar-bottom: 6px; --tool-button-bar-padding: 0 6px; --skillbar-min-height: 150px; --greeting-slider-width: 32px; --greeting-height: 45px; --super-agent-switch-height: 36px; --suggest-bubble-gap: 8px; --chat-bg-color: var(--dbx-bg-body-web); --s-color-bg-body: var(--dbx-bg-body-web);\"><div class=\"flex-1 flex relative main-with-nav-qPJ0z0\" id=\"chat-route-main\"><nav class=\"left-side-U7A0kz w-sidebar-width left-side__expand-OIQFEm left-side-sm-fixed-XHrOd1\"><div id=\"flow_chat_sidebar\" class=\"relative p-12 sm:fixed overflow-hidden pointer-events-auto w-sidebar-width flex shrink-0 flex-col bg-dbx-bg-base-web border-r border-[0.5px] border-s-color-border-tertiary/80 transition-[tra",
+    "playwright_findings": {
+      "pw_textareas": [
+        {
+          "selector": "textarea",
+          "className": "semi-input-textarea semi-input-textarea-autosize",
+          "boundingBox": {
+            "x": 400,
+            "y": 700,
+            "width": 760,
+            "height": 24
+          }
+        },
+        {
+          "selector": "textarea",
+          "className": "",
+          "boundingBox": {
+            "x": 520,
+            "y": 0,
+            "width": 760,
+            "height": 0
+          }
+        }
+      ],
+      "pw_contenteditables": [],
+      "pw_buttons": []
+    }
+  },
+  {
+    "platform": "元宝",
+    "url": "https://yuanbao.tencent.com/chat/",
+    "timestamp": "2026-06-28T08:43:48.989038",
+    "load_status": "ok",
+    "screenshot": "D:\\软件\\XianRenZhangAgent\\agent_core\\platform_research\\screenshots\\yuanbao_screenshot.png",
+    "input_boxes": [
+      {
+        "tag": "[contenteditable]",
+        "className": "ql-editor ql-blank",
+        "id": "",
+        "innerText": "\n",
+        "ariaLabel": "",
+        "role": "",
+        "parentClass": "chat-input-editor InputTextArea_hightLightTextAreaNew__aKxTD style__text-area__edit__content___HVSts ql-container",
+        "visible": true
+      }
+    ],
+    "send_buttons": [],
+    "file_upload": [
+      {
+        "tag": "span",
+        "className": "icon iconfont icon-upload",
+        "innerText": "",
+        "ariaLabel": "",
+        "parentClass": "agent-drag-file__logo"
+      }
+    ],
+    "file_inputs": [],
+    "login_status": {
+      "detected": true,
+      "indicators": [
+        "Avatar img: <DIV> .yb-common-nav__ft__avatar",
+        "Possible username: \"未登录\" in <DIV>"
+      ]
+    },
+    "iframe_info": [
+      {
+        "src": "https://open.weixin.qq.com/connect/qrconnect?appid=wx12b75947931a04ec&scope=snsapi_login&redirect_uri=https%3A%2F%2Fyuanbao.tencent.com%2Fscan%3Fnonce%3DN6HZYJWyWHw3McaC&state=wechat_login&login_type=jssdk&self_redirect=false&styletype=&sizetype=&bgcolor=&rst=&ts=1782607427049&style=black&href=data:text/css;base64,LndlYl9xcmNvZGVfcGFuZWxfcXVpY2tfbG9naW4ge3BhZGRpbmctdG9wOiAyMHB4O30gLmltcG93ZXJCb3ggLnRpdGxlIHtkaXNwbGF5OiBub25lO30gLmltcG93ZXJCb3ggLnFyY29kZSB7bWFyZ2luLXRvcDogMDsgd2lkdGg6IDEwMCU7IGJvcmRlcjogMDsgdmVydGljYWwtYWxpZ246IHRvcDt9IC5pbXBvd2VyQm94IC5zdGF0dXMuc3RhdHVzX2Jyb3dzZXIge2Rpc3BsYXk6IG5vbmU7fSAuaW1wb3dlckJveCAuc3RhdHVzIHtwYWRkaW5nOiAwOyB0ZXh0LWFsaWduOiBjZW50ZXI7fSAuaW1wb3dlckJveCAuc3RhdHVzX2ljb24ge2Rpc3BsYXk6IGJsb2NrIWltcG9ydGFudDsgcG9zaXRpb246IGFic29sdXRlOyB0b3A6IDUwdnc7IGxlZnQ6IDUwdnc7IG1hcmdpbjogLTIycHggMCAwIC0yMnB4OyBiYWNrZ3JvdW5kLWNvbG9yOiAjZmZmOyBib3JkZXItcmFkaXVzOiAxMDAlfSAuaW1wb3dlckJveCAuc3RhdHVzX2ZhaWwgaDQge2NvbG9yOiAjZDU0OTQxO30gLmltcG93ZXJCb3ggLnN0YXR1c19zdWNjIGg0IHtjb2xvcjogIzIwQzU3RH0gLmltcG93ZXJCb3ggLnN0YXR1c190eHQgcCB7ZGlzcGxheTogbm9uZX0gLmltcG93ZXJCb3ggLmluZm8ge3dpZHRoOiAxMDAlfSAud2ViX3FyY29kZV9zd2l0Y2hfd3JwIHttYXJnaW4tdG9wOiAwfSAuc3RhdHVzX2ZhaWwgLnN0YXR1c190eHQge2ZvbnQtc2l6ZTogMTRweH0gLnFsb2dpbl91c2VyX25pY2tuYW1lLC5qc19xdWlja19sb2dpbl9uaWNrbmFtZSB7bWF4LXdpZHRoOjE2MHB4O292ZXJmbG93OmhpZGRlbjt0ZXh0LW92ZXJmbG93OmVsbGlwc2lzO2Rpc3BsYXk6LXdlYmtpdC1ib3g7LXdlYmtpdC1saW5lLWNsYW1wOjI7LXdlYmtpdC1ib3gtb3JpZW50OnZlcnRpY2FsO3dvcmQtYnJlYWs6YnJlYWstYWxsO2xpbmUtaGVpZ2h0OjIwcHg7bWF4LWhlaWdodDo0MHB4O21hcmdpbi1sZWZ0OmF1dG87bWFyZ2luLXJpZ2h0OmF1dG87fQ==",
+        "className": ""
+      }
+    ],
+    "page_info": {
+      "title": "元宝-腾讯旗下全能AI助手",
+      "url": "https://yuanbao.tencent.com/chat/naQivTmsDa",
+      "width": 1280,
+      "height": 800,
+      "bodyClassName": ""
+    },
+    "body_html_preview": "<div id=\"__next\"><div id=\"app\"><div class=\"yb-layout agent-layout layout-pc yb-layout--pc-container\"><div class=\"yb-nav-fixed yb-nav-fixed--pc-ctx\"><div class=\"yb-common-nav__trigger yb-common-nav__trigger--grey\" data-desc=\"unfold\"><span style=\"font-size:20px\" class=\"yb-icon iconfont-yb icon-yb-ic_sidebar_20\"></span></div><div class=\"yb-common-nav__trigger\"><div><span class=\"yb-icon iconfont-yb icon-yb-ic_temporary_20\" style=\"font-size: 20px;\"></span></div></div></div><div class=\"yb-nav-mobile__header-wrapper\"></div><div class=\"yb-nav yb-common-nav yb-nav--pc-ctx yb-nav--push yb-nav--open\"><div class=\"yb-nav__mask\"></div><div class=\"yb-nav__content-wrapper\" style=\"width: 254px;\"><div class=\"yb-nav__header yb-common-nav__hd\"><div class=\"yb-common-nav__trigger\" data-desc=\"fold\"><span style=\"font-size:20px\" class=\"yb-icon iconfont-yb icon-yb-ic_sidebar_20\"></span></div><div style=\"margin:0px 8px\" class=\"yb-common-nav__trigger\" data-desc=\"new-chat\"><span style=\"font-size:20px\" class=\"yb-icon iconfont-yb icon-yb-ic_newchat_20\"></span></div></div><div dt-exposure=\"OnPageMod\" dt-page-id=\"SlidePage\" dt-mod-id=\"main_agent_mod\" dt-button-id=\"search_bar\" dt-ext1=\"pc\" class=\"yb-common-nav__tool\"><span style=\"font-size:20px\" class=\"yb-icon iconfont-yb icon-yb-ic_search_20 yb-common-nav__tool-icon\"></span><p class=\"yb-common-nav__tool-word\">搜索</p></div><div class=\"yb-nav__content\"><div dt-exposure=\"OnView\" dt-page-id=\"SlidePage\" dt-mod-id=\"main_mod\" dt-ext1=\"pc\" style=\"position: absolute; width: 10px; height: 10px; pointer-events: none;\"></div><div class=\"yb-tencent-yuanbao-list\"><div class=\"yb-tencent-yuanbao-list__recent\"><div dt-exposure=\"OnPageMod\" dt-click=\"OnPageClick\" dt-page-id=\"SlidePage\" dt-mod-id=\"my_collect\" dt-button-id=\"collect\"><div class=\"yb-tencent-yuanbao-list__item yb-tencent-yuanbao-list__item--active\" aegis-first-screen-timing=\"true\"><div class=\"yb-tencent-yuanbao-list__logo\"></div><p>元宝</p></div></div></div></div><div class=\"yb-recent-agent-list\"><div class=",
+    "playwright_findings": {
+      "pw_textareas": [],
+      "pw_contenteditables": [
+        {
+          "selector": "[contenteditable]",
+          "className": "ql-editor ql-blank",
+          "boundingBox": {
+            "x": 309,
+            "y": 677,
+            "width": 921,
+            "height": 22
+          }
+        }
+      ],
+      "pw_buttons": []
+    }
+  },
+  {
+    "platform": "ChatGPT",
+    "url": "https://chatgpt.com/",
+    "timestamp": "2026-06-28T08:44:12.529998",
+    "load_status": "navigate_error: Page.goto: net::ERR_CONNECTION_TIMED_OUT at https://chatgpt.com/\nCall log:\n  - navigating to \"https://chatgpt.com/\", waiting until \"domcontentloaded\"\n",
+    "screenshot": "D:\\软件\\XianRenZhangAgent\\agent_core\\platform_research\\screenshots\\chatgpt_screenshot.png",
+    "input_boxes": [],
+    "send_buttons": [],
+    "file_upload": [],
+    "file_inputs": [],
+    "login_status": {
+      "detected": false,
+      "indicators": []
+    },
+    "iframe_info": [],
+    "page_info": {
+      "title": "",
+      "url": "chrome-error://chromewebdata/",
+      "width": 1280,
+      "height": 800,
+      "bodyClassName": ""
+    },
+    "body_html_preview": "",
+    "playwright_findings": {
+      "pw_textareas": [],
+      "pw_contenteditables": [],
+      "pw_buttons": []
+    }
+  },
+  {
+    "platform": "Gemini",
+    "url": "https://gemini.google.com/app",
+    "timestamp": "2026-06-28T08:44:36.039473",
+    "load_status": "navigate_error: Page.goto: net::ERR_CONNECTION_TIMED_OUT at https://gemini.google.com/app\nCall log:\n  - navigating to \"https://gemini.google.com/app\", waiting until \"",
+    "screenshot": "D:\\软件\\XianRenZhangAgent\\agent_core\\platform_research\\screenshots\\gemini_screenshot.png",
+    "input_boxes": [],
+    "send_buttons": [],
+    "file_upload": [],
+    "file_inputs": [],
+    "login_status": {
+      "detected": false,
+      "indicators": []
+    },
+    "iframe_info": [],
+    "page_info": {
+      "title": "",
+      "url": "chrome-error://chromewebdata/",
+      "width": 1280,
+      "height": 800,
+      "bodyClassName": ""
+    },
+    "body_html_preview": "",
+    "playwright_findings": {
+      "pw_textareas": [],
+      "pw_contenteditables": [],
+      "pw_buttons": []
+    }
+  }
+]

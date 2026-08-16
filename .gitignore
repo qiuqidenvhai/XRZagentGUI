@@ -1,0 +1,63 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Data & Browser caches (D drive projects, avoid pushing)
+xrz_data/
+probe_out/
+None/
+platform_research/screenshots/
+
+# Generated / temporary files
+!__xianrenzhang_icon.png
+!gui.html
+!desktop_app.py
+*.jpg
+*.jpeg
+*.gif
+*.mp4
+*.webm
+# 排除 png 但保留项目图标
+*.png
+!__xianrenzhang_icon.png
+research_result.json
+*_result.json
+*_status.txt
+*.log
+debug_*.py
+fix_*.py
+test_*.py
+xyz.py
+
+# Virtual env / python binaries
+pythonw.exe
+python.exe

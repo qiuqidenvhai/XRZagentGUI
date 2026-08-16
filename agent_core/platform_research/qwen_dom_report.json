@@ -1,0 +1,42 @@
+{
+  "input_boxes": [
+    {
+      "type": "textarea",
+      "className": "message-input-textarea",
+      "placeholder": "有什么我能帮您的吗？",
+      "ariaLabel": "",
+      "visible": true,
+      "rect": {
+        "x": 292,
+        "y": 376,
+        "w": 612,
+        "h": 32
+      }
+    }
+  ],
+  "send_buttons": [],
+  "file_upload": [
+    {
+      "type": "hidden_file_input",
+      "accept": "",
+      "className": "",
+      "hidden": true
+    }
+  ],
+  "login": {
+    "indicators": []
+  },
+  "message_containers": [
+    {
+      "selector": "[class*=\"message\"]",
+      "count": 9,
+      "lastText": ""
+    },
+    {
+      "selector": "[class*=\"chat\"]",
+      "count": 18,
+      "lastText": "使用 Qwen Studio，即表示您同意我们的 用户条款 和 隐私协议。"
+    }
+  ],
+  "bodyClass": ""
+}
