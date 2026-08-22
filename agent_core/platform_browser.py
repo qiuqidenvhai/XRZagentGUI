@@ -81,6 +81,10 @@ class PlatformProfile:
     # 空字符串表示「不点按钮、直接找 input[type=file] 用 set_input_files 设值」
     # （绝大多数现代聊天平台都有隐藏 file input，直接设值最稳，绕开系统文件对话框）。
     attach_button_selector: str = ""
+    # 部分平台（如千问 chat.qwen.ai）点开「+」按钮后是个下拉菜单，需要再点菜单里的
+    # 「上传附件」项才会真正激活 file input。此字段填菜单项文字；为空表示点完
+    # attach_button_selector 后直接找 file input 即可。
+    attach_menu_item_text: str = ""
     # 是否支持一次上传多个文件
     multi_file: bool = True
     # 「生成中」信号选择器：该元素在 AI 生成期间存在且可见，生成完成即消失。
@@ -148,8 +152,12 @@ PLATFORM_PROFILES = {
             "div.qwen-select-thinking",
             "div.qwen-thinking-selector",
         ],
-        # 文件上传：chat.qwen.ai 有隐藏 input#filesUpload（multiple），直接用策略1 即可。
-        attach_button_selector="",
+        # 文件上传：chat.qwen.ai 的输入区左侧有个「+」按钮（aria-label=选择模式），
+        # 点开后下拉菜单里有「上传附件」项，点它才会真正激活隐藏的 #filesUpload
+        # （直接对 #filesUpload 调 set_input_files 千问的 React 收不到，表现为"假上传"）。
+        # 因此走「点 + 按钮 → 点『上传附件』菜单项 → set_input_files」两步流程。
+        attach_button_selector="[aria-label='选择模式']",
+        attach_menu_item_text="上传附件",
         multi_file=True,
         response_selector="[class*='message'], [data-testid*='message']",
         generating_selector=".stop-button",
@@ -1150,16 +1158,23 @@ class PlatformBrowserManager:
     async def upload_files(self, file_paths: List[str]) -> str:
         """上传一个或多个文件（图片/PDF 等）到当前聊天输入框。
 
-        最稳策略：直接定位隐藏的 input[type=file] 并用 set_input_files 设值，
-        绕开系统文件对话框（Playwright 原生支持，无需真实点击）。若页面没有可交互
-        的 file input，先点 attach_button_selector 触发它出现，再找。
+        千问 chat.qwen.ai 的特殊处理（关键修复）：千问的隐藏 #filesUpload 必须先
+        在输入框左侧点「+」(选择模式) 按钮、再点下拉菜单里的「上传附件」项，React
+        才会真正接管 file input；直接对 #filesUpload 调 set_input_files 千问前端
+        收不到，表现为「假上传」。故支持 attach_menu_item_text 两步流程，并在设值后
+        做真实校验（页面出现文件名/预览），杜绝静默假成功。
+
+        稳定性策略：走「+ -> 上传附件」菜单触发原生文件框，用 expect_file_chooser
+        正式接管注入（这是有头模式下不弹系统框的唯一可靠办法）；chooser 未触发时
+        退回「force 点击武装 input + set_input_files」；每次注入后都做真实校验，
+        整体最多重试 3 轮，确保千问上传是真上传而非假成功。
         """
         if not self._page:
             raise RuntimeError("页面未初始化")
-        
+
         # 确保已登录（关非登录弹窗 + 遇登录弹窗则等待用户登录）
         await self._ensure_logged_in_or_wait()
-        
+
         valid = []
         for fp in file_paths:
             p = Path(fp)
@@ -1170,49 +1185,126 @@ class PlatformBrowserManager:
         if not valid:
             return "错误：没有有效文件可上传（路径不存在）"
 
-        # 策略1：直接找 file input（绝大多数平台都有隐藏的 input[type=file]）
-        file_input = self._page.locator("input[type='file']").first
-        if await file_input.count() == 0:
-            # 策略2：点 attach 按钮让 file input 出现（元宝等需要先点按钮）
-            if self.profile.attach_button_selector:
-                sels = [s.strip() for s in self.profile.attach_button_selector.split(",") if s.strip()]
-                for sel in sels:
+        names = ", ".join(Path(v).name for v in valid)
+        file_loc = self._page.locator("input#filesUpload, input[type='file']")
+
+        async def _verify_uploaded() -> bool:
+            """真实校验：页面是否出现刚上传文件的预览/文件名（千问会显示『解析中……』）。
+            注意：千问把文件名显示成带换行的形式（如 _name 换行 .pdf），故页面与文件名
+            都要先去掉所有空白再比对，否则会误判『未挂载』导致假失败。"""
+            try:
+                return await self._page.evaluate("""(fnames) => {
+                    const clean = s => (s || '').toLowerCase()
+                        .split(' ').join('')
+                        .split(String.fromCharCode(10)).join('')
+                        .split(String.fromCharCode(9)).join('')
+                        .split(String.fromCharCode(13)).join('');
+                    const norm = fnames.map(clean);
+                    const body = clean(document.body.innerText);
+                    for (const n of norm) if (body.includes(n)) return true;
+                    const els = [...document.querySelectorAll('*')];
+                    for (const el of els) {
+                        const t = clean(el.innerText);
+                        for (const n of norm) if (t.includes(n)) return true;
+                    }
+                    return false;
+                }""", [Path(v).name for v in valid])
+            except Exception:
+                return False
+
+        async def _inject_via_menu() -> bool:
+            """两步流程：点 + -> 点上传附件 -> (chooser 接管 | 武装后 set_input_files) -> 校验。
+            返回 True 表示文件已真正挂载到输入框。"""
+            if not self.profile.attach_button_selector:
+                return False
+            sels = [s.strip() for s in self.profile.attach_button_selector.split(",") if s.strip()]
+            for sel in sels:
+                btn = self._page.locator(sel).first
+                if await btn.count() == 0 or not await btn.is_visible():
+                    continue
+                try:
+                    await btn.click(timeout=5000)
+                except Exception:
+                    await btn.click(timeout=5000, force=True)
+                await asyncio.sleep(1.0)
+                if not self.profile.attach_menu_item_text:
+                    # 无菜单项：点开后直接注入已出现的 input
+                    fi = file_loc.first
+                    if await fi.count() > 0:
+                        await fi.set_input_files(valid[0] if len(valid) == 1 else valid)
+                        await asyncio.sleep(2.0)
+                        return await _verify_uploaded()
+                    return False
+                mi = self._page.locator(
+                    ".qwen-chat-v2-dropdown-menu-item:has-text('" + self.profile.attach_menu_item_text + "')").first
+                # 轮询菜单项渲染（最多 ~6s），确保下拉菜单真正出现
+                for _ in range(20):
+                    await asyncio.sleep(0.3)
+                    if await mi.count() > 0 and await mi.is_visible():
+                        break
+                else:
+                    return False
+                # 点「上传附件」触发原生文件框，用 chooser 正式接管注入
+                try:
+                    async with self._page.expect_file_chooser(timeout=8000) as fc_info:
+                        await mi.click(timeout=5000)
+                    fc = await fc_info.value
+                    await fc.set_files(valid[0] if len(valid) == 1 else valid)
+                except Exception:
+                    # chooser 未触发：force 点击武装 input，再 set_input_files 兜底
                     try:
-                        btn = self._page.locator(sel).first
-                        if await btn.count() > 0 and await btn.is_visible():
-                            try:
-                                await btn.click(timeout=5000)
-                            except Exception:
-                                await btn.click(timeout=5000, force=True)
-                            # 给 input 一点出现时间（元宝等可能慢）
-                            for _ in range(6):
-                                await asyncio.sleep(0.5)
-                                file_input = self._page.locator("input[type='file']").first
-                                if await file_input.count() > 0:
-                                    break
-                            if await file_input.count() > 0:
-                                break
+                        await mi.click(timeout=5000, force=True)
                     except Exception:
-                        continue
-            file_input = self._page.locator("input[type='file']").first
+                        pass
+                    await asyncio.sleep(1.5)
+                    fi = file_loc.first
+                    if await fi.count() > 0:
+                        await fi.set_input_files(valid[0] if len(valid) == 1 else valid)
+                await asyncio.sleep(2.5)
+                if await _verify_uploaded():
+                    return True
+                # 校验未过：再补一次 set_input_files（应对 chooser 注入但 React 未刷新）
+                fi = file_loc.first
+                if await fi.count() > 0:
+                    try:
+                        await fi.set_input_files(valid[0] if len(valid) == 1 else valid)
+                    except Exception:
+                        pass
+                    await asyncio.sleep(2.5)
+                    return await _verify_uploaded()
+                return await _verify_uploaded()
+            return False
 
-        if await file_input.count() == 0:
-            logger.warning(f"[{self.profile.name}] 未找到文件上传入口，诊断页面...")
-            await self._diagnose_clickable(self.profile.name)
-            return "错误：未找到文件上传入口（该平台可能不支持，或需登录后才有）"
+        # 无 attach_button 平台（deepseek 等）：直接 set_input_files 即可
+        if not self.profile.attach_button_selector:
+            fi = file_loc.first
+            if await fi.count() == 0:
+                logger.warning(f"[{self.profile.name}] 未找到文件上传入口，诊断页面...")
+                await self._diagnose_clickable(self.profile.name)
+                return "错误：未找到文件上传入口（该平台可能不支持，或需登录后才有）"
+            try:
+                await fi.set_input_files(valid[0] if len(valid) == 1 else valid)
+                await asyncio.sleep(2.0)
+            except Exception as e:
+                logger.error(f"[{self.profile.name}] 文件上传失败: {e}")
+                return f"文件上传失败: {e}"
+            if await _verify_uploaded():
+                logger.info(f"[{self.profile.name}] 已上传 {len(valid)} 个文件: {names}（已校验）")
+                return f"已上传 {len(valid)} 个文件: {names}"
+            return f"错误：文件未能真正挂载到输入框；{names}"
 
-        try:
-            if self.profile.multi_file and len(valid) > 1:
-                await file_input.set_input_files(valid)
-            else:
-                await file_input.set_input_files(valid[0])
-            await asyncio.sleep(1.5)  # 等文件预览/缩略图出现
-            names = ", ".join(Path(v).name for v in valid)
-            logger.info(f"[{self.profile.name}] 已上传 {len(valid)} 个文件: {names}")
-            return f"已上传 {len(valid)} 个文件: {names}"
-        except Exception as e:
-            logger.error(f"[{self.profile.name}] 文件上传失败: {e}")
-            return f"文件上传失败: {e}"
+        # 千问等两步流程平台：最多重试 3 轮，杜绝不稳定导致的假失败
+        for attempt in range(3):
+            if await _inject_via_menu():
+                logger.info(f"[{self.profile.name}] 已上传 {len(valid)} 个文件: {names}（两步流程校验通过）")
+                return f"已上传 {len(valid)} 个文件: {names}"
+            # 重置：关闭可能残留的菜单，准备下一轮重试
+            try:
+                await self._page.keyboard.press("Escape")
+            except Exception:
+                pass
+            await asyncio.sleep(0.8)
+        return f"错误：文件未能真正挂载到输入框（千问可能需要先点『+』->『上传附件』；{names}）"
 
     async def upload_file(self, file_path: str):
         """上传单个文件（兼容旧接口）"""

@@ -42,7 +42,7 @@
       "div.qwen-thinking-selector"
     ],
     "thinking_mode": "select",
-    "attach_button_selector": "",
+    "attach_button_selector": "[aria-label='选择模式']",
     "multi_file": true,
     "response_selector": "[class*='message'], [data-testid*='message']",
     "thinking_selector": "[class*='thinking'], [class*='reasoning'], [class*='think'], [data-testid*='thinking'], details:has(summary)",
@@ -54,7 +54,8 @@
     "viewport_width": 1280,
     "viewport_height": 900,
     "display": "通义千问",
-    "icon": "💬"
+    "icon": "💬",
+    "attach_menu_item_text": "上传附件"
   },
   "doubao": {
     "platform": "doubao",
