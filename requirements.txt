@@ -1,0 +1,18 @@
+# 仙人掌 Agent（XianRenZhang Agent）依赖清单
+# 安装：pip install -r requirements.txt
+# 浏览器二进制需另执行：python -m playwright install chromium
+# （启动仙人掌.bat / 安装依赖.bat 已自动处理）
+
+# ── 浏览器自动化（网页 AI 调用核心）──
+playwright>=1.40
+
+# ── 原生 GUI 壳（PySide6 桌面窗口 + 内嵌浏览器）──
+PySide6>=6.6
+
+# ── 文档生成 ──
+python-docx>=1.1
+python-pptx>=0.6.23
+
+# ── 可选：本地模型（Ollama HTTP API 客户端，纯标准库即可，无需额外依赖）──
+# requests（如需自定义 HTTP，可取消下一行注释）
+# requests>=2.31

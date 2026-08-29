@@ -1,0 +1,205 @@
+{
+  "deepseek": {
+    "platform": "deepseek",
+    "name": "DeepSeek",
+    "url": "https://chat.deepseek.com",
+    "chat_url": "https://chat.deepseek.com",
+    "input_selector": "textarea",
+    "send_selector": "button[type='submit']",
+    "upload_button_selector": "",
+    "thinking_toggle_selectors": [
+      "button:has-text('深度思考')",
+      "[class*='depth'] button",
+      "div[role='switch']:has-text('深度')"
+    ],
+    "thinking_mode": "toggle",
+    "attach_button_selector": "",
+    "multi_file": true,
+    "response_selector": "[class*='message']:last-child",
+    "thinking_selector": "",
+    "generating_selector": ".loading, [class*='generating']",
+    "login_texts": [
+      "登录",
+      "Login"
+    ],
+    "viewport_width": 1280,
+    "viewport_height": 900,
+    "display": "DeepSeek",
+    "icon": "💭",
+    "models": [
+      {
+        "value": "quick",
+        "label": "快速模式",
+        "selector": "div[role='radio']:has-text('快速模式')"
+      },
+      {
+        "value": "expert",
+        "label": "专家模式",
+        "selector": "div[role='radio']:has-text('专家模式')"
+      },
+      {
+        "value": "vision",
+        "label": "识图模式",
+        "selector": "div[role='radio']:has-text('识图模式')"
+      }
+    ]
+  },
+  "tongyi": {
+    "platform": "tongyi",
+    "name": "通义千问",
+    "url": "https://chat.qwen.ai/",
+    "chat_url": "https://chat.qwen.ai/",
+    "input_selector": "textarea, [contenteditable='true']",
+    "send_selector": "button[aria-label='发送']",
+    "upload_button_selector": "",
+    "thinking_toggle_selectors": [
+      "div.qwen-thinking-selector",
+      ".qwen-select-thinking .ant-select-selector",
+      "div.qwen-select-thinking",
+      "button:has-text('深度思考')",
+      "div[role='switch']:has-text('思考')"
+    ],
+    "thinking_mode": "select",
+    "thinking_timeout": 60,
+    "skip_thinking_selector": "button:has-text('跳过'), button:has-text('取消'), span:has-text('跳过思考')",
+    "attach_button_selector": "[aria-label='选择模式']",
+    "multi_file": true,
+    "response_selector": ".qwen-chat-message-assistant",
+    "thinking_selector": "[class*='thinking'], [class*='reasoning'], [class*='think'], [data-testid*='thinking']",
+    "generating_selector": ".stop-button",
+    "login_texts": [
+      "登录",
+      "Login"
+    ],
+    "viewport_width": 1280,
+    "viewport_height": 900,
+    "display": "通义千问",
+    "icon": "💬",
+    "attach_menu_item_text": "上传附件",
+    "models": [
+      {
+        "value": "qwen3.8-max",
+        "label": "Qwen3.8-Max",
+        "selector": "div[role='button']:has-text('Qwen') || text=Qwen3.8-Max"
+      },
+      {
+        "value": "qwen3.7-plus",
+        "label": "Qwen3.7-Plus",
+        "selector": "div[role='button']:has-text('Qwen') || text=Qwen3.7-Plus"
+      }
+    ]
+  },
+  "doubao": {
+    "platform": "doubao",
+    "name": "豆包",
+    "url": "https://www.doubao.com/chat/",
+    "chat_url": "https://www.doubao.com/chat/",
+    "input_selector": "div.tiptap.ProseMirror",
+    "send_selector": "",
+    "upload_button_selector": "",
+    "thinking_toggle_selectors": [
+      "button:has-text('深度思考')",
+      "button:has-text('深度思考 Beta')",
+      "[class*='deep-think']",
+      "div[role='switch']:has-text('深度')"
+    ],
+    "thinking_mode": "toggle",
+    "attach_button_selector": "input[type=file], .UploadFileInput, [class*='Attach'] input, [class*='upload']",
+    "multi_file": true,
+    "response_selector": ".agent-chat__bubble",
+    "thinking_selector": "[class*='thinking'], [class*='reasoning'], [class*='think']",
+    "generating_selector": ".stop-button, [class*='stop']",
+    "login_texts": [
+      "登录",
+      "Log in"
+    ],
+    "viewport_width": 1280,
+    "viewport_height": 900,
+    "display": "豆包",
+    "icon": "🤖",
+    "models": [
+      {
+        "value": "doubao-mode-0",
+        "label": "对话",
+        "selector": "text=对话"
+      },
+      {
+        "value": "doubao-mode-1",
+        "label": "深入研究",
+        "selector": "text=深入研究"
+      },
+      {
+        "value": "doubao-mode-2",
+        "label": "帮我写作",
+        "selector": "text=帮我写作"
+      },
+      {
+        "value": "doubao-mode-3",
+        "label": "图像生成",
+        "selector": "text=图像生成"
+      },
+      {
+        "value": "doubao-mode-4",
+        "label": "翻译",
+        "selector": "text=翻译"
+      },
+      {
+        "value": "doubao-mode-5",
+        "label": "音乐生成",
+        "selector": "text=音乐生成"
+      },
+      {
+        "value": "doubao-mode-6",
+        "label": "视频生成",
+        "selector": "text=视频生成"
+      }
+    ]
+  },
+  "yuanbao": {
+    "platform": "yuanbao",
+    "name": "元宝",
+    "url": "https://yuanbao.tencent.com/chat/",
+    "chat_url": "https://yuanbao.tencent.com/chat/",
+    "input_selector": "[contenteditable].ql-editor.ql-blank",
+    "send_selector": "div[aria-label='发送']",
+    "upload_button_selector": "span.icon-upload",
+    "thinking_toggle_selectors": [
+      "button:has-text('深度思考')",
+      "div[role='switch']:has-text('深度')",
+      "[class*='T1-deep'] button",
+      "[class*='deep-think']"
+    ],
+    "thinking_mode": "toggle",
+    "attach_button_selector": ".UploadFileSelector_iconContainer__6Wpsp, .UploadFileSelector_iconButton__LEwqk, [class*='UploadFileSelector']",
+    "multi_file": true,
+    "response_selector": ".agent-chat__bubble",
+    "thinking_selector": "[class*='thinking'], [class*='reasoning'], [class*='think']",
+    "generating_selector": ".stop-button, [class*='stop'], [class*='generating']",
+    "login_texts": [
+      "登录",
+      "Log in"
+    ],
+    "viewport_width": 1280,
+    "viewport_height": 900,
+    "display": "元宝",
+    "icon": "✨",
+    "models": [
+      {
+        "value": "hunyuan-pro",
+        "label": "混元 Pro"
+      },
+      {
+        "value": "hunyuan-t1",
+        "label": "混元 T1（深度思考）"
+      },
+      {
+        "value": "deepseek-v3",
+        "label": "DeepSeek V3"
+      },
+      {
+        "value": "deepseek-r1",
+        "label": "DeepSeek R1（推理）"
+      }
+    ]
+  }
+}

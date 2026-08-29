@@ -1,0 +1,28 @@
+2026/08/28-21:00:25.545 4e60 Creating DB D:\软件\XianRenZhangAgent\browser_profiles\tongyi\Default\IndexedDB\https_chat.qwen.ai_0.indexeddb.leveldb since it was missing.
+2026/08/28-21:00:25.569 4e60 Reusing MANIFEST D:\软件\XianRenZhangAgent\browser_profiles\tongyi\Default\IndexedDB\https_chat.qwen.ai_0.indexeddb.leveldb/MANIFEST-000001
+2026/08/28-21:00:28.406 4e60 Level-0 table #5: started
+2026/08/28-21:00:28.418 4e60 Level-0 table #5: 234538 bytes OK
+2026/08/28-21:00:28.422 4e60 Delete type=0 #3
+2026/08/28-21:00:28.545 4f14 Level-0 table #7: started
+2026/08/28-21:00:28.554 4f14 Level-0 table #7: 234220 bytes OK
+2026/08/28-21:00:28.558 4f14 Delete type=0 #4
+2026/08/28-21:00:28.704 4f14 Level-0 table #9: started
+2026/08/28-21:00:28.717 4f14 Level-0 table #9: 234500 bytes OK
+2026/08/28-21:00:28.720 4f14 Delete type=0 #6
+2026/08/28-21:00:28.838 3100 Level-0 table #11: started
+2026/08/28-21:00:28.846 3100 Level-0 table #11: 177606 bytes OK
+2026/08/28-21:00:28.848 3100 Delete type=0 #8
+2026/08/28-21:00:28.849 3100 Manual compaction at level-0 from '\x00\x02\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x03\x00\x00\x00' @ 0 : 0; will stop at '\x00\x02\x01\x02\x03\x00\x00\x00\x00\x00\x00,@' @ 3313 : 1
+2026/08/28-21:00:28.850 3100 Compacting 2@0 + 1@1 files
+2026/08/28-21:00:28.868 3100 Generated table #12@0: 1440 keys, 12550 bytes
+2026/08/28-21:00:28.868 3100 Compacted 2@0 + 1@1 files => 12550 bytes
+2026/08/28-21:00:28.870 3100 compacted to: files[ 0 1 1 0 0 0 0 ]
+2026/08/28-21:00:28.871 3100 Delete type=2 #11
+2026/08/28-21:00:28.872 3100 Manual compaction at level-0 from '\x00\x02\x01\x02\x03\x00\x00\x00\x00\x00\x00,@' @ 3313 : 1 .. '\x00\x03\x00\x00\x00' @ 0 : 0; will stop at (end)
+2026/08/28-21:00:28.872 3100 Manual compaction at level-1 from '\x00\x02\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x03\x00\x00\x00' @ 0 : 0; will stop at '\x00\x02\x01\x02\x03\x00\x00\x00\x00\x00\x00,@' @ 5895 : 0
+2026/08/28-21:00:28.873 3100 Compacting 1@1 + 1@2 files
+2026/08/28-21:00:28.893 3100 Generated table #13@1: 19 keys, 538 bytes
+2026/08/28-21:00:28.894 3100 Compacted 1@1 + 1@2 files => 538 bytes
+2026/08/28-21:00:28.896 3100 compacted to: files[ 0 0 1 0 0 0 0 ]
+2026/08/28-21:00:28.896 3100 Delete type=2 #12
+2026/08/28-21:00:28.897 3100 Manual compaction at level-1 from '\x00\x02\x01\x02\x03\x00\x00\x00\x00\x00\x00,@' @ 5895 : 0 .. '\x00\x03\x00\x00\x00' @ 0 : 0; will stop at (end)
