@@ -17,6 +17,7 @@ platform_browser.py — 多平台浏览器管理器
 import asyncio
 import logging
 import json
+import re
 import shutil
 import os
 import subprocess
@@ -28,12 +29,39 @@ from dataclasses import dataclass, field
 
 logger = logging.getLogger("platform_browser")
 
+_DIAG_FILE = r"D:\软件\XianRenZhangAgent\_xrz_dom_dump.jsonl"
+
+
+def _write_diag(platform_name: str, tag: str, data) -> None:
+    """把诊断数据直接写文件并 flush，绕过 stdout 块缓冲（重定向到文件时日志会卡在 8KB 缓冲里）。"""
+    try:
+        with open(_DIAG_FILE, "a", encoding="utf-8") as f:
+            f.write(json.dumps({"platform": platform_name, "tag": tag, "data": data},
+                               ensure_ascii=False) + "\n")
+            f.flush()
+    except Exception:
+        pass
+
 # 网页自带的 UI 文字（开关/按钮标签/免责声明等），绝不能当作 AI 回复读进上下文。
 # 这些文字一旦被当成 assistant 回复读进去，下一次又会作为上下文发给模型，造成污染。
 # 典型来源（chat.qwen.ai）：
 #   - 输入框旁的「快速回答」开关文字
 #   - 回复底部的免责声明「人工智能生成的内容可能不准确」
 #   - 回复操作按钮「复制 / 赞 / 踩 / 重新生成 / 分享」
+def _has_complete_protocol(text: str) -> bool:
+    """文本里是否已经含有一个【完整可解析】的工具调用块（@@@@ 或 RAW）。
+
+    用途：给 _looks_incomplete 兜底——只要协议块已经完整闭合、能被解析器解析出来，
+    就不该再因为「疑似写到一半」而空转等待。实测豆包回复
+    `@@@@ {"tool":"set_deep_think",...} @@@@` 时曾被误判 10 次（白白多等 20 秒）。
+    """
+    try:
+        from .protocol import Protocol
+        return Protocol().extract(text or "") is not None
+    except Exception:
+        return False
+
+
 UI_NOISE_TOKENS = [
     # qwen「快速回答」开关 / 模式标签
     "快速回答", "快速",
@@ -53,6 +81,26 @@ UI_NOISE_TOKENS = [
     "朗读", "停止", "继续生成",
     # qwen 思考模式下拉框的模式标签（Auto/自动）——曾被误读成 AI 回复
     "Auto", "自动",
+    # 各平台「思考过程」折叠条上的状态标签（实测 chat.qwen.ai 会在正文前多出一行
+    # 「已经完成思考」，被整行读进回复里污染上下文）
+    "已经完成思考", "已完成思考", "思考完成", "已深度思考", "深度思考完成",
+    "已思考", "思考已结束", "以上是思考过程",
+    # 生成中的状态行（实测元宝在思考期只渲染「正在思考」，被整段读成 AI 回复）
+    "正在思考", "思考中", "正在深度思考", "正在生成", "生成中",
+    "正在搜索", "正在联网搜索", "正在分析", "正在输入",
+    # Qwen Studio 的「选一个更好的回复」反馈面板（实测会被整段读进回复里）
+    "此反馈将帮助我们评估并提升", "你更喜欢哪个回复", "请选择一个以继续",
+    "我更喜欢这个回复", "更喜欢这个回复", "此反馈将帮助我们",
+    # 元宝的 A/B 反馈面板（实测 2026-09-13：元宝在回复后弹出
+    # 「您正在提供关于 元宝 新版本的反馈 / 您更喜欢哪个回答 / 回答1 回答2 /
+    #   我更喜欢这个回答」，整段被当成模型回复读回来，把真正的回答顶掉了）
+    "您正在提供关于", "您更喜欢哪个回答", "我更喜欢这个回答",
+    "更喜欢这个回答", "回答 1", "回答 2", "此反馈仅用于改进",
+    # 平台「额度 / 次数耗尽」提示卡（实测豆包会把这张卡整段渲染在回复区，
+    # 被我们当成模型回答读回来，导致任务被误判成「模型不回协议」）
+    "免费额度用完", "免费额度已用完", "额度用完", "额度已用完", "额度用完了",
+    "免费额度不足", "额度不足", "次数已用完", "使用次数已达上限",
+    "恢复为你服务", "开通豆包订阅", "免等待，继续为你服务", "休息一阵子",
 ]
 
 
@@ -115,6 +163,18 @@ class PlatformProfile:
     # GUI 展示用：侧边栏按钮文字与图标（纯展示，缺失时回退 name / 🌐）
     display: str = ""
     icon: str = "🌐"
+    # 「用户自己发出去的消息气泡」选择器（结构性识别）。
+    # 为什么需要：豆包等平台的用户气泡与 AI 气泡共用同一个 response_selector
+    # （如 [class*="md-box-root"]），若只按文本比对，网页重排/裁剪导致字符数差几十个
+    # 就会漏判 → 把自己发出去的提示词当成 AI 回复读回来（表现为「8 秒就"回复完成"，
+    # 内容却是自己刚发的那段」）。配上本选择器后，直接按 DOM 结构排除用户气泡。
+    user_bubble_selector: str = ""
+    # 该平台（当前网页界面）是否真的提供「深度思考」开关。
+    # 实测豆包网页端并没有可用的深度思考 toggle：原实现退而去点工具栏的
+    # 「快速 / 深入研究」模式按钮，结果把页面点进了异常状态，之后 210s 都收不到任何回复。
+    # 因此这里允许直接标注为 False —— 此时 enable_thinking 立即返回 False（不点任何按钮），
+    # 由上层如实告诉模型「该平台没有深度思考开关」，而不是谎报成功、更不是把页面点坏。
+    supports_thinking: bool = True
 
 PLATFORM_PROFILES = {
     "deepseek": PlatformProfile(
@@ -353,11 +413,20 @@ class PlatformBrowserManager:
         self._playwright = None
         self._browser = None  # Context
         self._page = None
+        # 【子代理支持】子窗口标志：子窗口与母代理共享同一 _browser（context），
+        # 只拥有自己的一个新 page。close() 时只关自己的 page，绝不动母代理的
+        # 浏览器进程 / playwright（与 browser.py 的 BrowserManager._is_child 同款设计）。
+        self._is_child = False
         # 发送前读取的消息数（由 send_message 写入，供 wait_response 作基线）
         # 关键修复：千问/通义在提交瞬间就创建新消息 DOM 节点，若 baseline 在
         # 发送后读，count 永远 == baseline → appeared 恒为 False → 等待回复超时。
         # 改为「发送前先存计数」，确保出现了新节点才会 detected。
-        self._pre_send_msg_count = 0
+        # 【关键修复】用 None 作「未设置」哨兵，而不是 0——空对话时发送前计数
+        # 合法地就是 0，若用 0 当哨兵，wait_response 会误判为「未设置」而回退到
+        # 「发送后读计数」，此时新回复已被算进 baseline → appeared 恒为 False →
+        # 第一轮必然超时返回「（未收到回复）」。这正是第三方平台（新会话）首轮
+        # 对话失败的根因（DeepSeek 因历史记录多而侥幸不触发）。
+        self._pre_send_msg_count = None
         
     def _kill_stale_browser_for_profile(self):
         """启动前：杀掉仍占用本平台 user_data_dir 的残留 Chromium 进程。
@@ -565,7 +634,31 @@ class PlatformBrowserManager:
             logger.info(f"[{self.profile.name}] 已保存 {len(cookies)} 条 cookies")
         except Exception as e:
             logger.warning(f"[{self.profile.name}] 保存 cookies 失败: {e}")
-    
+
+    async def _persist_cookies_throttled(self, force: bool = False):
+        """已登录确认后，把当前全部 cookie（含【非持久会话 cookie】）落盘到 cookies.json，
+        使登录态能跨 Chromium / 后端重启存活。
+
+        【09-14 根因】元宝（yuanbao.tencent.com）靠 2 条【非持久】会话 cookie 维持登录，
+        Chromium 每次被杀（重启后端）就把它们从内存清掉；虽然 10 条 tencent.com SSO
+        持久 cookie 还在，但元宝 app 不会自动靠 SSO 补发会话 cookie → 掉回扫码登录墙。
+        而 save_cookies() 原先只在 wait_login() 成功时调一次，正常运行从不落盘，
+        会话 cookie 一重启即丢（实测今早后端被杀 3 次后元宝就掉登录）。
+        这里在 check_login 判「已登录」时就落盘，重启后 _load_cookies() 把会话 cookie
+        加回，登录态不再因重启而丢。带 60s 节流，避免高频 check_login 反复写盘
+        （force=True 可绕过，如刚扫码成功）。未登录时绝不调用它（只调用已登录路径）。"""
+        if not self._browser:
+            return
+        import time as _time
+        now = _time.time()
+        if not force and (now - getattr(self, "_last_cookie_save_ts", 0.0)) < 60:
+            return
+        try:
+            await self.save_cookies()
+            self._last_cookie_save_ts = now
+        except Exception as e:
+            logger.warning(f"[{self.profile.name}] 持久化 cookies 失败: {e}")
+
     async def navigate(self, url: str = None):
         """别名：与 BrowserManager 接口对齐，便于外部按 self.navigate() 调用。
         url 参数：若提供则导航到指定 URL；否则导航到本 profile 的 chat_url。"""
@@ -662,50 +755,89 @@ class PlatformBrowserManager:
             # 顶部右上角有「登录」按钮 = 未登录
             # class 含 nologin 的容器 = 未登录
             if self.profile.platform == "yuanbao":
-                is_nologin = await self._page.evaluate("""() => {
-                    // 1. 底部或左上角：未登录 + 用户头像位置
+                diag = await self._page.evaluate("""() => {
+                    const reasons = [];
+                    const vis = (el) => !!(el && el.offsetWidth > 0 && el.offsetHeight > 0);
+
+                    // 1. 底部/左上角「未登录」头像/文字（必须可见）
                     const bottomLogin = document.querySelector(
                         '[class*="bottom"], [class*="footer"] [class*="login"], ' +
-                        '[class*="user"] [class*="login"], [class*="avatar"]'
-                    );
-                    if (bottomLogin && /未登录/.test(bottomLogin.innerText || '')) return true;
+                        '[class*="user"] [class*="login"], [class*="avatar"]');
+                    if (vis(bottomLogin) && /未登录/.test((bottomLogin.innerText || '').trim()))
+                        reasons.push('1.底部未登录');
 
-                    // 2. 页面主区域 nologin class
-                    const containers = document.querySelectorAll('[class*="nologin"]');
-                    for (const c of containers) {
-                        if (c.offsetWidth > 0 && c.offsetHeight > 0) return true;
+                    // 2. 页面主区域【可见】的 nologin class
+                    for (const c of document.querySelectorAll('[class*="nologin"]')) {
+                        if (vis(c)) { reasons.push('2.可见nologin'); break; }
                     }
 
-                    // 3. 右上角顶部导航栏「登录」按钮
-                    const navLoginBtns = document.querySelectorAll('header [class*="login"], [class*="header"] [class*="login"], .yb-nav__user [class*="login"]');
-                    for (const b of navLoginBtns) {
-                        if (b.offsetWidth > 0 && b.offsetHeight > 0 && b.innerText.trim()) return true;
+                    // 3. 右上角【可见】顶部导航栏「登录」按钮
+                    for (const b of document.querySelectorAll('header [class*="login"], [class*="header"] [class*="login"], .yb-nav__user [class*="login"]')) {
+                        if (vis(b) && b.innerText.trim()) { reasons.push('3.右上角登录按钮'); break; }
                     }
 
-                    // 4. 页面 body 含明确的未登录提示
+                    // 4. 整页扫码登录卡片专属文案（掉登录整页就是这张卡片）
                     const bodyText = document.body.innerText || '';
-                    if (/未登录/.test(bodyText) && !/登录/.test(bodyText.replace(/未登录/g, ''))) return true;
-                    if (bodyText.includes('请登录') || bodyText.includes('微信扫码登录')) return true;
+                    const LOGIN_WALL = ['请使用微信扫描二维码登录', '请扫描二维码登录',
+                                        '扫码默认已阅读', '扫码登录'];
+                    for (const k of LOGIN_WALL) {
+                        if (bodyText.includes(k)) { reasons.push('4.扫码卡片:' + k); break; }
+                    }
 
-                    // 5. 没有 message 且 nologin class 存在
+                    // 5. 【收紧 09-14】仅当 nologin 元素【可见】且确无会话内容时才算未登录。
+                    // 旧写法 !hasMessage && 存在任意 nologin（含隐藏）——元宝 SPA 在已登录页也会
+                    // 预渲染隐藏的 login 相关组件，导致 check_login 误报未登录（实测 09-14：
+                    // tencent.com 10 条有效登录 cookie 在线，却被判未登录）。
                     const hasMessage = document.querySelectorAll('[class*="message"], [class*="session"], [class*="dialog"]').length > 0;
-                    const hasNologin = document.querySelectorAll('[class*="nologin"]').length > 0;
-                    if (!hasMessage && hasNologin) return true;
+                    const nologinVisible = Array.from(document.querySelectorAll('[class*="nologin"]')).some(vis);
+                    if (!hasMessage && nologinVisible) reasons.push('5.可见nologin+无会话');
 
-                    // 6. 未登录时输入框 placeholder
+                    // 6. 未登录时输入框 placeholder（保留原兜底，恒不判未登录）
                     const editor = document.querySelector('[contenteditable].ql-editor, textarea');
                     if (editor && /登录|请输入/.test(editor.getAttribute('placeholder') || '')) {
-                        // 如果底部显示「未登录」也说明没登录
-                        return false; // 先不据此判定
+                        // 先不据此判定
                     }
 
-                    return false;
+                    return { nologin: reasons.length > 0, reasons: reasons };
                 }""")
-                if is_nologin:
-                    logger.info(f"[{self.profile.name}] check_login: 未登录")
+                _reasons = (diag.get("reasons") or []) if isinstance(diag, dict) else []
+                if isinstance(diag, dict) and diag.get("nologin"):
+                    logger.info(f"[{self.profile.name}] check_login: 未登录（命中: {','.join(_reasons) or '无'}）")
                     return False
 
+                # 页面还在骨架屏 / 加载中 → 登录墙很可能还没渲染出来，
+                # 此时 is_nologin=false 是【假阴性】。
+                # 实测：元宝刚导航完 0.5s 就报告「已登录」，实际是未登录的登录墙，
+                # 于是照常发送 → 点击输入框超时 15s → 空等回复 40s → 才发现没登录，
+                # 用户白等近 90 秒。这里等到页面稳定后再复检一次。
+                if not getattr(self, "_login_rechecking", False):
+                    self._login_rechecking = True
+                    try:
+                        _skeleton_js = """() => {
+                            if (document.readyState !== 'complete') return true;
+                            return document.querySelectorAll(
+                                '[class*="skeleton" i], [class*="loading" i]').length > 3;
+                        }"""
+                        try:
+                            _loading = await self._page.evaluate(_skeleton_js)
+                        except Exception:
+                            _loading = False
+                        if _loading:
+                            logger.info(f"[{self.profile.name}] 页面仍在加载（骨架屏），"
+                                        f"等待稳定后复检登录状态…")
+                            for _ in range(10):
+                                await asyncio.sleep(1.0)
+                                try:
+                                    if not await self._page.evaluate(_skeleton_js):
+                                        break
+                                except Exception:
+                                    break
+                            return await self.check_login()
+                    finally:
+                        self._login_rechecking = False
+
                 logger.info(f"[{self.profile.name}] check_login: 已登录")
+                await self._persist_cookies_throttled()
                 return True
 
             # 其他平台的通用逻辑
@@ -724,11 +856,44 @@ class PlatformBrowserManager:
             try:
                 msg_count = await self._page.locator("[class*='message']").count()
                 has_content = msg_count > 0
-            except:
+            except Exception:
                 pass
+
+            # 页面还在骨架屏 / 加载中时【不能急着下结论】：
+            # 此刻登录入口还没渲染（has_login=False），消息也还是 0（has_content=False），
+            # 按 `not has_login` 的规则会被判成「已登录」——典型的假阳性。
+            # 实测：元宝刚导航完 0.5s 就报告「已登录」，实际是未登录的登录墙，
+            # 于是照常发送 → 点击输入框超时 15s → 空等回复 40s → 才发现没登录，
+            # 用户白白干等近 90 秒才看到一句「请先登录」。
+            # 这里先确认页面是否仍在加载，是就等它稳定再判断（最多 ~10s）。
+            if not has_login and not has_content:
+                try:
+                    _loading = await self._page.evaluate("""() => {
+                        if (document.readyState !== 'complete') return true;
+                        const sk = document.querySelectorAll(
+                            '[class*="skeleton" i], [class*="loading" i]').length;
+                        return sk > 3;
+                    }""")
+                except Exception:
+                    _loading = False
+                if _loading:
+                    logger.info(f"[{self.profile.name}] 页面仍在加载（骨架屏），"
+                                f"等待稳定后再判定登录状态…")
+                    for _ in range(10):
+                        await asyncio.sleep(1.0)
+                        try:
+                            has_login = await login_btn.count() > 0
+                            has_content = await self._page.locator(
+                                "[class*='message']").count() > 0
+                        except Exception:
+                            break
+                        if has_login or has_content:
+                            break
 
             logged_in = not has_login or has_content
             logger.info(f"[{self.profile.name}] 登录状态: {logged_in}")
+            if logged_in:
+                await self._persist_cookies_throttled()
             return logged_in
         except Exception as e:
             logger.warning(f"[{self.profile.name}] 登录检查异常: {e}")
@@ -789,14 +954,27 @@ class PlatformBrowserManager:
             input_el = self._page.locator("textarea").first
 
         if not await input_el.is_visible():
-            raise RuntimeError(f"{self.profile.name} 输入框不可见")
+            logger.warning(f"[{self.profile.name}] 输入框初始不可见，等待可见后再填")
 
         # 清空并填写
         # 关键修复：千问切平台/React 路由切换时，输入框可能短暂不可交互（loading/隐藏层遮挡）。
         # 先用 wait_for("attached") 保证 DOM 节点已插入，再 click 聚焦；fill 加显式超时 45s
         # （默认 30s 在 React 页面重绘时可能不够），避免「发送失败: Locator.fill: Timeout」假失败。
+        # 子代理新开页面时输入框可能更慢：先等可见（不强制 raise），click 超时放宽到 15s，
+        # click 失败则回退到 focus + fill，避免「发送失败: Locator.click: Timeout」假失败。
+        try:
+            await input_el.wait_for(state="visible", timeout=15000)
+        except Exception as e:
+            logger.warning(f"[{self.profile.name}] 输入框15s内未可见，仍尝试填写: {e}")
         await input_el.wait_for(state="attached", timeout=15000)
-        await input_el.click(timeout=5000)
+        try:
+            await input_el.click(timeout=15000)
+        except Exception as e:
+            logger.warning(f"[{self.profile.name}] click 失败，改 focus+fill: {e}")
+            try:
+                await input_el.focus(timeout=5000)
+            except Exception:
+                pass
         await asyncio.sleep(0.2)
         await input_el.fill("", timeout=45000)
         await asyncio.sleep(0.1)
@@ -834,6 +1012,11 @@ class PlatformBrowserManager:
         except Exception:
             pass
         self._pre_send_msg_count = msg_count_before
+        # 记住本轮发出去的原话：豆包/千问等平台「用户气泡」和「AI 气泡」共用同一个
+        # class（例如豆包的 [class*="md-box-root"]），空会话 baseline=0 时会把用户自己
+        # 刚发的那句话也当成 AI 回复读回来 → 回灌给模型后会污染上下文、甚至让模型
+        # 以为「我已经回答过了」。这里存起来，读取回复时按内容剔除。
+        self._last_sent_text = text
 
         # 发送
         sent = False
@@ -882,9 +1065,18 @@ class PlatformBrowserManager:
                     verified = True
                     logger.info(f"[{self.profile.name}] 发送已验证（消息数 {msg_count_after} -> {count_after}）")
                     break
-                # 方式2：检查输入框是否已清空
-                val = await input_el.input_value() if hasattr(input_el, "input_value") else ""
-                if not val.strip():
+                # 方式2：检查输入框是否已清空。
+                # 注意：contenteditable（豆包/元宝的富文本编辑器）没有 input_value()，
+                # 旧代码直接调 input_value() 会抛异常 → 被 except 吞掉 → verified 恒为 False，
+                # 于是每次发送都打「可能未成功发出」的假警告。这里改用通用 DOM 取值。
+                val = await self._page.evaluate(
+                    """() => {
+                        const inp = document.querySelector('div.tiptap.ProseMirror, [contenteditable], textarea');
+                        if (!inp) return '';
+                        return (inp.innerText || inp.value || '');
+                    }"""
+                )
+                if not str(val or "").strip():
                     verified = True
                     logger.info(f"[{self.profile.name}] 发送已验证（输入框已清空）")
                     break
@@ -896,6 +1088,34 @@ class PlatformBrowserManager:
                 f"[{self.profile.name}] ⚠️ 发送后 5s 内未检测到新消息/输入框未清空，"
                 f"消息可能未成功发出（原文字数: {text_len}）"
             )
+            # ---- 诊断：dump 输入框状态 + 可见的发送类按钮，便于修正 send 方式 ----
+            try:
+                _sd = await self._page.evaluate(
+                    """() => {
+                        const res = {url: location.href, inputText: '', msgClasses: {}, tail: []};
+                        const inp = document.querySelector('div.tiptap.ProseMirror, [contenteditable], textarea');
+                        if (inp) res.inputText = (inp.innerText || inp.value || '').slice(0, 60);
+                        const cnt = {};
+                        document.querySelectorAll('*[class]').forEach(el => {
+                            const c = el.className;
+                            if (typeof c !== 'string' || !c) return;
+                            c.split(/\\s+/).forEach(t => {
+                                if (/message|chat|bubble|reply|answer|markdown|content|assistant|user|segment|item|md-|receive|send/i.test(t)) {
+                                    cnt[t] = (cnt[t] || 0) + 1;
+                                }
+                            });
+                        });
+                        res.msgClasses = cnt;
+                        const main = document.querySelector('main') || document.body;
+                        res.tail = Array.from(main.querySelectorAll('div[class]')).slice(-45)
+                                     .map(el => (typeof el.className === 'string' ? el.className : '')).filter(Boolean);
+                        return res;
+                    }"""
+                )
+                _write_diag(self.profile.name, "send", _sd)
+                logger.warning(f"[{self.profile.name}] 发送诊断: {str(_sd)[:2200]}")
+            except Exception as _e:
+                logger.warning(f"[{self.profile.name}] 发送诊断失败: {_e}")
         return True
     
     # ============================================================
@@ -911,6 +1131,11 @@ class PlatformBrowserManager:
         方便用户实跑时贴回实际 UI 让我精确修正。
         """
         if not self._page:
+            return False
+        # 平台已明确标注「没有深度思考开关」→ 绝不点任何按钮（乱点会把页面点坏），
+        # 直接返回 False，由上层如实告知模型。
+        if not getattr(self.profile, "supports_thinking", True):
+            logger.info(f"[{self.profile.name}] 该平台未提供深度思考开关，跳过（不点击任何按钮）")
             return False
         # Qwen 等用下拉框（ant-select）选择思考模式 → 走 select 专属分支
         if (self.profile.thinking_mode or "toggle") == "select":
@@ -1461,9 +1686,38 @@ class PlatformBrowserManager:
         # 进而读取回复永远返回空）。正确做法：把选择器作为 evaluate 的参数传入。
         # 另外 Playwright 的 page.evaluate 只接受【一个】arg，多值要用数组传入再解构。
         sel = self.profile.response_selector
+        # 第 4 个参数 = 本轮用户自己发出去的原话（用于剔除「用户气泡」被误读成 AI 回复）
+        sent_text = getattr(self, "_last_sent_text", "") or ""
+        # 第 5 个参数 = 平台「用户气泡」的选择器（结构性识别，比文本比对更可靠）
+        user_bubble_sel = getattr(self.profile, "user_bubble_selector", "") or ""
         return await self._page.evaluate(
             "(args) => {"
             " const sel = args[0]; const base = args[1]; const noise = args[2];"
+            " const norm = (s) => (s || '').replace(/\\s+/g, '').trim();"
+            " const ex = norm(args[3] || '');"
+            " const ubsel = args[4] || '';"
+            " const isEcho = (t) => {"
+            "   const a = norm(t);"
+            "   if (!ex || a.length < 8) return false;"
+            "   if (a === ex) return true;"
+            "   const shorter = a.length < ex.length ? a : ex;"
+            "   const longer = a.length < ex.length ? ex : a;"
+            "   if (shorter.length >= 20 && longer.indexOf(shorter) !== -1"
+            "       && longer.length - shorter.length <= Math.max(80, longer.length * 0.06)) return true;"
+            "   const h = 160;"
+            "   if (a.length >= 50 && ex.length >= 50 && a.slice(0, h) === ex.slice(0, h)) return true;"
+            "   return false;"
+            " };"
+            " const inUserBubble = (el) => {"
+            "   if (!ubsel) return false;"
+            "   let n = el;"
+            "   for (let k = 0; k < 8 && n; k++) {"
+            "     try { if (n.matches && n.matches(ubsel)) return true; } catch (e) {}"
+            "     try { if (n.querySelector && n.querySelector(ubsel)) return true; } catch (e) {}"
+            "     n = n.parentElement;"
+            "   }"
+            "   return false;"
+            " };"
             " const cleanPart = (raw) => {"
             "   const lines = (raw || '').split(/\\r?\\n/);"
             "   const kept = [];"
@@ -1471,14 +1725,33 @@ class PlatformBrowserManager:
             "     const s = line.trim();"
             "     if (!s) continue;"
             "     let isUi = false;"
-            "     for (const n of noise) { if (s === n) { isUi = true; break; } }"
+            "     for (const n of noise) {"
+            "       if (s === n) { isUi = true; break; }"
+            "       if (n && s.startsWith(n) && s.length < n.length + 40) { isUi = true; break; }"
+            "     }"
             "     if (isUi) continue;"
             "     let stripped = s;"
-            "     for (const n of noise) { stripped = stripped.split(n).join(''); }"
-            "     if (stripped.trim().length === 0) continue;"
-            "     kept.push(line);"
+            "     for (const n of noise) { stripped = stripTok(stripped, n); }"
+            "     stripped = stripped.trim();"
+            "     if (!stripped) continue;"
+            "     kept.push(stripped);"
             "   }"
             "   return kept.join('\\n').trim();"
+            " };"
+            " const HAN = /[\\u3400-\\u4dbf\\u4e00-\\u9fff\\uf900-\\ufaff]/;"
+            " const stripTok = (s, n) => {"
+            "   if (!n) return s;"
+            "   let out = ''; let i = 0;"
+            "   while (true) {"
+            "     const k = s.indexOf(n, i);"
+            "     if (k < 0) { out += s.slice(i); break; }"
+            "     const before = k > 0 ? s[k - 1] : '';"
+            "     const after = (k + n.length) < s.length ? s[k + n.length] : '';"
+            "     const embedded = (before && HAN.test(before)) || (after && HAN.test(after));"
+            "     out += s.slice(i, embedded ? (k + n.length) : k);"
+            "     i = k + n.length;"
+            "   }"
+            "   return out;"
             " };"
             " const els = document.querySelectorAll(sel);"
             " const count = els.length;"
@@ -1492,6 +1765,8 @@ class PlatformBrowserManager:
             "     if (el.getAttribute && el.getAttribute('contenteditable') !== null) continue;"
             "     const t = (el.innerText || '').trim();"
             "     if (!t) continue;"
+            "     if (inUserBubble(el)) continue;"
+            "     if (isEcho(t)) continue;"
             "     const cleaned = cleanPart(t);"
             "     if (!cleaned) continue;"
             "     parts.push(cleaned);"
@@ -1505,6 +1780,8 @@ class PlatformBrowserManager:
             "     if (el.getAttribute && el.getAttribute('contenteditable') !== null) continue;"
             "     const t = (el.innerText || '').trim();"
             "     if (!t) continue;"
+            "     if (inUserBubble(el)) continue;"
+            "     if (isEcho(t)) continue;"
             "     const cleaned = cleanPart(t);"
             "     if (!cleaned) continue;"
             "     text = cleaned; break;"
@@ -1512,7 +1789,7 @@ class PlatformBrowserManager:
             " }"
             " return { count: count, text: text, newAppeared: count > base };"
             " }",
-            [sel, baseline_count, UI_NOISE_TOKENS],
+            [sel, baseline_count, UI_NOISE_TOKENS, sent_text, user_bubble_sel],
         )
 
     async def wait_response(self, timeout: int = 60, on_thinking=None,
@@ -1540,12 +1817,18 @@ class PlatformBrowserManager:
         last_thinking = ""
         best_text = ""
         stable_count = 0
+        # 「疑似未完整」连续次数：防止 _looks_incomplete 误判导致无限等待
+        # （第三方平台回复里若夹带 @@@@ 示例/未配对括号，会被判为未完成而永不返回，
+        #   表现为整轮卡满 120s 超时 → 母代理反复重试 → 用户侧看不到任何回复）
+        incomplete_streak = 0
         gen_sel = self.profile.generating_selector or ""
         thinking_sel = thinking_selector or self.profile.thinking_selector
         text = ""
         appeared = False
         total_count = 0  # 诊断：页面上当前消息总数
+        _no_appear_ticks = 0  # 连续「一个新气泡都没出现」的 tick 数（会话静默失效探测）
         _diag_tick = 0  # 诊断：每 20 次 tick 打印一次状态
+        _mid_dumped = False  # 诊断：中期 DOM dump 只做一次
         # 思考开始时间（用于超时检测）
         self._thinking_start_time = None
 
@@ -1553,7 +1836,7 @@ class PlatformBrowserManager:
         # 关键修复：千问/通义在「提交瞬间」就创建新消息节点，若在发送后再读 baseline，
         # 新节点会被算进 baseline → count 永远不 > baseline → appeared 恒为 False → 超时假失败。
         baseline = 0
-        if getattr(self, '_pre_send_msg_count', 0) > 0:
+        if getattr(self, '_pre_send_msg_count', None) is not None:
             baseline = self._pre_send_msg_count
         else:
             try:
@@ -1568,6 +1851,22 @@ class PlatformBrowserManager:
 
         interval = 0.5
         n_ticks = int(timeout / interval) + 1
+        _wait_start = time.time()   # 看门狗计时基准
+        # 【静默失效看门狗·加速】原阈值 75s 太长：实测通义等平台的网页会话一旦静默，
+        # 每轮都要白等 75s 才判死，再叠加「换新会话 + 重发 13KB 上下文」的开销，
+        # 单条任务轻松突破上层 300s 超时 → 用户侧看到「一直转圈、最终没有任何回复」。
+        # 现降到 40s；同时包一层 on_thinking 记录「最后一次思考输出时间」——
+        # 若模型还在持续吐思考过程（深度思考模式下 40s 不出正文是正常的），就不提前判死。
+        _last_think_ts = [0.0]
+        if on_thinking is not None:
+            _orig_thinking = on_thinking
+
+            def _thinking_watch(t):
+                _last_think_ts[0] = time.time()
+                return _orig_thinking(t)
+
+            on_thinking = _thinking_watch
+        _SILENT_LIMIT = 40
         gen_js = (
             "(sel) => { const els = document.querySelectorAll(sel);"
             " for (const el of els) { const r = el.getBoundingClientRect();"
@@ -1577,6 +1876,21 @@ class PlatformBrowserManager:
         for _ in range(n_ticks):
             await asyncio.sleep(interval)
             _diag_tick += 1
+            # ── 会话静默失效看门狗（按墙钟计时，放在 try 之外，任何异常都挡不住它）──
+            # 实测豆包会话过长后：不报错、不产生新气泡、也不进入「生成中」状态，
+            # 老逻辑会白等满 210s。这里只要 75s 仍一个字都没抓到就提前收工，
+            # 让上层走「空回复重试 + 自动换新会话」。
+            if not best_text and (time.time() - _wait_start) > _SILENT_LIMIT and \
+                    (time.time() - _last_think_ts[0]) > 25:
+                logger.warning(
+                    f"[{self.profile.name}] 等待 {time.time() - _wait_start:.0f}s 仍未抓到任何回复正文"
+                    f"（page_msg≈{total_count}），判定该网页会话已静默失效，提前结束等待"
+                )
+                return ""
+            # 诊断：30s 仍未抓到文本 → dump 一次（放在 continue 之前，保证一定执行）
+            if (not _mid_dumped) and _diag_tick == 60 and not best_text:
+                _mid_dumped = True
+                await self._diag_mid_dump()
             try:
                 info = await self._read_last_reply(baseline)
                 if not isinstance(info, dict):
@@ -1596,6 +1910,7 @@ class PlatformBrowserManager:
                 if appeared and text and len(text) > len(best_text):
                     best_text = text
                     stable_count = 0
+                    incomplete_streak = 0
                     # 文本出现后重置思考超时计时（说明已进入回复阶段）
                     if hasattr(self, '_thinking_start_time'):
                         delattr(self, '_thinking_start_time')
@@ -1603,7 +1918,19 @@ class PlatformBrowserManager:
                 # 还没出字（含「提交中、尚未首个 token」的空窗）→ 视为仍在生成，继续等
                 if not appeared or not text:
                     stable_count = 0
+                    _no_appear_ticks += 1
+                    # 【关键】75 秒连一个新气泡都没出现 ⇒ 基本可判定这个网页会话已经静默失效
+                    # （实测豆包会话过长后就是这样：不报错、也不回复）。
+                    # 早点返回空字符串，让上层走「空回复重试 + 自动换新会话」，别白等满 210 秒。
+                    if _no_appear_ticks >= int(_SILENT_LIMIT / interval):
+                        logger.warning(
+                            f"[{self.profile.name}] 发送后 {_no_appear_ticks * interval:.0f}s "
+                            f"内没有出现任何新消息气泡（page_msg≈{total_count}），"
+                            f"判定该会话已静默失效，提前结束等待（上层会换新会话重试）"
+                        )
+                        return ""
                     continue
+                _no_appear_ticks = 0
 
                 # UI 生成信号：该元素可见 ⇒ AI 还在输出
                 generating = None
@@ -1636,12 +1963,21 @@ class PlatformBrowserManager:
 
                 # UI 信号模式下：稳定 ~1.5s 即判定完成（等尾部流式落定）
                 if generating is False and stable_count >= 3:
-                    if self._looks_incomplete(best_text):
+                    if (self._looks_incomplete(best_text)
+                            and not _has_complete_protocol(best_text)
+                            and incomplete_streak < 10):
+                        incomplete_streak += 1
                         logger.info(
-                            f"[{self.profile.name}] 文本疑似未完整（{len(best_text)}字），继续等待"
+                            f"[{self.profile.name}] 文本疑似未完整（{len(best_text)}字，"
+                            f"第{incomplete_streak}次），尾部={best_text[-90:]!r}，继续等待"
                         )
                         stable_count = 0
                         continue
+                    if incomplete_streak >= 10:
+                        logger.warning(
+                            f"[{self.profile.name}] 「疑似未完整」已连续 {incomplete_streak} 次，"
+                            f"强制按最终文本采纳（防止无限等待）: {len(best_text)} 字"
+                        )
                     logger.info(f"[{self.profile.name}] 回复完成（UI 信号）: {len(best_text)} 字")
                     if on_thinking and last_thinking:
                         try:
@@ -1652,9 +1988,21 @@ class PlatformBrowserManager:
 
                 # 兜底（无 generating_selector 时）：文本稳定 ~3s 判定完成
                 if generating is None and stable_count >= 6:
-                    if self._looks_incomplete(best_text):
+                    if (self._looks_incomplete(best_text)
+                            and not _has_complete_protocol(best_text)
+                            and incomplete_streak < 10):
+                        incomplete_streak += 1
+                        logger.info(
+                            f"[{self.profile.name}] 文本疑似未完整（稳定兜底，{len(best_text)}字，"
+                            f"第{incomplete_streak}次），尾部={best_text[-90:]!r}"
+                        )
                         stable_count = 0
                         continue
+                    if incomplete_streak >= 10:
+                        logger.warning(
+                            f"[{self.profile.name}] 「疑似未完整」已连续 {incomplete_streak} 次，"
+                            f"强制按最终文本采纳（稳定兜底）: {len(best_text)} 字"
+                        )
                     logger.info(f"[{self.profile.name}] 回复完成（稳定兜底）: {len(best_text)} 字")
                     if on_thinking and last_thinking:
                         try:
@@ -1708,12 +2056,71 @@ class PlatformBrowserManager:
             f"[{self.profile.name}] 等待回复超时（{timeout}s/{n_ticks} ticks），"
             f"已捕获 {len(best_text)} 字, appeared={appeared}, page_msg≈{total_count}"
         )
+        # ---- 诊断：完全没抓到文本时，dump 页面候选 class 名，便于修正 response_selector ----
+        if not best_text:
+            try:
+                _diag = await self._page.evaluate(
+                    """() => {
+                        const res = {url: location.href, classes: {}, tail: []};
+                        const cnt = {};
+                        document.querySelectorAll('*[class]').forEach(el => {
+                            const c = el.className;
+                            if (typeof c !== 'string' || !c) return;
+                            c.split(/\\s+/).forEach(t => {
+                                if (/message|chat|bubble|reply|answer|markdown|content|assistant|user|segment|item|md-/i.test(t)) {
+                                    cnt[t] = (cnt[t] || 0) + 1;
+                                }
+                            });
+                        });
+                        res.classes = cnt;
+                        const main = document.querySelector('main') || document.body;
+                        res.tail = Array.from(main.querySelectorAll('div[class]')).slice(-50)
+                                     .map(el => el.className).filter(Boolean);
+                        return res;
+                    }"""
+                )
+                _write_diag(self.profile.name, "timeout", _diag)
+                logger.warning(f"[{self.profile.name}] DOM诊断: {str(_diag)[:2600]}")
+            except Exception as _e:
+                logger.warning(f"[{self.profile.name}] DOM诊断失败: {_e}")
         if on_thinking and last_thinking:
             try:
                 on_thinking(last_thinking)
             except Exception:
                 pass
         return best_text if best_text else None
+
+    async def _diag_mid_dump(self):
+        """诊断：回复期 dump 一次 DOM，用于定位真正的「回复节点」class（写入 jsonl，绕过日志缓冲）。"""
+        try:
+            _md = await self._page.evaluate(
+                """() => {
+                    const res = {url: location.href, classes: {}, listKids: [], strong: [], texts: []};
+                    const cnt = {};
+                    document.querySelectorAll('*[class]').forEach(el => {
+                        const c = el.className;
+                        if (typeof c !== 'string' || !c) return;
+                        c.split(/\\s+/).forEach(t => {
+                            if (/message|chat|bubble|reply|answer|markdown|content|assistant|md-box|item|segment/i.test(t)) {
+                                cnt[t] = (cnt[t] || 0) + 1;
+                            }
+                        });
+                    });
+                    res.classes = cnt;
+                    const lst = document.querySelector('[class*="message-list-"], [class*="list_items"], [class*="md-box-root"]');
+                    if (lst) {
+                        res.listKids = Array.from(lst.children).map(el => (typeof el.className === 'string' ? el.className : '').slice(0, 110));
+                        const deep = lst.querySelectorAll('div[class]');
+                        res.strong = Array.from(deep).slice(-25).map(el => (typeof el.className === 'string' ? el.className : '').slice(0, 110));
+                    }
+                    res.texts = Array.from(document.querySelectorAll('[class*="md-box-root"], [class*="content-"]'))
+                                  .slice(-6).map(el => (el.innerText || '').slice(0, 160));
+                    return res;
+                }"""
+            )
+            _write_diag(self.profile.name, "mid30s", _md)
+        except Exception as _e:
+            logger.warning(f"[{self.profile.name}] 中期DOM诊断失败: {_e}")
 
     @staticmethod
     def _looks_incomplete(text: str) -> bool:
@@ -1729,17 +2136,25 @@ class PlatformBrowserManager:
         stripped = text.rstrip()
 
         # 1. 未闭合的 @@@@ 协议块（最关键：qwen 工具调用格式）
+        #    【关键修复】只有「未闭合标记出现在文本尾部」才算未完成。
+        #    若正文中间夹带了 @@@@ 示例（模型复述指令/协议），奇偶判断会永久为真，
+        #    导致 wait_response 卡满超时、母代理反复重试、用户看不到回复。
         open_marks = stripped.count("@@@@")
-        if open_marks % 2 == 1:          # 奇数个 @@@@ = 有未闭合的协议块
-            return True
-        # 也检查只剩半个的情况（如 "@@@" 在末尾但后面没有内容）
-        if stripped.endswith("@@@") and not stripped.endswith("@@@@@@"):
-            # 以恰好 3 个 @ 结尾，可能是打开标记
+        if open_marks % 2 == 1:
+            last_mark = stripped.rfind("@@@@")
+            if last_mark >= len(stripped) - 60:   # 未闭合标记紧贴尾部 ⇒ 真·写到一半
+                return True
+        # 也检查只剩半个的情况（只以恰好 3 个 @ 结尾才是被截断的打开标记）
+        # 【关键修复】原写法 `endswith("@@@") and not endswith("@@@@@@")` 会把
+        # 「正常以 @@@@ 结尾的完整协议块」也判成未完成（endswith("@@@") 对 4 个 @ 同样为真），
+        # 实测豆包每轮回复都因此白等 10 次 incomplete_streak（≈20 秒）。
+        if stripped.endswith("@@@") and not stripped.endswith("@@@@"):
             return True
 
         # 2. 未闭合的 JSON（大括号/方括号不配对）
-        # 只检查最后 200 字符（避免全文统计开销），且只在不包含完整闭合对时报警
-        tail = stripped[-200:] if len(stripped) > 200 else stripped
+        #    只看尾部 60 字：真正流式写 JSON 时，未配对括号必然出现在结尾附近；
+        #    放宽范围可避免正文里的示例 JSON 造成误判。
+        tail = stripped[-60:] if len(stripped) > 60 else stripped
         brace_diff = tail.count("{") - tail.count("}")
         bracket_diff = tail.count("[") - tail.count("]")
         if brace_diff > 0 or bracket_diff > 0:
@@ -1788,8 +2203,45 @@ class PlatformBrowserManager:
         await self._page.screenshot(path=path, full_page=True)
         logger.info(f"[{self.profile.name}] 截图已保存: {path}")
     
+    async def spawn_child(self, headless: bool = None):
+        """在同一浏览器实例里开一个新窗口（新 page），返回共享登录态的子管理器。
+
+        与 browser.py 的 BrowserManager.spawn_child 同款设计（子代理支持的关键）：
+        - 子管理器与母代理【共用同一个持久化上下文 / 同一个浏览器进程】
+          （self._browser 是 launch_persistent_context 返回的 BrowserContext），
+          因此 cookies / localStorage / 登录态 100% 继承，无需复制 profile，
+          也不会有第二个浏览器实例抢 SingletonLock。
+        - 子管理器只拥有自己的一个新 page，与母代理的 page 相互独立。
+        - 之前 PlatformBrowserManager 没有 spawn_child → 子代理（task 工具）在非
+          DeepSeek 平台一启动就 raise「母代理浏览器未就绪」；有了它，子代理可在
+          任意平台（通义/豆包/元宝）复用当前平台浏览器跑通。
+        """
+        if self._browser is None:
+            raise RuntimeError("母代理浏览器尚未启动，无法派生子窗口")
+
+        child = PlatformBrowserManager(self.platform_key, headless=self.headless)
+        # 与母代理共享底层资源（同一个浏览器进程 / 同一套登录态）
+        child._playwright = self._playwright
+        child._browser = self._browser          # 共享同一持久化上下文（= 同一浏览器）
+        child._is_child = True                  # 子窗口：close() 只关自己的 page
+        # 开一个新窗口（新 page），与母代理的 page 彼此独立
+        child._page = await self._browser.new_page()
+        logger.info(f"[{self.platform_key}] 已为子代理开新窗口（共享登录态，零复制）")
+        return child
+
     async def close(self):
         """关闭浏览器"""
+        # 子窗口：只关自己的 page，绝不动母代理的浏览器进程 / playwright
+        if getattr(self, "_is_child", False):
+            if self._page is not None:
+                try:
+                    await self._page.close()
+                except Exception:
+                    pass
+                self._page = None
+            logger.info(f"[{self.platform_key}] 子窗口已关闭（母代理浏览器保持运行）")
+            return
+
         if self._browser:
             try:
                 await self._browser.close()
@@ -1800,7 +2252,7 @@ class PlatformBrowserManager:
                 await self._playwright.stop()
             except:
                 pass
-        
+
         self._browser = None
         self._page = None
         self._playwright = None
@@ -1983,6 +2435,55 @@ class MultiPlatformManager:
 # 通用平台会话（让 Commander 可在任意平台上对话）
 # ============================================================
 
+class LoginRequiredError(RuntimeError):
+    """平台掉登录了：不要再重试，直接把「请扫码登录」如实报给用户。"""
+
+
+class SecurityVerificationRequiredError(RuntimeError):
+    """平台触发了【反自动化图形验证】（图片拖拽/滑块/选图 CAPTCHA）。
+
+    这种情况不是「会话静默失效」，也绝不是空回复能自愈的：它是平台风控把我
+    的高频重发（6.8KB 协议块 × 多次 + 自动开新会话）判定为机器人后弹出的验证墙。
+    验证墙需要【人】在浏览器里手动完成一次，Agent 侧继续自动重试只会：
+      - 把验证墙越刷越频繁（每次开新会话 + 重发整段协议都算一次机器行为）；
+      - 让「等待 40s 无回复」空转 4 轮 × 210s，用户侧看到「一直转圈没反应」。
+    所以一旦命中验证墙，立即如实上抛，停止空转，告诉用户去浏览器里手动过一次验证。
+    """
+
+
+# 平台页面掉登录时， scrape 回来的「回复」其实就是登录墙上的字
+_LOGIN_WALL_TOKENS = (
+    "请使用微信扫描二维码登录", "请扫描二维码登录", "扫码登录", "扫码默认已阅读",
+    "未登录", "登录后使用", "请先登录", "请登录", "Sign in to continue",
+)
+
+# 平台风控「反自动化图形验证」墙上的特征词（豆包实测：图片拖拽选择类 CAPTCHA）。
+# 命中任意一条即判定为验证墙，而不是「会话静默失效」。
+_SECURITY_WALL_TOKENS = (
+    "请选择所有符合", "符合上述描述", "符合上图", "并拖拽到", "拖拽到下方",
+    "拖拽到这里", "按住滑块", "向右滑动", "请完成验证", "验证一下",
+    "请拖动下方", "滑动验证", "点击验证", "完成拼图", "拼图验证",
+)
+
+# 平台自身的「工具不存在」报错行（实测通义 chat.qwen.ai）：
+# 模型在网页端尝试用【平台原生】function calling 调 web_fetch / done 等，
+# 平台回一行「Tool web_fetch does not exists.」并渲染进回复气泡里。
+# wait_response 会把它当正文抓回来 → 最终回复开头糊 4 行英文报错给用户看。
+_PLATFORM_TOOL_ERR_RE = re.compile(r"^Tool\s+[\w.\-]+\s+does\s+not\s+exists?\s*\.?\s*$", re.I)
+
+
+def strip_platform_noise_lines(text: str) -> str:
+    """剔掉平台页面混进回复正文里的报错行（不影响协议块与真正的正文）。"""
+    if not text:
+        return text
+    try:
+        kept = [ln for ln in str(text).splitlines()
+                if not _PLATFORM_TOOL_ERR_RE.match(ln.strip())]
+        return "\n".join(kept).strip()
+    except Exception:
+        return text
+
+
 class PlatformSession:
     """
     通用平台会话适配器。
@@ -1997,12 +2498,30 @@ class PlatformSession:
     def __init__(self, platform_bm: "PlatformBrowserManager"):
         self._bm = platform_bm
         self._messages: list = []          # [{"role":..,"content":..}]
+        # 【修复】整个会话只用一个会话 JSON 文件。以前每次保存都按时间戳新建文件，
+        # 于是「一次任务 = 几十条历史记录」，历史抽屉被刷屏（实测 442 条里绝大多数是同
+        # 一个任务的重复落盘）。固定住路径后 _record_task 会按 file 去重、原地更新。
+        self._conv_file_path: str = ""
         self._system_prompt: str = ""
         self._thinking_mode = False
         self._logged_in = True             # 由外部 check_login 决定，这里默认放行
         self._on_event = None              # 思考过程等事件回调 (event_type, data) -> None
         self._last_thinking = ""
         self._context_exhausted = False    # 上下文耗尽检测标志
+        # 【原生多轮修复】播种态必须挂在【持久】的 bm（PlatformBrowserManager）上，
+        # 不能只挂在 session 上。GUI 每条用户消息都会 new 一个 PlatformSession，
+        # 但 豆包 的浏览器 context（/chat/<id> 里已有的对话）是持久的。若播种态
+        # 只在 session 上，新 session 会把 6.8KB 协议重新砸进 豆包【正在进行的对话】
+        # 里 → 豆包卡壳 → 40s 无回复 → 假「静默失效」→ 自愈又跳回空白 /chat/ 把
+        # 原生多轮上下文整个销毁。挂到 bm 上后：后续消息的 session 读到「已播种」，
+        # 只发轻量提醒 + 用户原话，靠 豆包 网页同一 /chat/<id> 的对话记忆续上下文。
+        self._proto_seeded = getattr(platform_bm, "_native_multi_turn_seeded", False)
+        import logging as _lg
+        _lg.getLogger(__name__).debug(
+            f"[原生多轮诊断] PlatformSession(bm_id={id(platform_bm)}) "
+            f"init读到 _native_multi_turn_seeded={self._proto_seeded} "
+            f"platform={platform_bm.profile.name if getattr(platform_bm,'profile',None) else '?'}"
+        )
 
     # ---- 与 DeepSeekSession 对齐的属性/方法 ----
     @property
@@ -2013,20 +2532,27 @@ class PlatformSession:
         self._thinking_mode = not self._thinking_mode
         logger.info(f"[{self._bm.profile.name}] 思考模式: {self._thinking_mode}")
 
-    async def set_deep_think(self, enable: bool):
-        """开启/关闭深度思考：实际点击平台 UI 的「深度思考」开关（不再只是设内存标志）"""
+    async def set_deep_think(self, enable: bool) -> bool:
+        """开启/关闭深度思考：实际点击平台 UI 的「深度思考」开关（不再只是设内存标志）。
+
+        返回值：True 表示确实切换成功；False 表示该平台没有可用开关（上层会
+        如实告知模型，而不是谎报「已开启」——谎报会让模型以为处于深度思考态，
+        实测豆包还会因为去点「快速/深入研究」模式按钮而把页面点坏）。
+        """
         self._thinking_mode = enable
         try:
             ok = await self._bm.enable_thinking(enable)
             if ok:
                 logger.info(f"[{self._bm.profile.name}] 深度思考已{'开启' if enable else '关闭'}")
-            else:
-                logger.warning(
-                    f"[{self._bm.profile.name}] 深度思考按钮未找到"
-                    f"（可能该平台不支持，或需登录后才有；已 dump 页面元素供修正）"
-                )
+                return True
+            logger.warning(
+                f"[{self._bm.profile.name}] 深度思考开关不可用"
+                f"（该平台网页端未提供，或需登录后才显示）"
+            )
+            return False
         except Exception as e:
             logger.warning(f"[{self._bm.profile.name}] 深度思考切换失败: {e}")
+            return False
 
     async def initialize(self):
         # 浏览器已在切换时 launch + navigate，这里无需重复
@@ -2047,39 +2573,153 @@ class PlatformSession:
             except Exception:
                 pass
 
+    # 【轻量协议提醒卡】后续轮次发给网页端的「格式提醒」——只几百字，不再是 6.8KB。
+    # 网页（豆包/通义/元宝）在同一会话里自己持有完整对话记忆（含首轮喂进去的
+    # 工具列表 + 核心指令），所以后续轮次只需一句「继续用 @@@@ 协议」的轻提醒 +
+    # 用户原话即可。重发 6.8KB 是喂死网页端、逼出假「静默失效」的根因，故砍掉。
+    _COMPACT_PROTOCOL_CARD = (
+        "【格式提醒】本会话继续：你只能用 @@@@ JSON 协议回复，格式 "
+        "@@@@{\"tool\":\"工具名\",\"params\":{...},\"id\":\"1\"}@@@；"
+        "从首轮已列出的工具集里选（docx_create / pptx_create / "
+        "file_write / file_edit / file_read / browser_search / task / done 等），"
+        "不要用网页内建功能生成文件。全部做完后调用 done 收尾。"
+    )
+
     def _build_context(self, new_user_text: str) -> str:
-        """把历史 + 新消息拼成单条文本发送给平台
+        """把上下文拼成单条文本发送给平台。
 
-        【关键】系统提示词（===核心指令=== / @@@@ 协议 / 工具列表 / 规则）必须
-        随每轮『反复』发送给模型——这是操作协议正常运作的前提：模型只有每次都
-        看到协议，才知道用 @@@@ JSON 格式回指令、才知道有哪些工具可用、才能
-        用工具控制电脑。之前错误地把系统提示词从上下文剔除，导致模型根本不知道
-        协议、只能乱回。
+        【原生多轮修复·关键】区分首轮 vs 后续轮：
+          - 首轮（本浏览器会话还没喂过协议，_proto_seeded 为 False）：
+            发完整系统提示词 + 近期历史 + 格式提醒 + 用户原话。这是把「工具列表 +
+            核心指令」一次性播种进网页，让网页端的模型知道协议。
+          - 后续轮（已播种，_proto_seeded 为 True）：只发「轻量格式提醒 + 用户原话」，
+            靠网页在同一会话里的原生多轮记忆续上下文，**不再重打包 ~6.8KB 系统提示词**。
 
-        【关键·轻量历史】只发送最近 N 条用户指令，避免多轮后上下文被腰斩。
+        之前每轮都整段重发 6.8KB 系统提示词，网页端（尤其豆包）吃不下这种
+        「每轮重新塞满」的输入 → 喂到卡壳 → 40s 不出正文 → 被误判成「会话静默失效」
+        → 又换新会话再塞 6.8KB → 死循环。改用原生多轮（网页自持上下文）后，
+        短问题就是短输入，多轮才真正能续上。
         """
-        MAX_RECENT = 6
-        keep_full = MAX_RECENT
-        start_full = max(0, len(self._messages) - keep_full)
         lines = []
-        # 系统提示词（协议）每轮都放在最前面反复喂给模型
-        if self._system_prompt:
-            lines.append(f"[系统指令]\n{self._system_prompt}")
-        # 压缩历史：取最近 MAX_RECENT 条用户消息
-        user_msgs = [m for m in self._messages if m["role"] == "user"]
-        recent_user = user_msgs[-MAX_RECENT:] if len(user_msgs) > MAX_RECENT else user_msgs
-        for m in recent_user:
-            lines.append(f"[用户] {m['content']}")
-        # 保留最近几轮助手回复（短消息完整，长消息截断）
-        recent_assistant = [m for m in self._messages if m["role"] == "assistant"]
-        for m in recent_assistant[-2:]:
-            content = m["content"] if len(m["content"]) < 2000 else m["content"][:2000]
-            lines.append(f"[助手] {content}")
+        import logging as _lg2
+        _seed_now = getattr(self, "_proto_seeded", False)
+        _bm_id = id(self._bm)
+        if not _seed_now:
+            # ── 首轮：完整播种 ──
+            _lg2.getLogger(__name__).debug(
+                f"[原生多轮分支] 走【完整播种】分支 sess_id={id(self)} bm_id={_bm_id} "
+                f"sess_flag={_seed_now} bm_flag={getattr(self._bm,'_native_multi_turn_seeded','<unset>')} "
+                f"sys_len={len(self._system_prompt)} text={new_user_text[:24]!r}"
+            )
+            MAX_RECENT = 6
+            if self._system_prompt:
+                lines.append(f"[系统指令]\n{self._system_prompt}")
+            user_msgs = [m for m in self._messages if m["role"] == "user"]
+            recent_user = user_msgs[-MAX_RECENT:] if len(user_msgs) > MAX_RECENT else user_msgs
+            for m in recent_user:
+                lines.append(f"[用户] {m['content']}")
+            recent_assistant = [m for m in self._messages if m["role"] == "assistant"]
+            for m in recent_assistant[-2:]:
+                content = m["content"] if len(m["content"]) < 2000 else m["content"][:2000]
+                lines.append(f"[助手] {content}")
+            lines.append(self._compact_format_reminder())
+            self._proto_seeded = True
+            # 【关键】播种态必须回写到持久的 bm，否则下一条 GUI 消息 new 出的
+            # 新 session 读不到「已播种」，会把 6.8KB 再次砸进 豆包 正在进行的
+            # /chat/<id> 对话里 → 卡壳 → 假静默失效 → 自愈跳回空白页毁掉原生多轮。
+            try:
+                self._bm._native_multi_turn_seeded = True
+            except Exception:
+                pass
+        else:
+            # ── 后续轮：只轻量提醒，吃网页原生多轮记忆 ──
+            _lg2.getLogger(__name__).debug(
+                f"[原生多轮分支] 走【轻量提醒】分支 sess_id={id(self)} bm_id={_bm_id} "
+                f"sess_flag={_seed_now} text={new_user_text[:24]!r}"
+            )
+            lines.append(self._COMPACT_PROTOCOL_CARD)
         lines.append(f"[用户] {new_user_text}")
         return "\n\n".join(lines)
 
-    async def send(self, text: str, attachments: List[str] = None) -> str:
-        """发送并等待回复（接口与 DeepSeekSession.send 一致）"""
+    def _compact_format_reminder(self) -> str:
+        """首轮随完整协议一起发的「格式提醒」（放在最末、紧贴任务前一行）。
+
+        【关键·弱模型适配】网页聊天平台的模型经常忽略埋在长提示词开头的格式要求，
+        直接用自然语言回答（实测豆包就会回「……我是仙人掌 Agent…… done ()」，
+        完全没有 @@@@ 协议块），导致协议解析失败 → 反复纠正空转。
+        解决：把最精炼的格式要求紧贴在实际任务【前一行】重复一次。
+        """
+        return (
+            "[格式提醒·必须遵守] 你只能用下面这种 @@@@ JSON 格式回复，不要用自然语言描述你要做什么：\n"
+            "@@@@\n"
+            '{"tool":"工具名","params":{...},"id":"1"}\n'
+            "@@@@\n"
+            "例如写文件：@@@@\n"
+            '{"tool":"file_write","params":{"path":"a.txt","content":"你好"},"id":"1"}\n'
+            "@@@@\n"
+            "任务全部做完后，用：@@@@\n"
+            '{"tool":"done","params":{},"id":"9"}\n'
+            "@@@@"
+        )
+
+    # 单个网页会话累计「发送字符数」上限：超过就自动开新会话。
+    # 实测豆包：每轮都要把 6.6k~7.4k 字符的系统提示词整段重发进同一个会话，
+    # 一个会话里发到第 3 轮（累计约 2 万字符）时网页端就【静默停止返回任何内容】——
+    # 不报错、也没有新气泡，表现为 wait_response 卡满 210s。只能靠「换新会话」自愈。
+    # 注意：这里统计的是【真正发出去的完整上下文长度】，不是 _messages 里那些短文本，
+    # 否则永远达不到阈值（实测踩过这个坑）。
+    # 【修复·重要】原阈值 14000 是致命 bug：我们每轮都要重发完整系统提示词（约 7KB），
+    # 所以「累计发送字符」在第 2 轮就超过 14000 → 每两轮就换一次新会话，
+    # 模型永远拿不到连续上下文，只好把每条请求当成全新任务理解
+    # （实测豆包因此把「生成 pptx」当成本地办公需求，直接跳进「豆包办公」沙箱自己生成文件，
+    #  完全不理我们的 @@@@ 工具协议）。
+    # 现改为：以【本会话已进行的轮数】为主判据，字符数只作兜底护栏；
+    # 网页端真的静默停止时由「空回复自愈」路径负责换会话，不必靠瞎猜字符数。
+    _RESET_CTX_CHARS = 40000
+    _RESET_TURNS = 10
+
+    async def send(self, text: str, attachments: List[str] = None,
+                   internal: bool = False) -> str:
+        """发送并等待回复（接口与 DeepSeekSession.send 一致）
+
+        internal=True 表示这是 Agent 的内部轮（工具结果回传、协议纠正、
+        继续指令等），不是用户说的话 —— 会被标记为 internal，不写进对话历史文件，
+        避免历史记录里塞满 [系统] 工具…执行结果 这类噪音（用户看到的就是「一团乱」）。
+        """
+        # ── 本会话首轮预检登录态 ──
+        # 不做这层预检的话，未登录平台要先走「点击输入框 15s 超时 + 空等回复 40s」
+        # 才被发现，用户干等近 90 秒才看到一句「请先登录」。
+        # （check_login 内部会在页面骨架屏阶段等待稳定再判定，避免误判成已登录。）
+        if not getattr(self, "_login_prechecked", False):
+            self._login_prechecked = True
+            try:
+                if not await asyncio.wait_for(self._bm.check_login(), timeout=40):
+                    self._login_required = True
+                    raise LoginRequiredError(
+                        f"[{self._bm.profile.name}] 平台未登录，请先在打开的浏览器窗口里登录，"
+                        f"再重新发任务")
+                logger.info(f"[{self._bm.profile.name}] 首轮登录预检通过")
+            except LoginRequiredError:
+                raise
+            except Exception:
+                pass   # 预检查不动就按原流程走，不因预检失败阻断任务
+
+        # ── 掉登录短路：上一次已经确认未登录后，每条指令先做一次便宜的登录态检查 ──
+        # 不做这层短路的话，未登录时每条指令都要走「等输入框 15s 超时」或
+        # 「等回复 210s 超时」才被发现，用户连发 5 条就要干等十几分钟，
+        # 而且每条都只看到一句看不懂的 Playwright 报错。
+        if getattr(self, "_login_required", False):
+            try:
+                if await asyncio.wait_for(self._bm.check_login(), timeout=15):
+                    self._login_required = False   # 用户已登录，恢复正常工作
+                    logger.info(f"[{self._bm.profile.name}] 检测到已完成登录，恢复任务执行")
+            except Exception:
+                pass
+            if getattr(self, "_login_required", False):
+                raise LoginRequiredError(
+                    f"[{self._bm.profile.name}] 平台未登录，请先在打开的浏览器窗口里登录，"
+                    f"再重新发任务")
+
         # 上下文耗尽检测
         if getattr(self, '_context_exhausted', False):
             recovered = await self.auto_recover_from_exhaustion()
@@ -2089,21 +2729,72 @@ class PlatformSession:
                 logger.warning(f"[{self._bm.profile.name}] 上下文恢复失败，继续使用当前会话")
                 self._context_exhausted = False
 
+        # ── 主动自愈 1：上一轮一个字都没抓到（会话可能已静默失效）→ 换新会话再试 ──
+        if getattr(self, "_last_reply_empty", False):
+            self._last_reply_empty = False
+            logger.warning(f"[{self._bm.profile.name}] 上一轮未抓到回复，自动开启新会话后重试")
+            await self._safe_new_conversation()
+
+        # ── 主动自愈 2：本会话轮数偏多 / 累计发送过长 → 换新会话（兜底护栏）──
         full_context = self._build_context(text)
-        self._messages.append({"role": "user", "content": text})
+        _sent_before = getattr(self, "_thread_sent_chars", 0)
+        _turns_before = getattr(self, "_thread_turns", 0)
+        if _turns_before >= self._RESET_TURNS or \
+                (_sent_before and (_sent_before + len(full_context)) > self._RESET_CTX_CHARS):
+            logger.warning(
+                f"[{self._bm.profile.name}] 本会话已进行 {_turns_before} 轮、"
+                f"累计发送 {_sent_before} 字符（轮数上限 {self._RESET_TURNS} / "
+                f"字符上限 {self._RESET_CTX_CHARS}），开启新会话以免网页端静默卡死"
+            )
+            await self._safe_new_conversation()   # 自愈：保留用户原话
+            self._thread_sent_chars = 0
+            self._thread_turns = 0
+            full_context = self._build_context(text)   # 新会话下重建上下文
+        self._thread_sent_chars = _sent_before + len(full_context)
+        self._thread_turns = _turns_before + 1
+
+        self._messages.append({"role": "user", "content": text, "internal": bool(internal)})
 
         # 发送（含附件）
         try:
             await self._bm.send_message(full_context, attachments=attachments)
+        except LoginRequiredError:
+            raise
         except Exception as e:
-            raise RuntimeError(f"[{self._bm.profile.name}] 发送失败: {e}")
+            # 发送失败最常见的真实原因不是「页面卡了」，而是掉登录了：
+            # 登录墙/扫码页根本就没有可输入的对话框，于是 fill/click 一直等到超时。
+            # 这种情况如果照原样把 Playwright 的 Call log 整坨抛出去：
+            #   · 用户看到的是一堆 DOM 选择器堆栈，完全不知道该去登录；
+            #   · 母代理会当成「普通调用失败」按协议反复重试，每轮再白等 15s+。
+            # 所以发送失败后先查一次登录态，掉登录就抛 LoginRequiredError，
+            # 由上层统一转成「[需要登录] 请先登录」这样的明确提示。
+            try:
+                _still = await asyncio.wait_for(self._bm.check_login(), timeout=15)
+            except Exception:
+                _still = True   # 查不动就按原样报错，不误判成未登录
+            if not _still:
+                self._login_required = True   # 后续指令直接短路，别再白等 15s
+                raise LoginRequiredError(
+                    f"[{self._bm.profile.name}] 平台未登录（找不到可输入的对话框），"
+                    f"请先在打开的浏览器窗口里登录，再重新发任务") from e
+            # 非登录问题：错误信息截断，别把几十行 Call log 塞进聊天窗口
+            _err = str(e)
+            if len(_err) > 300:
+                _err = _err[:300] + " …（已截断完整 Call log）"
+            raise RuntimeError(f"[{self._bm.profile.name}] 发送失败: {_err}")
 
         # 等待回复（第三方平台流式较慢，给 120s），实时抓取「思考过程」
+        # 第三方平台（千问/豆包/元宝）带「深度思考」时输出较慢，120s 常在收尾处被截断，
+        # 放宽到 210s，避免「回复被腰斩 → 无 @@@@ 协议 → 母代理反复重试」。
         response = await self._bm.wait_response(
-            timeout=120,
+            timeout=210,
             on_thinking=self._emit_thinking,
             thinking_selector=self._bm.profile.thinking_selector,
         )
+        # ── 网页交互留痕：把这一轮的页面整页截图存下来，方便事后核对 ──
+        # 出问题（空回复/被豆包办公劫持/渲染成状态行）时，光看日志是猜，
+        # 看截图一眼就能看出来。由 XRZ_UI_DUMP=1 打开，默认关闭不影响速度。
+        await self._ui_dump("reply")
         # 确保最终思考内容已上报（避免末尾事件被缓冲截断）
         if self._last_thinking and self._on_event:
             try:
@@ -2111,9 +2802,58 @@ class PlatformSession:
             except Exception:
                 pass
         if not response:
-            response = "（未收到回复）"
+            # ── 反自动化验证墙检测：豆包等平台的图形拖拽 CAPTCHA，md-box-root 读不到，
+            #    会表现为「40s 无正文」→ 老逻辑误判成「会话静默失效」，一路开新会话重发。
+            #    命中验证墙就如实上抛，停止空转，让用户去浏览器里手动过一次验证。
+            _wall_hit = await self._detect_security_wall()
+            if _wall_hit:
+                self._ui_dump("security-wall")
+                raise SecurityVerificationRequiredError(
+                    f"[{self._bm.profile.name}] 平台弹出反自动化图形验证（图片拖拽/滑块类 CAPTCHA）。"
+                    f"这是平台风控把本程序的高频自动操作判定为机器人所致，网页端需要【手动】"
+                    f"在打开的浏览器窗口里完成一次验证后才能继续。请勿反复重发，越刷验证墙越频繁。"
+                    f"请去浏览器窗口里手动过一遍图片验证，过完再重新发任务。"
+                )
+            # ── 掉登录检测：页面根本不是一个可对话的会话，再重试 3 轮 × 210s 毫无意义 ──
+            try:
+                if not await self._bm.check_login():
+                    self._login_required = True   # 短路后续指令，避免每条都白等超时
+                    raise LoginRequiredError(
+                        f"[{self._bm.profile.name}] 平台未登录（页面显示登录/扫码入口），"
+                        f"请先在打开的浏览器窗口里登录，再重新发任务")
+            except LoginRequiredError:
+                raise
+            except Exception:
+                pass
+            # 【关键修复】这里以前会把空回复改写成"（未收到回复）"再返回，
+            # 结果母代理以为「模型说了 7 个字」，于是走「没遵守协议」的纠正分支，
+            # 在同一个已失效的会话里反复重试（每次白等 210s）。
+            # 正确做法：如实返回空字符串，让母代理走「空回复重试」，并在下一轮换新会话。
+            logger.warning(
+                f"[{self._bm.profile.name}] 本轮未抓到任何回复正文"
+                f"（会话可能已静默失效），按空回复上报，下一轮将自动换新会话"
+            )
+            self._last_reply_empty = True
+            self._messages.append({"role": "assistant", "content": "（未收到回复）"})
+            self._maybe_save_conversation()
+            await self._ui_dump("empty-reply")
+            return ""
         self._messages.append({"role": "assistant", "content": response})
         logger.info(f"[{self._bm.profile.name}] 对话完成，历史 {len(self._messages)} 条")
+        # 抓回来的「回复」里若混着风控验证墙字样（部分平台把 CAPTCHA 提示塞进正文）
+        # → 同样如实停下，别当成正常回复继续空转。
+        if any(k in (response or "") for k in _SECURITY_WALL_TOKENS):
+            await self._ui_dump("security-wall")
+            raise SecurityVerificationRequiredError(
+                f"[{self._bm.profile.name}] 平台触发了反自动化图形验证（回复里出现验证提示）。"
+                f"请去打开的浏览器窗口里手动过一次验证，再重新发任务。"
+            )
+        # 抓回来的「回复」其实是登录墙 → 直接报未登录，别让母代理反复纠正空转
+        if any(k in (response or "") for k in _LOGIN_WALL_TOKENS):
+            self._login_required = True   # 同上：后续指令直接短路，别再空转
+            raise LoginRequiredError(
+                f"[{self._bm.profile.name}] 平台未登录（回复里是登录/扫码提示），"
+                f"请先在打开的浏览器窗口里登录，再重新发任务")
 
         # ===== 上下文耗尽检测与自动恢复 =====
         self._check_context_exhausted(response)
@@ -2122,6 +2862,129 @@ class PlatformSession:
         self._maybe_save_conversation()
 
         return response
+
+    # ── 网页交互留痕（XRZ_UI_DUMP=1 打开）──
+    # 每轮把平台页面**直接打印成 PDF**，落到 ui_dumps/<平台>/，出错时额外打一张。
+    # 光看日志只能猜「网页上到底发生了什么」，翻 PDF 一眼就能看出来
+    # （豆包跳进办公沙箱、页面渲染成状态行、空回复……全是肉眼可见的）。
+    # 实测有头 Chromium 的 page.pdf() 可用（_test_pdf_headed.py 验证过）。
+    @staticmethod
+    def _ui_dump_enabled() -> bool:
+        import os as _os
+        return _os.environ.get("XRZ_UI_DUMP") == "1"
+
+    async def _detect_security_wall(self) -> bool:
+        """检测平台是否弹出了反自动化图形验证墙（豆包图片拖拽 / 滑块 CAPTCHA）。
+
+        md-box-root（AI 正文选择器）读不到验证墙 → 空回复路径里必须先判断它，
+        否则会把「被风控锁住」误判成「会话静默失效」，一路开新会话重发 6.8KB 协议块，
+        越刷验证墙越频繁。命中特征词即返回 True，让上层如实停下、提示用户手动过验证。
+
+        两个实测坑，必须都处理：
+          1) 验证组件常挂在【独立 frame/iframe】里，主文档 body.innerText 抓不到 →
+             必须遍历 page 的所有 frame。
+          2) 豆包页面用【CJK 兼容汉字】渲染（如 上⽂ 的 ⽂=U+2F52 而非 文=U+4E0B），
+             直接子串匹配会漏 → 先归一：去掉所有空白，并把 CJK 兼容区字符剔除后再匹配
+             （用不含兼容区字符的『标准字特征词』做匹配，命中即判墙）。
+        """
+        page = getattr(self._bm, "_page", None)
+        if not page:
+            return False
+        try:
+            frames = list(getattr(page, "frames", []) or [page])
+        except Exception:
+            frames = [page]
+        raw_parts = []
+        for fr in frames:
+            try:
+                t = await fr.evaluate("() => (document.body && document.body.innerText) || ''")
+                if t:
+                    raw_parts.append(str(t))
+            except Exception:
+                continue
+        joined = "\n".join(raw_parts)
+        # 归一化：去空白；再把 CJK 兼容区/康熙部首区字符剔除，让『标准字特征词』能命中。
+        import re as _re
+        no_ws = _re.sub(r"\s+", "", joined)
+        normalized = _re.sub(r"[\u2e80-\u2fff\uf900-\ufaff]", "", joined)
+        # 在『去空白』与『去兼容区』两份归一化文本里分别匹配标准字特征词。
+        candidates = {
+            "拖拽到": ("拖拽到", "拖拽到"),
+            "请选择所有": ("请选择所有", "请选择所有"),
+            "按住滑块": ("按住滑块", "按住滑块"),
+            "向右滑动": ("向右滑动", "向右滑动"),
+            "滑动验证": ("滑动验证", "滑动验证"),
+            "拖动下方": ("拖动下方", "拖动下方"),
+            "请完成验证": ("请完成验证", "请完成验证"),
+            "完成拼图": ("完成拼图", "完成拼图"),
+            "拼图验证": ("拼图验证", "拼图验证"),
+            "符合上述描述": ("符合上述描述", "符合上图", "符合相关"),
+            "符合上图": ("符合上图", "符合上述描述"),
+        }
+        hit = None
+        for label, (primary, *alts) in candidates.items():
+            needles = [primary] + list(alts)
+            for blob in (no_ws, normalized):
+                if any(n and n in blob for n in needles):
+                    hit = label
+                    break
+            if hit:
+                break
+        import logging as _lg3
+        if hit:
+            _lg3.getLogger(__name__).warning(
+                f"[{getattr(self._bm.profile, 'name', '?')}] 检测到反自动化验证墙（命中特征「{hit}」），"
+                f"页面 frames={len(frames)} 总字数≈{len(joined)}，停止空转、如实上抛"
+            )
+        else:
+            _lg3.getLogger(__name__).info(
+                f"[{getattr(self._bm.profile, 'name', '?')}] 空回复但【未】命中验证墙特征"
+                f"（frames={len(frames)} 正文≈{len(joined)}字），按普通静默处理"
+            )
+        return bool(hit)
+
+    async def _ui_dump(self, tag: str):
+        if not self._ui_dump_enabled():
+            return
+        try:
+            page = getattr(self._bm, "_page", None)
+            if not page:
+                return
+            from pathlib import Path as _P
+            from datetime import datetime as _dt
+            base = _P(r"D:\软件\XianRenZhangAgent\xrz_data\XianRenZhang_tasks\ui_dumps")
+            d = base / (getattr(self._bm.profile, "platform", None) or "unknown")
+            d.mkdir(parents=True, exist_ok=True)
+            ts = _dt.now().strftime("%Y%m%d_%H%M%S")
+            try:
+                f = d / f"{ts}_{tag}.pdf"
+                await page.pdf(path=str(f), format="A4", print_background=True)
+            except Exception:
+                # 万一某个页面 pdf() 不灵，退回截图，保证留痕不丢
+                f = d / f"{ts}_{tag}.png"
+                await page.screenshot(path=str(f), full_page=True)
+            logger.info(f"[UI留痕] {f}")
+        except Exception as e:
+            logger.warning(f"[UI留痕] 留痕失败（不影响任务）: {e}")
+
+    async def _safe_new_conversation(self):
+        """尽量安全地开一个新会话（失败不影响主流程）。
+
+        注意：这是【自愈】路径，用户的任务没变，必须把用户原话带过去
+        （keep_user_task=True），否则历史记录里这条任务就只剩 AI 的回答了。
+        """
+        try:
+            await self.start_new_conversation(keep_user_task=True)
+            await asyncio.sleep(1.5)
+        except Exception as e:
+            logger.warning(f"[{self._bm.profile.name}] 开启新会话失败: {e}")
+            _carry = [dict(m) for m in self._messages
+                      if m.get("role") == "user" and not m.get("internal")]
+            try:
+                self._messages.clear()
+                self._messages.extend(_carry)
+            except Exception:
+                pass
 
     def _check_context_exhausted(self, response: str):
         """检测 AI 回复是否包含上下文耗尽信号"""
@@ -2161,16 +3024,17 @@ class PlatformSession:
 
     # ---- 对话历史持久化（与 DeepSeekSession 对齐）----
     def _maybe_save_conversation(self):
-        """每 5 轮或会话结束时自动持久化到全局对话历史"""
-        user_count = sum(1 for m in self._messages if m["role"] == "user")
-        if user_count % 5 == 0 or user_count == 0:
-            self._do_save_conversation()
+        """每轮都持久化（修复：以前「每 5 条用户消息才存一次」导致单轮任务从不落盘；
+        而自愈清空上下文后 user_count 变 0 又退化成每轮新建文件，把历史刷爆）。
+        会话 JSON 路径固定复用，每轮覆盖写同一个文件，既不漏存也不刷屏。"""
+        self._do_save_conversation()
 
     def _do_save_conversation(self):
         try:
             from .session import get_conversation_history, Message, _task_conv_dir
             hist = get_conversation_history()
-            msgs = [Message(role=m["role"], content=m["content"]) for m in self._messages]
+            msgs = [Message(role=m["role"], content=m["content"])
+                    for m in self._visible_messages()]
             hist.add_record(
                 platform=self._bm.profile.platform,
                 session_id="",
@@ -2184,21 +3048,37 @@ class PlatformSession:
         except Exception as e:
             logger.warning(f"[{self._bm.profile.name}] 历史持久化失败: {e}")
 
+    def _visible_messages(self) -> list:
+        """过滤掉内部轮（工具结果/协议纠正）和系统提示词，只留用户真实说的话 + AI 回复。"""
+        return [m for m in self._messages
+                if not m.get("internal") and m.get("role") != "system"]
+
     def _save_conv_json(self, file_path: str = None) -> str:
-        """方案二：把消息落盘成平台 JSON（含 URL，便于交叉校验）"""
+        """方案二：把消息落盘成平台 JSON（含 URL，便于交叉校验）。
+
+        只写用户真实对话（_visible_messages）：内部工具结果轮不落盘，
+        历史记录里才不会出现 [系统] 工具 xxx 执行结果 之类的噪音。
+        """
         from .session import _task_conv_dir, _record_task
         if file_path is None:
-            ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-            file_path = str(_task_conv_dir() / f"conv_{self._bm.profile.platform}_{ts}.json")
+            # 同一个会话复用同一个文件：历史记录里一个任务只占一条，且标题始终能取到用户原话
+            if not getattr(self, "_conv_file_path", ""):
+                ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+                self._conv_file_path = str(
+                    _task_conv_dir() / f"conv_{self._bm.profile.platform}_{ts}.json")
+            file_path = self._conv_file_path
+        else:
+            self._conv_file_path = file_path
         data = {
             "platform": self._bm.profile.platform,
             "url": self.get_current_url(),
-            "messages": [{"role": m["role"], "content": m["content"]} for m in self._messages],
+            "messages": [{"role": m["role"], "content": m["content"]}
+                         for m in self._visible_messages()],
         }
         Path(file_path).write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
         # 把这次对话登记为【一个独立任务】（标题=首条用户消息）
         _record_task(self._bm.profile.platform, file_path,
-                     self.get_current_url(), self._messages)
+                     self.get_current_url(), self._visible_messages())
         return file_path
 
     def get_current_url(self) -> str:
@@ -2223,6 +3103,8 @@ class PlatformSession:
             self._messages.clear()
             for m in data.get("messages", []):
                 self._messages.append({"role": m["role"], "content": m["content"]})
+            # 恢复的是哪个文件，后续就继续写回这个文件（否则恢复后一保存又建新文件）
+            self._conv_file_path = file_path
             logger.info(f"[{self._bm.profile.name}] 对话已从 {file_path} 加载，共 {len(self._messages)} 条")
             return True
         except Exception as e:
@@ -2258,10 +3140,36 @@ class PlatformSession:
         from .session import _list_tasks
         return _list_tasks(platform=self._bm.profile.platform)
 
-    async def start_new_conversation(self):
-        """开一个全新的独立对话：清空本地上下文 + 在浏览器里导航到新聊天。"""
+    async def start_new_conversation(self, keep_user_task: bool = False):
+        """开一个全新的独立对话：清空本地上下文 + 在浏览器里导航到新聊天。
+
+        keep_user_task=True 用于【Agent 自愈】场景（上一轮空回复 / 会话轮数超限）：
+        这种情况下网页端换了新会话，但用户的任务没变，如果连用户原话一起清掉，
+        落盘的会话 JSON 里就只剩 AI 的话 → 历史标题永远显示「(无标题对话)」，
+        回看时也看不到自己当初问了什么。所以要把用户说过的原话带过去。
+        用户主动点「新建会话」时传 False，连文件一起换新的。
+        """
+        _carry = []
+        if keep_user_task:
+            _carry = [dict(m) for m in self._messages
+                      if m.get("role") == "user" and not m.get("internal")]
         self._messages.clear()
+        if _carry:
+            self._messages.extend(_carry)
         self._session_id = ""
+        self._thread_sent_chars = 0
+        self._thread_turns = 0
+        # 换到一个【全新空白】浏览器会话时，模型确实需要重新看到完整工具列表，
+        # 所以重置播种态，下一轮走「完整播种」。
+        # （注意：同一 /chat/<id> 里的后续轮次/GUI 后续消息【不会】走这里，
+        #    它们靠 bm 上持久的 _native_multi_turn_seeded 走轻量提醒 + 原生多轮记忆。）
+        self._proto_seeded = False
+        try:
+            self._bm._native_multi_turn_seeded = False
+        except Exception:
+            pass
+        if not keep_user_task:
+            self._conv_file_path = ""   # 用户主动开新会话 → 下一个新文件
         try:
             if self._bm and getattr(self._bm, "navigate_to_chat", None):
                 await self._bm.navigate_to_chat()
@@ -2314,14 +3222,33 @@ class PlatformSession:
                 "   for (const line of lines) {"
                 "     const s = line.trim(); if (!s) continue;"
                 "     let isUi = false;"
-                "     for (const n of noise) { if (s === n) { isUi = true; break; } }"
+                "     for (const n of noise) {"
+                "       if (s === n) { isUi = true; break; }"
+                "       if (n && s.startsWith(n) && s.length < n.length + 40) { isUi = true; break; }"
+                "     }"
                 "     if (isUi) continue;"
                 "     let stripped = s;"
-                "     for (const n of noise) { stripped = stripped.split(n).join(''); }"
-                "     if (stripped.trim().length === 0) continue;"
-                "     kept.push(line);"
+                "     for (const n of noise) { stripped = stripTok(stripped, n); }"
+                "     stripped = stripped.trim();"
+                "     if (!stripped) continue;"
+                "     kept.push(stripped);"
                 "   }"
                 "   return kept.join('\\n').trim();"
+                " };"
+                " const HAN = /[\\u3400-\\u4dbf\\u4e00-\\u9fff\\uf900-\\ufaff]/;"
+                " const stripTok = (s, n) => {"
+                "   if (!n) return s;"
+                "   let out = ''; let i = 0;"
+                "   while (true) {"
+                "     const k = s.indexOf(n, i);"
+                "     if (k < 0) { out += s.slice(i); break; }"
+                "     const before = k > 0 ? s[k - 1] : '';"
+                "     const after = (k + n.length) < s.length ? s[k + n.length] : '';"
+                "     const embedded = (before && HAN.test(before)) || (after && HAN.test(after));"
+                "     out += s.slice(i, embedded ? (k + n.length) : k);"
+                "     i = k + n.length;"
+                "   }"
+                "   return out;"
                 " };"
                 " const els = document.querySelectorAll(sel);"
                 " const out = [];"

@@ -131,8 +131,18 @@ class BrowserManager:
                 accept_downloads=True,
             )
             logger.info(f"持久化上下文创建成功: {user_data_dir}")
+            BrowserManager._shared_browser_instance = self
         except Exception as e:
-            logger.warning(f"持久化上下文创建失败: {e}，尝试临时目录")
+            _msg = str(e)
+            # 关键修复：profile 已被其他实例占用（SingletonLock / 单实例冲突）时，
+            # 绝对不要偷偷开一个「未登录的临时浏览器」——那正是用户看到的
+            # 「两个 DeepSeek 浏览器（一个没登录）」的根因。直接抛出明确错误。
+            if any(k in _msg for k in ("SingletonLock", "already in use", "single instance", "locked", "被占用")):
+                raise RuntimeError(
+                    f"DeepSeek profile（{user_data_dir}）已被其他浏览器实例占用，"
+                    f"请勿同时打开两个 DeepSeek 浏览器。请先关闭多余的实例后再试。"
+                )
+            logger.warning(f"持久化上下文创建失败（非锁冲突）: {e}，尝试临时目录兜底")
             tmp_dir = tempfile.mkdtemp(prefix="xrz_chrome_")
             self._browser = await self._playwright.chromium.launch_persistent_context(
                 user_data_dir=tmp_dir,
@@ -141,7 +151,7 @@ class BrowserManager:
                 args=_launch_args,
                 accept_downloads=True,
             )
-            logger.info(f"临时上下文创建成功: {tmp_dir}")
+            logger.warning(f"[BrowserManager] 已退化为临时隔离上下文（未登录态）: {tmp_dir}")
 
         self._page = self._browser.pages[0] if self._browser.pages else await self._browser.new_page()
 
@@ -592,26 +602,50 @@ class BrowserManager:
         logger.info(f"已导航：{url}")
 
     async def check_login(self) -> bool:
-        """检查是否已登录 DeepSeek"""
+        """检查是否已登录 DeepSeek
+        
+        ★★★ 修复（2026-09-12）★★★
+        旧逻辑 is_chat_page = "chat.deepseek.com" in url 会把 /sign_in 也判定为聊天页，
+        导致未登录时误判"已登录"，子代理继续执行 → 找不到 textarea → Timeout。
+        
+        新逻辑：
+        1. URL 明确包含 /sign_in 或 /login → 未登录
+        2. 有用户头像 → 已登录
+        3. 在聊天页（不含 sign_in/login）且无登录按钮 → 已登录
+        4. 其余情况 → 未登录
+        """
         if self._page is None:
             return False
         try:
-            # 多种登录状态检测方式
-            # 1. 检查是否有登录按钮
-            login_btn = self._page.locator('button:has-text("登录"), a:has-text("登录"), button:has-text("Login")')
-            has_login_btn = await login_btn.count() > 0
+            url = self._page.url
             
-            # 2. 检查是否有用户头像/设置
+            # ★★★ 关键：sign_in / login 页面一律视为未登录 ★★★
+            if any(kw in url for kw in ["/sign_in", "/login", "/register"]):
+                logger.warning(f"登录检查：URL 为 {url}（登录/注册页）→ 未登录")
+                return False
+            
+            # 1. 检查用户头像（最可靠）
             user_avatar = self._page.locator('img[alt*="avatar"], [class*="avatar"], [class*="user-icon"]')
             has_avatar = await user_avatar.count() > 0
             
-            # 3. 检查 URL 是否在聊天页面
-            is_chat_page = "chat.deepseek.com" in self._page.url
+            # 2. 检查登录按钮
+            login_btn = self._page.locator('button:has-text("登录"), a:has-text("登录"), button:has-text("Login")')
+            has_login_btn = await login_btn.count() > 0
             
-            # 如果有头像或者在聊天页面且没有登录按钮，则认为已登录
-            logged_in = has_avatar or (is_chat_page and not has_login_btn)
+            # 3. 检查 textarea（有输入框 = 聊天页 = 已登录）
+            has_textarea = await self._page.locator('textarea').count() > 0
             
-            logger.info(f"登录检查：has_login_btn={has_login_btn}, has_avatar={has_avatar}, is_chat_page={is_chat_page}, logged_in={logged_in}")
+            # 判断逻辑：
+            # - 有头像 → 已登录
+            # - 有 textarea 且无登录按钮 → 已登录（聊天页）
+            # - 有登录按钮 → 未登录
+            # - 都没有 → 检查 URL 是否在聊天页
+            logged_in = has_avatar or (has_textarea and not has_login_btn)
+            
+            logger.info(
+                f"登录检查：url={url[:50]}, has_avatar={has_avatar}, "
+                f"has_textarea={has_textarea}, has_login_btn={has_login_btn} → logged_in={logged_in}"
+            )
             return logged_in
         except Exception as e:
             logger.warning(f"登录检查异常：{e}")
@@ -647,97 +681,138 @@ class BrowserManager:
             logger.warning(f"新建会话：{e}")
             await self.navigate()
 
-    async def send_message(self, text: str) -> bool:
-        """发送消息到 DeepSeek"""
+    async def _ensure_page(self, url: str = DEEPSEEK_URL):
+        """确保 self._page 是活的、可用的页面。
+
+        修复：旧逻辑只在 self._page is None 时重建。但页面被关闭/崩溃后仍持有旧引用
+        （非 None）时，后续 textarea.click() 会抛
+        'Locator.click: Target page, context or browser has been closed'。
+        这里额外检查 is_closed()，死了就置空并触发 navigate() 自动重建。
+        """
+        dead = False
         if self._page is None:
-            raise RuntimeError("页面未初始化")
-        if "chat.deepseek.com" not in self._page.url:
-            await self.navigate()
-
-        # 多种选择器尝试（DeepSeek 页面结构可能变化，按优先级多路探测）
-        textarea = None
-        selectors = [
-            "textarea[placeholder*='问']",
-            "textarea[placeholder*='输入']",
-            "textarea[placeholder*='Ask']",
-            "textarea[placeholder*='Type']",
-            "textarea",
-            "div[contenteditable='true'][role='textbox']",
-            "div[role='textbox']",
-            "[contenteditable='true']",
-            "div[class*='input'] textarea",
-            "div[class*='composer'] textarea",
-            "textarea[class*='text']",
-            "textarea[placeholder]",
-        ]
-
-        for sel in selectors:
+            dead = True
+        else:
             try:
-                el = self._page.locator(sel).first
-                if await el.count() > 0 and await el.is_visible():
-                    textarea = el
-                    logger.info(f"找到输入框：{sel}")
-                    break
+                if self._page.is_closed():
+                    dead = True
+                    self._page = None
             except Exception:
-                pass
-
-        # 兜底：用 JS 在整页找所有可见 textarea / contenteditable 元素
-        if textarea is None:
-            try:
-                candidates = await self._page.evaluate("""() => {
-                    const all = [
-                        ...document.querySelectorAll('textarea'),
-                        ...document.querySelectorAll('[contenteditable="true"]'),
-                        ...document.querySelectorAll('[contenteditable]'),
-                    ];
-                    for (const el of all) {
-                        const r = el.getBoundingClientRect();
-                        if (r.width > 20 && r.height > 20) return el.tagName;
-                    }
-                    return null;
-                }""")
-                if candidates:
-                    # 重新定位第一个可交互的
-                    textarea = self._page.locator("textarea, [contenteditable='true']").first
-                    if await textarea.count() > 0 and await textarea.is_visible():
-                        logger.info(f"JS 兜底找到输入框: {candidates}")
-            except Exception as e:
-                logger.warning(f"JS 兜底失败: {e}")
-
-        if textarea is None:
-            logger.error("未找到输入框，保存截图调试")
-            await self._page.screenshot(path="debug_no_input.png")
-            return False
-
-        # 清空并填写
-        await textarea.click()
-        await asyncio.sleep(0.2)
-        await textarea.fill("")
-        await asyncio.sleep(0.1)
-        await textarea.fill(text)
-        await asyncio.sleep(0.2)
-
-        # 尝试多种发送方式
-        sent = False
-        for sel in ["button[type='submit']", "button:has-text('发送')", "button:has-text('Send')"]:
-            btn = self._page.locator(sel)
-            if await btn.count() > 0 and await btn.first.is_enabled():
-                await btn.first.click()
-                logger.info("消息已发送（点击按钮）")
-                sent = True
-                break
-        
-        if not sent:
-            await textarea.press("Enter")
-            logger.info("消息已发送（Enter 键）")
-            sent = True
-
-        return sent
-
-    async def _send_internal(self, text: str) -> bool:
-        """内部发送协议消息：发完立即从 DOM 删除，不暴露给用户"""
+                dead = True
+                self._page = None
+        if dead:
+            logger.warning("检测到页面已死/未初始化，自动重建...")
+            await self.navigate(url)
         if self._page is None:
-            raise RuntimeError("页面未初始化")
+            raise RuntimeError("页面重建失败：页面未初始化")
+        return self._page
+
+    async def send_message(self, text: str) -> bool:
+        """发送消息到 DeepSeek（带页面存活自检 + 崩溃自动重建重试）"""
+        async def _attempt():
+            await self._ensure_page()
+            if "chat.deepseek.com" not in self._page.url:
+                await self.navigate()
+            # 多种选择器尝试（DeepSeek 页面结构可能变化，按优先级多路探测）
+            textarea = None
+            selectors = [
+                "textarea[placeholder*='问']",
+                "textarea[placeholder*='输入']",
+                "textarea[placeholder*='Ask']",
+                "textarea[placeholder*='Type']",
+                "textarea",
+                "div[contenteditable='true'][role='textbox']",
+                "div[role='textbox']",
+                "[contenteditable='true']",
+                "div[class*='input'] textarea",
+                "div[class*='composer'] textarea",
+                "textarea[class*='text']",
+                "textarea[placeholder]",
+            ]
+
+            for sel in selectors:
+                try:
+                    el = self._page.locator(sel).first
+                    if await el.count() > 0 and await el.is_visible():
+                        textarea = el
+                        logger.info(f"找到输入框：{sel}")
+                        break
+                except Exception:
+                    pass
+
+            # 兜底：用 JS 在整页找所有可见 textarea / contenteditable 元素
+            if textarea is None:
+                try:
+                    candidates = await self._page.evaluate("""() => {
+                        const all = [
+                            ...document.querySelectorAll('textarea'),
+                            ...document.querySelectorAll('[contenteditable="true"]'),
+                            ...document.querySelectorAll('[contenteditable]'),
+                        ];
+                        for (const el of all) {
+                            const r = el.getBoundingClientRect();
+                            if (r.width > 20 && r.height > 20) return el.tagName;
+                        }
+                        return null;
+                    }""")
+                    if candidates:
+                        # 重新定位第一个可交互的
+                        textarea = self._page.locator("textarea, [contenteditable='true']").first
+                        if await textarea.count() > 0 and await textarea.is_visible():
+                            logger.info(f"JS 兜底找到输入框: {candidates}")
+                except Exception as e:
+                    logger.warning(f"JS 兜底失败: {e}")
+
+            if textarea is None:
+                logger.error("未找到输入框，保存截图调试")
+                try:
+                    await self._page.screenshot(path="debug_no_input.png")
+                except Exception:
+                    pass
+                return False
+
+            # 清空并填写
+            await textarea.click()
+            await asyncio.sleep(0.2)
+            await textarea.fill("")
+            await asyncio.sleep(0.1)
+            await textarea.fill(text)
+            await asyncio.sleep(0.2)
+
+            # 尝试多种发送方式
+            sent = False
+            for sel in ["button[type='submit']", "button:has-text('发送')", "button:has-text('Send')"]:
+                btn = self._page.locator(sel)
+                if await btn.count() > 0 and await btn.first.is_enabled():
+                    await btn.first.click()
+                    logger.info("消息已发送（点击按钮）")
+                    sent = True
+                    break
+
+            if not sent:
+                await textarea.press("Enter")
+                logger.info("消息已发送（Enter 键）")
+                sent = True
+
+            return sent
+
+        try:
+            return await _attempt()
+        except Exception as e:
+            err = str(e)
+            if "has been closed" in err or "TargetClosed" in err or "detached" in err:
+                logger.warning(f"发送时页面异常（{e}），重建后重试一次...")
+                self._page = None
+                try:
+                    return await _attempt()
+                except Exception as e2:
+                    logger.error(f"重建重试仍失败: {e2}")
+                    raise
+            raise
+
+    async def _send_internal_impl(self, text: str) -> bool:
+        """_send_internal 的内部实现（带页面存活自检）。"""
+        await self._ensure_page()
         if "chat.deepseek.com" not in self._page.url:
             await self.navigate()
 
@@ -798,6 +873,18 @@ class BrowserManager:
             logger.warning(f"删除内部消息失败：{e}")
 
         return True
+
+    async def _send_internal(self, text: str) -> bool:
+        """内部发送协议消息：发完立即从 DOM 删除，不暴露给用户（带页面存活自检 + 重试）"""
+        try:
+            return await self._send_internal_impl(text)
+        except Exception as e:
+            err = str(e)
+            if "has been closed" in err or "TargetClosed" in err or "detached" in err:
+                logger.warning(f"_send_internal 页面异常（{e}），重建后重试一次...")
+                self._page = None
+                return await self._send_internal_impl(text)
+            raise
 
     async def wait_response(self, timeout: int = 120, on_thinking=None,
                             thinking_selector: str = "") -> Optional[str]:

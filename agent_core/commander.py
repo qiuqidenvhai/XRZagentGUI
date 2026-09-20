@@ -48,6 +48,10 @@ class EventType(Enum):
     INTERRUPT = "interrupt"  # 用户中断
     MESSAGE_QUEUED = "message_queued"  # 插话消息入队
     MESSAGE_PROCESSED = "message_processed"  # 插话消息处理
+    # WARNING/INFO：系统提示类事件（不是错误）。之前没有这两个类型，代码只能
+    # 回退成 ERROR 事件 —— GUI 会把「新指令已排队」这类正常提示也画成红色报错。
+    WARNING = "warning"
+    INFO = "info"
 
 
 @dataclass
@@ -87,6 +91,9 @@ class ToolRegistry:
         "generate_ppt": "pptx_create", "make_ppt": "pptx_create",
         "ppt_create": "pptx_create", "pptx": "pptx_create",
         "create_ppt": "pptx_create",
+        # PDF
+        "make_pdf": "pdf_create", "create_pdf": "pdf_create", "pdf": "pdf_create",
+        "generate_pdf": "pdf_create", "export_pdf": "pdf_create",
         # 文件读写
         "write_file": "file_write", "create_file": "file_write",
         "save_file": "file_write", "write_text": "file_write",
@@ -150,8 +157,21 @@ class ToolRegistry:
             if note:
                 out = note + "\n" + out
             return ExecutionResult(id=str(uuid.uuid4()), status="success", output=out, tool=resolved)
-        except Exception as e:
-            return ExecutionResult(id=str(uuid.uuid4()), status="error", error=str(e), tool=resolved)
+        except BaseException as e:  # noqa: BLE001 - 见下方说明
+            # 这里必须兜住 BaseException，不能只拦 Exception。
+            # 实测事故：生成 PPT 时清理中间文件触发环境级删除拦截，对方抛的是
+            # SystemExit（BaseException 的子类，不是 Exception）。
+            # asyncio 的 Task.__step 对 SystemExit / KeyboardInterrupt 是
+            # 「set_exception 后原样再 raise」，异常会一路穿透 run_forever，
+            # 直接终结事件循环线程 —— 结果就是整个后端永久报废：
+            # 之后每一条指令都只能返回「事件循环未运行」，必须重启进程才能恢复。
+            # 工具出错只应该让这一步失败并回传给模型，绝不允许拖垮整个 Agent。
+            if isinstance(e, (KeyboardInterrupt, SystemExit)) and sys.is_finalizing():
+                raise
+            exc_name = type(e).__name__
+            return ExecutionResult(id=str(uuid.uuid4()), status="error",
+                                   error=f"工具 {resolved} 执行失败（{exc_name}）: {e}",
+                                   tool=resolved)
 
 
 # ============================================================
@@ -226,8 +246,11 @@ class Commander:
             if not full_path.exists():
                 return f"错误: 文件不存在 {full_path}"
             # PDF 文件用 PyPDF2 提取文本，其他文件用 UTF-8 文本读取
+            # 【修复】_read_pdf 是这里的局部函数（带 self 参数），不是类方法，
+            # 以前写成 self._read_pdf(...) → AttributeError，
+            # AI 一读 PDF 就崩，然后开始疯狂自救（装库/写脚本）直到超时。
             if full_path.suffix.lower() == '.pdf':
-                return await self._read_pdf(full_path)
+                return await _read_pdf(self, full_path)
             text = full_path.read_text(encoding="utf-8")
             all_lines = text.split("\n")
             offset = int(params.get("offset", 1))
@@ -241,11 +264,19 @@ class Commander:
             return f"[文件 {full_path} 行 {offset}-{offset + len(seg) - 1} / 共 {len(all_lines)} 行]\n{numbered}"
 
         async def _read_pdf(self, path: Path) -> str:
-            """使用 PyPDF2 读取 PDF 文件内容"""
+            """使用 PyPDF2 读取 PDF 文件内容（PyPDF2 没装时回退 pypdf）"""
+            reader_mod = None
             try:
-                import PyPDF2
+                import PyPDF2 as reader_mod
+            except ImportError:
+                try:
+                    import pypdf as reader_mod
+                except ImportError:
+                    return ("[错误] 读取 PDF 需要 PyPDF2 / pypdf，"
+                            "请用项目解释器安装：\"D:/软件/Python/python.exe\" -m pip install PyPDF2")
+            try:
                 with open(path, 'rb') as f:
-                    reader = PyPDF2.PdfReader(f)
+                    reader = reader_mod.PdfReader(f)
                     num_pages = len(reader.pages)
                     text_parts = []
                     for i, page in enumerate(reader.pages):
@@ -927,15 +958,43 @@ class Commander:
 
         async def task(**params):
             """委派子代理执行任务（对标 OpenCode task）。
-            params: goal(必填) / type(research|visit|coding)"""
+            params: goal(必填) / type(research|visit|coding)
+            子代理跟随【当前对话平台】：用当前 session 的浏览器开子窗口，
+            平台浏览器用 PlatformSession 适配（接口与 DeepSeekSession 对齐）。"""
             goal = params.get("goal") or params.get("prompt") or ""
             if not goal:
                 return "错误: 必须提供 goal"
             try:
                 from agent_core.subagent_manager import get_subagent_manager
                 mgr = get_subagent_manager(self._work_dir)
-                tid = await mgr.spawn_subagent(goal, task_type=params.get("type", "research"))
-                return f"已委派子代理任务: id={tid}\n目标: {goal}\n（用 check_task / wait_task 查询结果）"
+                # 【子代理跟随当前平台】优先用当前 session 的浏览器（self._session._bm，
+                # 跟随用户当前活跃平台：通义/豆包/元宝/DeepSeek），回退到构造时的 self._bm。
+                # 以前注入固定的 self._bm（DeepSeek 浏览器）→ 用户在通义发任务，子代理却
+                # 跑去 DeepSeek 网页，平台错位。现在子代理在哪个平台就开哪个平台的子窗口。
+                cur_bm = None
+                try:
+                    cur_bm = getattr(self._session, "_bm", None)
+                except Exception:
+                    cur_bm = None
+                if cur_bm is None:
+                    cur_bm = self._bm
+                # 派发前注入母浏览器 + 事件回调（同 _browser_research/_browser_visit）。
+                # spawn_child 现在 DeepSeek BrowserManager 与 PlatformBrowserManager 都有，
+                # 故任意平台都能派生子窗口。
+                if cur_bm is not None and hasattr(cur_bm, "spawn_child"):
+                    mgr.set_browser_manager(cur_bm)
+                    # 子代理内部多轮工具调用带 subagent_task_id 标记冒泡到 GUI。
+                    try:
+                        mgr.set_event_forwarder(self._on_event)
+                    except Exception:
+                        pass
+                    plat = getattr(getattr(cur_bm, "profile", None), "name",
+                                   getattr(cur_bm, "platform_key", "")) or type(cur_bm).__name__
+                    tid = await mgr.spawn_subagent(goal, task_type=params.get("type", "research"))
+                    return ("已委派子代理任务: id=%s\n目标: %s\n（平台: %s，"
+                            "用 check_task / wait_task 查询结果）" % (tid, goal, plat))
+                return ("错误: 当前平台浏览器不支持派生子窗口（缺 spawn_child 方法），"
+                        "无法启动子代理。")
             except Exception as e:
                 return f"委派子代理失败: {e}"
 
@@ -1051,7 +1110,7 @@ class Commander:
                             try:
                                 d.rmdir()
                                 summaries.append(f"删除空目录: {d.name}")
-                            except Exception:
+                            except BaseException:  # noqa: BLE001 清理失败无所谓，但不能让异常逃逸
                                 pass
 
                 # 2. 清理超7天的旧附件
@@ -1091,18 +1150,6 @@ class Commander:
             return "\n".join(summaries) if summaries else "无需清理"
         self._tools.register("cleanup_manager", "任务清理管理框架", cleanup_manager)
 
-        # ─── 深度思考开关 + 文件附件工具 ───
-        async def set_deep_think(**params):
-            """开启/关闭当前 AI 平台的「深度思考」模式（每个平台 UI 不同，已逐平台适配）"""
-            enable = params.get("enable", True)
-            if self._session is None:
-                return "错误：session 未初始化"
-            try:
-                await self._session.set_deep_think(enable=bool(enable))
-                return f"深度思考已{'开启' if enable else '关闭'}"
-            except Exception as e:
-                return f"深度思考切换失败: {e}"
-
         async def attach_file(**params):
             """把本地文件（图片/PDF 等）附加到下次发送给 AI 平台的消息里。
 
@@ -1130,7 +1177,11 @@ class Commander:
             msg += "，将在下一轮对话时自动附带发送给 AI"
             return msg
 
-        self._tools.register("set_deep_think", "开/关深度思考模式(enable=true/false)", set_deep_think)
+        # 【已取消】set_deep_think —— 不再注册给 AI。
+        # 理由（用户决定）：深度思考是本软件的【界面开关】，由用户自己点，
+        # 不该交给 AI 去「猜按钮再点」。实测四个平台上 AI 去点这个开关从未成功过，
+        # 反而把「深度思考 开启/关闭」当成一条普通任务去执行，浪费轮次还污染历史。
+        # self._tools.register("set_deep_think", ...)
         self._tools.register("attach_file", "附加文件(图片/PDF等)到下次对话(支持paths列表)", attach_file)
 
         # ─── Shell 执行工具 ───
@@ -1140,7 +1191,24 @@ class Commander:
             # 注意：不再硬拦截「写 C 盘」的命令行——用户若明确要求在某个路径生成，
             # 就按用户路径执行，真实系统错误（如权限/路径不存在）会原样返回，
             # 由 AI 自行判断并纠正，脚本不替用户做路径决定。
+            if not str(cmd).strip():
+                return ("[系统] 收到空的 shell 命令，未执行任何操作。"
+                        "请不要重复发送空命令；如需创建文件请改用 file_write 工具，"
+                        "任务已完成时请调用 done()。")
             timeout = params.get("timeout", 60)
+
+            def _dec(b: bytes) -> str:
+                """Windows 控制台默认 GBK/CP936 输出，直接用 utf-8 解码会变成乱码，
+                模型看不懂乱码就会反复重发同一条命令 → 死循环。这里做多编码回退。"""
+                if not b:
+                    return ""
+                for enc in ("utf-8", "gbk", "cp936", "mbcs"):
+                    try:
+                        return b.decode(enc)
+                    except (UnicodeDecodeError, LookupError):
+                        continue
+                return b.decode("utf-8", errors="replace")
+
             try:
                 proc = await asyncio.create_subprocess_shell(
                     cmd,
@@ -1148,9 +1216,12 @@ class Commander:
                     stderr=asyncio.subprocess.PIPE,
                 )
                 stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=timeout)
-                return f"[退出码 {proc.returncode}]\n{stdout.decode('utf-8', errors='ignore')}\n{stderr.decode('utf-8', errors='ignore')}"
+                return f"[退出码 {proc.returncode}]\n{_dec(stdout)}\n{_dec(stderr)}"
             except asyncio.TimeoutError:
-                proc.kill()
+                try:
+                    proc.kill()
+                except Exception:
+                    pass
                 return f"命令超时（>{timeout}s）"
             except Exception as e:
                 return f"执行错误: {e}"
@@ -1218,24 +1289,10 @@ class Commander:
                 return "[错误] 搜索超时（60秒）"
             except Exception as e:
                 return f"[错误] {str(e)}"
-
-        # ─── 深度思考工具（母代理执行，AI 调用）───
-        async def _deep_think_tool(**params):
-            """深度思考工具 - 由 AI 调用，实际控制浏览器按钮
-            
-            当 AI 认为当前问题需要深度思考时，调用此工具开启 DeepSeek 的深度思考模式。
-            系统会在 AI 输出完成后自动关闭此模式。
-            """
-            enable_str = params.get("enable", "true")
-            enable = enable_str.lower() in ("true", "1", "yes", "on")
-            await self._session.set_deep_think(enable)
-            return f"深度思考模式已{'开启' if enable else '关闭'}"
-
         self._tools.register("browser_click", "点击元素", browser_click)
         self._tools.register("browser_fill", "填写输入框", browser_fill)
         self._tools.register("browser_screenshot", "截图", browser_screenshot)
         self._tools.register("browser_search", "搜索", browser_search)
-        self._tools.register("deep_think", "深度思考：AI认为需要深度思考时调用此指令开启DeepSeek深度思考模式，完成后自动关闭", _deep_think_tool)
 
         # ─── 研究代理工具（独立子代理进程）───
         async def _browser_research(**params):
@@ -1367,7 +1424,11 @@ class Commander:
             sam = get_subagent_manager(self._work_dir)
 
             task_id = params.get("task_id", "")
-            timeout = params.get("timeout", 300)
+            # 子代理内部多轮（搜索/抓取/写文件）常跑 5-8 分钟，默认 300s 会在
+            # 子代理写 result.json 之前就超时 → 母代理拿到"未知错误"就弃用子代理
+            # 结果去走常识兜底（实测 9/15：子代理其实 success=True，只是 wait 太急）。
+            # 提到 900s，让 wait 等到子代理真正跑完再取结果。
+            timeout = params.get("timeout", 900)
 
             task = await sam.wait_task(task_id, timeout=timeout)
 
@@ -1525,6 +1586,27 @@ class Commander:
                     raw_content = params[key]
                     break
 
+            # 【实测事故】只传 path、不传内容时，旧代码会默默产出一个
+            # 「封面(用文件名当标题) + Thank You 结尾」的空壳 2 页 PPT，
+            # 用户要的「综合测试/功能展示/谢谢」三页一页都没有，
+            # 但工具返回 success，模型还汇报「生成成功」，问题极难发现。
+            # 这里直接报错，让模型补上内容重试，绝不允许静默生成空壳。
+            _empty_content = (
+                raw_content is None
+                or (isinstance(raw_content, str) and not raw_content.strip())
+                or (isinstance(raw_content, dict)
+                    and not (raw_content.get("slides") or raw_content.get("content")
+                             or raw_content.get("text")))
+                or (isinstance(raw_content, (list, tuple)) and not raw_content)
+            )
+            if _empty_content:
+                return ("错误：pptx_create 缺少内容，已取消生成（避免产出空壳 PPT）。\n"
+                        "请在 params 里带上 content，例如：\n"
+                        "  content='第1页「综合测试」\\n第2页「功能展示」\\n第3页「谢谢」'\n"
+                        "也支持 Markdown（# 一级标题分段）或结构化 "
+                        "{\"title\":\"...\",\"slides\":[{\"heading\":\"...\",\"items\":[...]}]}。\n"
+                        "只给 path 是不够的，请补充内容后重新调用。")
+
             requested_filename = params.get("filename")
             filename = os.path.expandvars(str(requested_filename or "slides.pptx"))
             path = os.path.expandvars(str(params.get("path") or ""))
@@ -1563,9 +1645,16 @@ class Commander:
                     theme_name=theme_name,
                     subtitle=subtitle,
                 )
+                # 把实际生成的页标题回传：模型能一眼核对「我要的 3 页在不在」，
+                # 避免它拿到一句「已生成」就以为万事大吉（实测过：模型用更差的
+                # 内容重复调用，把已经生成好的 3 页覆盖成标题是文件名的空壳）。
+                _titles = info.get("titles") or []
+                _titles_s = " / ".join(_titles) if _titles else "（标题为空，请检查 content）"
                 return (
                     f"✅ PPT 已生成: {info['path']}\n"
-                    f"   共 {info['slides']} 页（含封面），主题: {info['theme']}，16:9 宽屏"
+                    f"   共 {info['slides']} 页（含封面），主题: {info['theme']}，16:9 宽屏\n"
+                    f"   各页标题: {_titles_s}\n"
+                    f"   若页数或标题与要求不符，请带上完整内容重新调用（不要只传 path）。"
                 )
             except ImportError as ie:
                 msg = str(ie)
@@ -1575,7 +1664,140 @@ class Commander:
             except Exception as e:
                 raise Exception(f"❌ PPT 生成失败 ({type(e).__name__}): {e}") from e
 
-        self._tools.register("pptx_create", "生成 PPT（python-pptx）", pptx_tool_fn)
+        self._tools.register(
+            "pptx_create",
+            "生成 PPT（python-pptx）。content 必须【逐页】给出，格式："
+            "第1页「标题一」\\n第2页「标题二」\\n第3页「谢谢」，每页可另起行写要点；"
+            "这样页数和标题才会与要求一一对应。只传 path 或传无分页的一大段文字，"
+            "会导致页数对不上或被压成一页。",
+            pptx_tool_fn)
+
+        # ─── PDF 生成工具（reportlab）───
+        async def pdf_tool_fn(**params):
+            import os
+            from pathlib import Path
+
+            raw_content = ""
+            for key in ["content", "text", "body", "data", "value", "raw"]:
+                if key in params and params[key] is not None:
+                    raw_content = params[key]
+                    break
+
+            # 与 pptx 一致：空内容直接报错，绝不出空壳 PDF
+            _empty = (
+                raw_content is None
+                or (isinstance(raw_content, str) and not raw_content.strip())
+                or (isinstance(raw_content, (list, tuple, dict)) and not raw_content)
+            )
+            if _empty:
+                return ("错误：pdf_create 缺少内容，已取消生成（避免产出空壳 PDF）。\n"
+                        "请在 params 里带上 content（纯文本或 Markdown：# 标题 / - 要点）后重试。")
+
+            requested_filename = params.get("filename")
+            filename = os.path.expandvars(str(requested_filename or "document.pdf"))
+            path = os.path.expandvars(str(params.get("path") or ""))
+            filename_path = Path(filename)
+            if filename_path.suffix.lower() != ".pdf":
+                filename_path = filename_path.with_suffix(".pdf")
+
+            if path and Path(path).suffix.lower() == ".pdf" and not requested_filename:
+                out_path = self._safe_path(Path(path))
+            elif path:
+                out_path = self._safe_path(Path(path) / filename_path)
+            else:
+                out_path = self._safe_path(filename_path)
+            out_path.parent.mkdir(parents=True, exist_ok=True)
+
+            try:
+                from reportlab.lib.pagesizes import A4
+                from reportlab.lib.units import cm
+                from reportlab.lib.colors import HexColor
+                from reportlab.pdfbase import pdfmetrics
+                from reportlab.pdfbase.ttfonts import TTFont
+                from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+                from reportlab.lib.styles import ParagraphStyle
+
+                # 中文字体：优先系统自带 SimSun / SimHei（D 盘环境 Windows 必有），
+                # 注册失败则退回 Helvetica（中文变方块，但页面结构保留）。
+                font_name = "Helvetica"
+                try:
+                    pdfmetrics.registerFont(TTFont("XRZSimSun", r"C:\Windows\Fonts\simsun.ttc"))
+                    font_name = "XRZSimSun"
+                except Exception:
+                    try:
+                        pdfmetrics.registerFont(TTFont("XRZSimHei", r"C:\Windows\Fonts\simhei.ttf"))
+                        font_name = "XRZSimHei"
+                    except Exception:
+                        font_name = "Helvetica"
+
+                title_style = ParagraphStyle("xrz_title", fontName=font_name, fontSize=18,
+                                              leading=24, spaceAfter=10,
+                                              textColor=HexColor("#1f2937"))
+                h2_style = ParagraphStyle("xrz_h2", fontName=font_name, fontSize=14,
+                                           leading=20, spaceBefore=10, spaceAfter=4,
+                                           textColor=HexColor("#1d4ed8"))
+                body_style = ParagraphStyle("xrz_body", fontName=font_name, fontSize=10.5,
+                                            leading=16, textColor=HexColor("#374151"))
+                bullet_style = ParagraphStyle("xrz_bullet", fontName=font_name, fontSize=10.5,
+                                              leading=16, leftIndent=14, bulletIndent=2,
+                                              textColor=HexColor("#374151"))
+
+                doc = SimpleDocTemplate(str(out_path), pagesize=A4,
+                                        leftMargin=2 * cm, rightMargin=2 * cm,
+                                        topMargin=1.8 * cm, bottomMargin=1.8 * cm)
+
+                def _esc(s):
+                    return (str(s).replace("&", "&amp;").replace("<", "&lt;")
+                            .replace(">", "&gt;"))
+
+                story = []
+                # 文档标题：内容首个 # 标题，否则用文件名
+                text_src = raw_content if isinstance(raw_content, str) else str(raw_content)
+                first_h = ""
+                for _ln in text_src.splitlines():
+                    if _ln.strip().startswith("# "):
+                        first_h = _ln.strip()[2:].strip()
+                        break
+                story.append(Paragraph(_esc(first_h or out_path.stem), title_style))
+                story.append(Spacer(1, 6))
+
+                started = first_h != ""  # 首个 # 已作大标题，跳过避免重复
+                for raw_line in text_src.splitlines():
+                    line = raw_line.rstrip()
+                    s = line.strip()
+                    if not s:
+                        continue
+                    if started:
+                        started = False
+                    if s.startswith("### "):
+                        story.append(Paragraph(_esc(s[4:]), h2_style))
+                    elif s.startswith("## "):
+                        story.append(Paragraph(_esc(s[3:]), h2_style))
+                    elif s.startswith("# "):
+                        story.append(Paragraph(_esc(s[2:]), title_style))
+                    elif s.startswith(("- ", "* ")):
+                        story.append(Paragraph("• " + _esc(s[2:]), bullet_style))
+                    elif s.startswith("```"):
+                        # 代码块行：原样渲染（等宽风格用斜体标记段说明）
+                        story.append(Paragraph(_esc(s), bullet_style))
+                    else:
+                        story.append(Paragraph(_esc(s), body_style))
+
+                doc.build(story)
+                _size_kb = round(out_path.stat().st_size / 1024, 1)
+                return (f"✅ PDF 已生成: {out_path}（{_size_kb} KB，共 {doc.page} 页）\n"
+                        f"   若内容与要求不符，请带上完整内容重新调用。")
+            except ImportError as ie:
+                raise ImportError("❌ reportlab 未安装。请运行：\"D:/软件/Python/python.exe\" -m pip install reportlab") from ie
+            except Exception as e:
+                raise Exception(f"❌ PDF 生成失败 ({type(e).__name__}): {e}") from e
+
+        self._tools.register(
+            "pdf_create",
+            "生成 PDF（reportlab）。content 支持纯文本或 Markdown"
+            "（# 大标题 / ## 小节 / - 要点），中文自动用系统 SimSun/SimHei 字体。"
+            "只传 path 不传内容会被拒绝。",
+            pdf_tool_fn)
 
         # ─── 记忆工具（母代理直接执行）───
         async def remember_tool(**params):
@@ -1685,6 +1907,44 @@ class Commander:
         else:
             platforms_block = "- DeepSeek（https://chat.deepseek.com，默认平台）"
 
+        # RAW 命令格式：仅在「本机 shell 真实可用」时宣传。
+        # 网页聊天平台（通义/豆包/元宝…）上的模型会照抄这个格式、反复发同一条 shell 命令，
+        # 而该命令在本机要么不存在、要么输出乱码 → 模型看不懂就无限重发 → 死循环卡死。
+        # 因此对多平台会话【不提供】RAW shell 格式，只允许使用真实工具。
+        _is_platform_session = type(self._session).__name__ != "DeepSeekSession"
+        if _is_platform_session:
+            raw_block = (
+                "（本平台【不提供】shell / RAW 命令能力，也禁止输出任何 RAW 命令块"
+                "（即用尖括号包住 RAW 三个字母的那种块）；"
+                "禁止尝试执行系统命令，一切操作必须通过下面的工具完成。）\n"
+                "【严禁使用网页自带功能代替工具】不要使用本网页自带的「办公 / 文档生成 / "
+                "PPT 生成 / 表格生成 / 沙箱 / 深度研究 / 上网插件」等任何平台内建功能，"
+                "也不要让网页自己去生成文件。这些功能运行在网页自己的沙箱里，"
+                "生成的文件【不会】出现在用户电脑上，等于任务失败。\n"
+                "生成 Word / PPT / 表格 / 文本等一切文件，"
+                "【必须】通过 @@@@ 协议调用 docx_create / pptx_create / file_write 等本 Agent 的工具，"
+                "并把工具返回的成功信息作为完成的依据。\n"
+                "【特别提醒】一旦看到网页弹出「办公 / 写作 / 演示文稿 / 文档」之类的面板、卡片或"
+                "侧边栏，就说明你【走错路了】：那是平台自己的沙箱，在那里做出来的东西用户电脑上一个"
+                "文件都不会有，而且会立刻耗尽平台额度、让你后面再也答不上话。"
+                "此时必须马上停止，改为直接输出一行 @@@@ 协议调用本 Agent 的工具。\n"
+                "同理，【查资料 / 联网检索】也必须调用 browser_search 工具，"
+                "不要用网页自带的「联网搜索 / 上网」开关——那样搜到的内容只留在网页里，"
+                "本 Agent 和用户都拿不到结果。\n"
+                "【身份】当用户问「你是谁 / 你是什么模型」时，必须明确回答："
+                "你是「仙人掌 Agent（XianRenZhang Agent）」，当前由本平台的大模型驱动；"
+                "不要只报平台的名字，也不要否认自己是仙人掌 Agent。\n"
+            )
+        else:
+            raw_block = (
+                "RAW 命令格式（直接执行shell，仅在你确实需要执行系统命令时使用）：\n"
+                "<<<RAW>>>\n"
+                "echo hello\n"
+                "<<<RAW>>>\n"
+                "（上面 echo hello 只是格式示例；请把示例换成你真正要执行的命令，"
+                "绝不照抄示例本身。）\n"
+            )
+
         return f"""你是仙人掌 Agent（XianRenZhang Agent），一个自主 AI 助手，支持多平台 LLM。
 
 === 核心指令 ===
@@ -1698,11 +1958,7 @@ class Commander:
 }}
 @@@@
 
-RAW 命令格式（直接执行shell）：
-<<<RAW>>>
-命令内容
-<<<RAW>>>
-
+{raw_block}
 === 可用工具 ===
 {tools_block}
 
@@ -1719,15 +1975,14 @@ RAW 命令格式（直接执行shell）：
 {platforms_block}
 
 不同平台的特性：
-- DeepSeek: 支持深度思考(R1)、文件上传、搜索 —— 用 set_deep_think(enable=true) 开启
-- 通义千问: 支持深度思考、文件上传 —— 用 set_deep_think(enable=true) 开启
-- 豆包: 支持深度思考、文件上传 —— 用 set_deep_think(enable=true) 开启
-- 元宝: 支持深度思考、文件上传 —— 用 set_deep_think(enable=true) 开启
-- ChatGPT: 支持深度思考（Analysis 模式）、文件上传
-- Gemini: 支持深度思考（Think 模式）
+- DeepSeek: 支持文件上传、搜索
+- 通义千问: 支持文件上传
+- 豆包: 支持文件上传
+- 元宝: 支持文件上传
+- ChatGPT: 支持文件上传
+- Gemini: 支持文件上传
 - Ollama: 完全本地运行，通过 `ollama run qwen3.5:0.8b` 子进程通信。AI 调用 ollama_chat 工具时启动 ollama run 并与 qwen3.5:0.8b 对话。
 
-提示：需要深度思考时，先调用 `set_deep_think(enable=true)`，再发后续对话；
 需要让 AI 看图/读文档时，先 `attach_file(paths=[...])` 把图片/PDF 路径加入，
 再发对话，文件会自动作为附件上传到输入框。
 
@@ -1739,7 +1994,7 @@ RAW 命令格式（直接执行shell）：
 5. 任务完成后，发送 done() 表示结束
 7. **思考过程可视化**：每次调用工具前，先用一两句自然语言表达你的思考或计划，
    并【写在本轮 @@@@ 协议块之外】（纯自然语言，不要放进 JSON）。这部分会被实时抓取，
-   作为「🧠 思考过程」展示给用户，让用户看到你的推理链路。即便用户没开启深度思考(R1)，
+   作为「🧠 思考过程」展示给用户，让用户看到你的推理链路。
    这条思考过程也必须保留。
 
 8. **文件类任务必须用工具真实完成，绝不许让用户复制粘贴**：你运行在用户的本机电脑上，
@@ -1769,6 +2024,19 @@ RAW 命令格式（直接执行shell）：
   （例如为了生成报告必须先建目录、为了改文件必须先读取），那就直接做，不要停下来。
 - 只有当你想做的东西【完全超出】用户这条指令的范畴（用户没要报告你偏要写报告）时，才不做它；
   但即便如此也【不向用户提问】，只专注于用户真正要求的事，做完后调用 done()。
+
+=== 禁止重复 / 禁止无用 shell（极重要，防卡死）===
+- 【严禁】连续两次发送完全相同的工具调用。如果上一次的返回结果说明该操作已经成功，
+  就直接进入下一步或调用 done()；如果返回的是错误，就【换一种做法】，绝不要原样重发。
+- 【严禁】输出任何 `<<<RAW>>>` / shell 命令块。你所在的网页聊天平台无法在本机执行系统命令，
+  就算输出了也只会得到乱码或「不是内部或外部命令」之类的报错。需要读写文件请直接用
+  file_write / file_edit / docx_create / pptx_create；需要查资料请用 browser_search / webfetch。
+- 工具返回内容与上一次完全一样时，说明这条路走不通，必须改变策略。
+- 【严禁】用自然语言宣称「已生成 / 已创建 / 已保存」某个文件。文件是否生成只看工具返回，
+  没有成功调用工具就说已生成，属于谎报，会被系统拦截并要求重做。
+- 【严禁】把任务交给网页自带的「办公 / 文档 / PPT / 表格 / 沙箱 / 深度研究」等平台内建功能。
+  那些功能在网页自己的沙箱里生成文件，用户电脑上不会有任何文件，等于没做。
+  一律用 @@@@ 协议调用本 Agent 的 docx_create / pptx_create / file_write 等工具。
 
 === 子代理规则 ===
 - browser_research: 启动独立研究子代理（后台运行，不阻塞母代理）
@@ -1819,8 +2087,108 @@ RAW 命令格式（直接执行shell）：
         if self._session:
             self._session.set_system_prompt(self._system_prompt)
 
+    def _recent_uploads(self, minutes: int = 15, limit: int = 3) -> list:
+        """最近刚上传的附件绝对路径（HTTP /upload 的落盘目录）。
+
+        「上传」和「发指令」常常是两次请求，附件不一定会进 _pending_attachments，
+        模型看不到路径就会满磁盘 glob 找文件（实测为此绕了 25 次工具调用）。
+        """
+        try:
+            import time as _t
+            base = Path(__file__).resolve().parent.parent / "xrz_data" / "gui_attachments"
+            if not base.is_dir():
+                return []
+            now = _t.time()
+            files = [p for p in base.iterdir() if p.is_file()]
+            files.sort(key=lambda p: p.stat().st_mtime, reverse=True)
+            return [str(p) for p in files
+                    if (now - p.stat().st_mtime) <= minutes * 60][:limit]
+        except Exception:
+            return []
+
     async def run(self, user_instruction: str, file_path: Optional[str] = None,
                   context_hints: str = "") -> str:
+        """run() 的并发闸门。
+
+        【实测缺陷·必须串行】后端 /command 没有任何并发保护：上一条任务还在跑时
+        再发一条指令，两个 run() 会【同时驱动同一个网页会话】（同一浏览器、同一
+        PlatformSession / DeepSeekSession）。后果是灾难性的且难以察觉：
+          · 两条指令的消息在同一个网页输入框里交替发出 → 模型收到串台上下文；
+          · 两个 wait_response 抢同一个页面的「最后一条消息」→ 回复张冠李戴；
+          · 会话自愈（换新会话/轮数计数）被两次调用互相触发 → 无限换会话空转；
+          · 最终表现为「任务卡死、最终回复丢失（final=''）」。
+        这里用 asyncio.Lock 把 run() 串行化：后来的指令排队等前一条跑完再执行。
+        """
+        try:
+            import asyncio as _aio
+            _lock = getattr(self, "_run_lock", None)
+            if _lock is None:
+                _lock = _aio.Lock()
+                self._run_lock = _lock
+        except Exception:
+            _lock = None
+        if _lock is None:
+            return await self._run_impl(user_instruction, file_path, context_hints)
+        if _lock.locked():
+            logger.warning("[Commander] 上一条任务仍在执行，新指令已排队（避免同一网页会话被并发驱动）")
+            try:
+                _warn_evt = getattr(EventType, "WARNING", None) or EventType.ERROR
+                self._emit(_warn_evt, {
+                    "text": "上一条任务还在执行，你的新指令已排队，稍后自动执行"
+                })
+            except Exception:
+                pass
+        # 排队等待有上限：不能因为上一条任务卡住就让后面所有指令永远排队
+        # （否则用户会发现「发什么都没反应」，比并发串台还难排查）。
+        try:
+            await _aio.wait_for(_lock.acquire(), timeout=600)
+        except Exception:
+            logger.error("[Commander] 等待上一条任务让出执行权超时（600s），放弃本次指令")
+            try:
+                self._emit(EventType.ERROR, {
+                    "text": "上一条任务超过 10 分钟仍未结束，本次指令已取消。"
+                            "请先中断上一条任务（或重启软件）再试。"
+                })
+            except Exception:
+                pass
+            return "[错误] 上一条任务长时间未结束（很可能卡住了），本次指令已取消。" \
+                   "请先中断上一条任务，或重启软件。"
+        try:
+            return await self._run_impl(user_instruction, file_path, context_hints)
+        except BaseException as e:  # noqa: BLE001 - 最后一道防线，见下方说明
+            # 【实测事故·必须拦 BaseException】
+            # 工具链里冒出的 SystemExit / KeyboardInterrupt 会穿透 Task.__step，
+            # 一路终结事件循环线程，导致后端永久返回「事件循环未运行」。
+            # 这里把任何逃逸异常都降级成一次普通的失败任务：
+            #   · 通知前端（错误事件 + 结束事件），用户能看到失败原因；
+            #   · 释放锁，后续指令照常可用；
+            #   · 异常不再外泄，事件循环存活。
+            if isinstance(e, (KeyboardInterrupt, SystemExit)) and sys.is_finalizing():
+                raise
+            exc_name = type(e).__name__
+            logger.exception("[Commander] 任务执行过程中发生未捕获异常，已降级为失败任务")
+            try:
+                self._emit(EventType.ERROR, {
+                    "text": f"任务中断（{exc_name}）: {e}"
+                })
+            except Exception:
+                pass
+            try:
+                self._emit(EventType.DONE, {
+                    "type": "error",
+                    "text": f"任务因内部异常中断（{exc_name}）: {e}",
+                })
+            except Exception:
+                pass
+            return f"[错误] 任务中断（{exc_name}）: {e}"
+        finally:
+            try:
+                _lock.release()
+            except Exception:
+                pass
+
+    async def _run_impl(self, user_instruction: str, file_path: Optional[str] = None,
+                        context_hints: str = "") -> str:
         """
         单轮执行（自动循环直到 AI 认为完成）
         返回最终回复内容
@@ -1850,6 +2218,18 @@ RAW 命令格式（直接执行shell）：
                 "同时在本地磁盘保留有原件，请直接用 file_read 读取以下绝对路径，"
                 f"不要猜测其它路径：\n{_att_lines}"
             )
+        elif any(k in user_instruction for k in ("上传", "附件", "PDF", "pdf", "文档", "这份", "刚才")):
+            # 【实测坑】用户在面板里点「上传」是走 HTTP /upload 落盘，
+            # 并不一定会进 _pending_attachments（上传和发指令是两次请求）。
+            # 结果模型不知道附件在哪，开始满磁盘 glob → 二十多轮工具调用去找文件。
+            # 这里把「刚刚上传」的文件路径直接指给它（file_read 支持 PDF）。
+            _recent = self._recent_uploads()
+            if _recent:
+                current_input += (
+                    "\n\n[附件说明] 刚刚上传到本机的文件在这里，请用 file_read 直接读取"
+                    "（file_read 支持 PDF），不要自己满盘搜索：\n"
+                    + "\n".join(f"- {p}" for p in _recent)
+                )
 
         final_reply = ""
         last_ai_text = ""  # 最近一次 AI 的纯文本回复（循环到上限时作为最终答案返回）
@@ -1861,10 +2241,32 @@ RAW 命令格式（直接执行shell）：
         # 安全阀：MAX_NO_PROTOCOL 防止 AI 永远不回协议导致纯纠正死循环（独立于轮数）。
         max_turns, turn = 99999999999, 0
         no_protocol_retries = 0  # 防止通用平台（通义/豆包等）不遵守协议时无限循环
+        empty_reply_retries = 0  # 防止「一次没抓到回复」就把整个任务判死
+        # 通用平台（豆包等）首轮可能因为页面还在渲染而抓不到正文，允许有限次重发同一请求。
+        MAX_EMPTY_REPLY = 3
         # 极大值：通用平台不一定每次都立刻回 @@@@ 协议（尤其首轮还在消化协议时），
         # 绝不能因为几次没回协议就提前 break 退出循环（用户明确要求调成极大值）。
         # 配合「每轮反复发送系统提示词」+「清洗网页 UI 文字」，模型最终会回协议。
         MAX_NO_PROTOCOL = 99999999999
+        # 网页聊天平台（通义/豆包/元宝）的模型能力弱，经常整段用自然语言回答、不写 @@@@ 协议。
+        # 对它们保留「纠正几次」即可：纠正无效时把那句话当最终回答返回，
+        # 绝不能无限重试导致用户侧看起来「卡死」。DeepSeek 仍保持极大值。
+        _is_platform_session = type(self._session).__name__ != "DeepSeekSession"
+        _max_no_protocol = 2 if _is_platform_session else MAX_NO_PROTOCOL
+        # 假完成守卫：弱模型（豆包/元宝）常「口头声称已生成文件」却不真的调工具。
+        # 实测：豆包对「生成 mp2_doubao.pptx」只回「已生成 3 页演示文稿…文件已生成」，
+        # 而全程 tools=['done']，磁盘上没有该文件 → 必须打回让它真调工具。
+        self._file_tools_used = set()
+        self._tool_result_log = []   # [(工具名, 结果摘要)] 用于 done() 空文案时生成真实总结
+        self._fake_done_retries = 0
+        self._empty_done_retries = 0
+        self._no_progress_retries = 0      # 无进展循环守卫打回计数（本 run 内）
+        self._cmd_sigs = []                # 本 run 内已执行工具调用签名（tool+参数）
+        self._no_progress_baseline = None  # 无进展守卫触发时的 _cmd_sigs 长度基线
+        MAX_FAKE_DONE = 2
+        MAX_EMPTY_DONE = 1
+        # 本轮是否为「用户真实输入」（用户插话）→ 决定 internal 标记
+        _queued_user_turn = False
 
         while turn < max_turns and self._running:
             turn += 1
@@ -1884,6 +2286,7 @@ RAW 命令格式（直接执行shell）：
                 # 将插话消息作为新的输入
                 current_input = f"[用户插话] {queued_msg}\n\n请暂停当前工作，优先处理用户的插话要求。"
                 self._interrupted = False  # 清除中断标志，继续执行
+                _queued_user_turn = True   # 用户插话属于真实用户输入，要进历史
                 continue
 
             # 记忆提醒
@@ -1891,14 +2294,49 @@ RAW 命令格式（直接执行shell）：
                 self._emit(EventType.MEMORY_REMINDER, {"turn": self._history_turns})
 
             # 发送给 AI（携带待附件）
+            # internal 标记：本次 run() 的第一轮（真实用户指令）以及用户插话算"用户说的"，
+            # 其余所有轮都是 Agent 内部控制轮（工具结果回传 / 协议纠正 / 继续指令）
+            # → 不写进对话历史，历史记录里只留用户真实对话。
             try:
+                if self._pending_attachments:
+                    _att_note = ("\n[系统] 本轮附带以下本地文件（如果网页输入框没有出现附件预览，"
+                                 "就用 file_read 工具直接读取这些路径，file_read 支持 PDF）：\n"
+                                 + "\n".join(f"- {x}" for x in self._pending_attachments))
+                    current_input = current_input + _att_note
                 response = await self._session.send(
                     current_input,
                     attachments=self._pending_attachments if self._pending_attachments else None,
+                    internal=not (turn == 1 or _queued_user_turn),
                 )
+                # 【噪音清洗】网页平台会把「Tool xxx does not exists.」这类平台原生
+                # 工具报错混进回复正文（实测通义），不做处理会原样出现在最终回复开头。
+                try:
+                    from agent_core.platform_browser import strip_platform_noise_lines as _spn
+                    response = _spn(response)
+                except Exception:
+                    pass
+                self._last_attachment_paths = list(self._pending_attachments or [])
+                # 【实测问题】DeepSeek 的 attach 按钮选择器为空 → 网页附件根本没上传，
+                # 模型回答「会话没有收到任何 PDF」。附件的本机路径是 100% 存在的，
+                # 直接告诉模型用 file_read 读（file_read 支持 PDF），不再依赖网页上传。
                 self._pending_attachments = []  # 发送后清空
+                _queued_user_turn = False
             except Exception as e:
                 logger.error(f"AI 调用失败: {e}")
+                try:
+                    from .platform_browser import LoginRequiredError as _LRE
+                    if isinstance(e, _LRE):
+                        return f"[需要登录] {e}"
+                except Exception:
+                    pass
+                try:
+                    from .platform_browser import SecurityVerificationRequiredError as _SVRE
+                    if isinstance(e, _SVRE):
+                        # 反自动化图形验证墙：如实停下、告诉用户去浏览器手动过一次验证，
+                        # 绝不自动重发（越刷验证墙越频繁）。
+                        return f"[需要手动过验证] {e}"
+                except Exception:
+                    pass
                 return f"[错误] AI 调用失败: {e}"
 
             # 诊断日志：记录收到的回复长度和是否包含协议标记
@@ -1913,10 +2351,12 @@ RAW 命令格式（直接执行shell）：
 
             # ── 思考过程可视化 ──
             # 把 AI 在 @@@@ 协议 / <<<RAW>>> 之外的自然语言表达（思考、计划、解释）推送给 GUI，
-            # 作为「🧠 思考过程」实时展示。这样即便平台没有开启深度思考(R1)推理模式，
+            # 作为「🧠 思考过程」实时展示。
             # 用户也能看到 Agent 每一步在想什么、打算怎么做。
             _reasoning = self._strip_protocol(response)
             if _reasoning:
+                # 记下最近一次模型的自然语言内容，作为死循环/异常收尾时的兜底答复
+                last_ai_text = _reasoning
                 if not cmds:
                     # AI 这一轮只说了话、没有调工具 → 直接当作思考过程展示
                     self._emit(EventType.THINKING, {"text": _reasoning})
@@ -1931,26 +2371,131 @@ RAW 命令格式（直接执行shell）：
                            {"text": self._protocol.describe_fix(cmds[0])})
             if not cmds:
                 ai_text = (response or "").strip()
+                # 【彻底废除隐式 done】（用户明令）：
+                # 实测元宝第 1 轮回复里明明带着 file_write 的 @@@@ 协议，却因为自然语言里
+                # 提到「完成 / done」就被当成收尾直接结束，工具根本没执行。
+                # 规则改为：没有显式的 @@@@{"tool":"done"}@@@ 协议就【绝不】结束任务，
+                # 一律按「未遵守协议」发警告打回。
+                if ai_text and self._implicit_done(ai_text):
+                    no_protocol_retries += 1
+                    _budget_imp = 20 if self._demanded_output_path(original_task) else max(_max_no_protocol, 4)
+                    if no_protocol_retries > _budget_imp:
+                        logger.warning("模型始终未显式调用 done()，按最终回复处理（已警告 %d 次）",
+                                       no_protocol_retries)
+                        _warn_text = "模型一直没用显式 done() 协议收尾，已按最后回复结束任务"
+                        _warn_evt = getattr(EventType, "WARNING", None) or getattr(EventType, "ERROR")
+                        self._emit(_warn_evt, {"text": _warn_text})
+                        final_reply = response
+                        break
+                    logger.info("[Commander] 检测到自然语言收尾但无显式 done() 协议，警告打回 %d/%d",
+                                no_protocol_retries, _budget_imp)
+                    self._emit(EventType.CORRECTION_SENT, {
+                        "text": "模型想用自然语言收尾，已警告：必须显式调用 done() 协议才算结束"
+                    })
+                    current_input = (
+                        "[SYSTEM] 【禁止用自然语言宣布完成】你的上一条回复没有可执行的 @@@@ 协议"
+                        "（或协议格式错误被丢弃）。规则：\n"
+                        "1. 要执行操作 → 输出 @@@@{\"tool\":\"工具名\",\"params\":{...},\"id\":\"1\"}@@@@；\n"
+                        "2. 任务确实做完 → 必须显式输出 @@@@{\"tool\":\"done\",\"params\":{},\"id\":\"9\"}@@@@ "
+                        "才算结束，写成「任务完成」「done()」这类自然语言【无效】。\n"
+                        "现在请重新输出正确的协议行。"
+                    )
+                    continue
+                if ai_text and self._looks_like_quota_block(ai_text):
+                    # 平台账号额度/次数耗尽（实测豆包页面直接弹：
+                    # 「近 7 天办公能力的免费额度用完了，我得休息一阵子了…」）。
+                    # 这类提示不是模型回答，重试也没用（网页只会一直弹同一张额度卡），
+                    # 必须立刻把真实原因告诉用户并停止，不能假装成模型回答去空转轮次。
+                    logger.error(f"[Commander] 平台额度/次数耗尽: {ai_text[:120]!r}")
+                    self._emit(EventType.ERROR, {"text": f"该平台账号额度已耗尽：{ai_text[:120]}"})
+                    final_reply = (
+                        f"[平台额度耗尽] {ai_text.strip()}\n\n"
+                        "这不是本软件的问题：该网页账号的免费额度 / 使用次数已用完，"
+                        "网页只回额度提示、不再回答。请等额度恢复、开通订阅，或切换到其它平台。"
+                    )
+                    break
+                if ai_text and self._looks_like_platform_error(ai_text):
+                    # 平台自身报错 / 网页反馈面板文字 → 不是模型回答，重发同一条请求即可
+                    empty_reply_retries += 1
+                    logger.warning(
+                        f"[Commander] 第 {turn} 轮抓到平台报错/UI 噪音片段："
+                        f"{ai_text[:120]!r}，重试 {empty_reply_retries}/{MAX_EMPTY_REPLY}"
+                    )
+                    if empty_reply_retries <= MAX_EMPTY_REPLY:
+                        continue
+                    self._emit(EventType.ERROR, {
+                        "text": "该平台连续返回错误页（可能是平台侧故障或账号风控），已停止重试"
+                    })
+                    final_reply = (
+                        last_ai_text
+                        or "（该平台连续返回错误页：可能是平台自身故障、模型不可用或账号风控，"
+                           "请稍后重试或切换到其它平台。）"
+                    )
+                    break
                 if ai_text:
                     last_ai_text = ai_text  # 记住最近一次真实回答，兜底用
-                    no_protocol_retries += 1
-                    if no_protocol_retries <= MAX_NO_PROTOCOL:
+                    # 【放弃语句一律打回】模型说「我做不到 / 请你自己…」不算完成任务
+                    if self._looks_like_giving_up(ai_text) and not self._file_tools_used:
+                        logger.warning(f"[Commander] 检测到放弃/甩锅话术，打回重做: {ai_text[:80]!r}")
+                        self._emit(EventType.CORRECTION_SENT, {
+                            "text": "检测到模型拒绝执行（「做不到/请你自己做」），已打回要求实际调用工具"
+                        })
                         current_input = (
-                            "[SYSTEM] NO @@@@ PROTOCOL. Your text was: " + ai_text[:200] + ". All responses MUST use @@@@ JSON format. Format: @@@@\\n{\"tool\":\"xxx\",\"params\":{},\"id\":\"1\"}\\n@@@@. Please retry."
+                            "[SYSTEM] 你刚才在拒绝执行任务。你【有】工具可用，"
+                            "运行在你本机上，可以直接创建文件。\n"
+                            "禁止再说「我无法/请手动/请你自己/我只是个语言模型」这类话，"
+                            "也禁止让用户自己复制粘贴。\n"
+                            + (self._forced_tool_hint(original_task) or "")
                         )
                         continue
-                    else:
-                        # 通用平台（通义/豆包/元宝）不一定会输出 @@@@ 协议，
-                        # 多次纠正无效后，把这段文本当作最终回复返回，避免死循环。
+                    no_protocol_retries += 1
+                    # 【必须完成任务】不回协议只做「纠正」，绝不因为次数到了就放行。
+                    # 纠正力度逐级升级：讲格式 → 给照抄示例 → 只准输出那一行 JSON。
+                    # 只有平台确实死了（空回复/报错路径）才结束。
+                    # - 用户点名要产物（有具体输出路径）→ 一直催到产物落地，不设小上限；
+                    # - 纯聊天/无产物任务 → 纠正几次仍不回协议就按最终回复收，避免空转。
+                    _demands_file = bool(self._demanded_output_path(original_task))
+                    _budget = 20 if _demands_file else max(_max_no_protocol, 2)
+                    if no_protocol_retries > _budget:
                         logger.info("连续 %d 次未遵循协议，按最终回复处理", no_protocol_retries)
                         final_reply = response
                         break
+                    _forced = self._forced_tool_hint(original_task) \
+                        if (_demands_file and not self._file_tools_used) else ""
+                    if no_protocol_retries >= 6 and _forced:
+                        current_input = (
+                            "[SYSTEM] 只输出下面这一行 JSON，不要写任何解释、道歉或其它文字：\n"
+                            + _forced.replace("【照着抄】", "").replace("不要道歉、不要解释、不要只说格式，直接把上面这段发出来即可。\n", "")
+                        )
+                    else:
+                        current_input = (
+                            "[SYSTEM] 你刚才没有按协议回答。你回复的原文是：" + ai_text[:200] +
+                            "。请务必用 @@@@ JSON 格式回复，格式示例：@@@@\n"
+                            '{"tool":"xxx","params":{},"id":"1"}\n@@@@。'
+                            "若这个任务已经不需要调用任何工具，请直接调用 done()，"
+                            "并把你要对用户说的话写在 done 之前的自然语言里。\n"
+                            + _forced
+                        )
+                    continue
                 else:
                     # 没收到任何回复（等待超时 / 回复选择器未命中 / 站点结构变化）
+                    # 【关键】不能一次抓空就把整个任务判死：先重发同一请求（页面可能还在渲染），
+                    # 连续多次都拿不到才结束，并给出人类可读的原因。
+                    empty_reply_retries += 1
+                    if empty_reply_retries <= MAX_EMPTY_REPLY:
+                        logger.warning(
+                            f"[Commander] 第 {turn} 轮未抓到模型回复，重试 "
+                            f"{empty_reply_retries}/{MAX_EMPTY_REPLY}"
+                        )
+                        continue
                     self._emit(EventType.ERROR, {
-                        "text": "未收到模型回复（可能是回复选择器未命中或站点结构变化）"
+                        "text": "未收到模型回复（回复选择器未命中、页面未渲染完或站点结构变化）"
                     })
-                    final_reply = "（未收到回复）"
+                    final_reply = (
+                        last_ai_text
+                        or "（未收到模型回复：已连续重试多次仍未从网页抓取到回答正文，"
+                           "可能是该平台回复区结构变化或页面加载异常。请稍后重试。）"
+                    )
                     break
 
             # 解析到协议命令，重置纠正计数
@@ -2000,10 +2545,223 @@ RAW 命令格式（直接执行shell）：
             except Exception:
                 pass
 
+            # ── 死循环检测：连续 5 次完全相同的工具调用（工具名+参数+结果）强制终止 ──
+            # 这是 raw_shell 空命令死循环（"极其糟糕"卡死根因）的兜底保护。
+            import json as _json
+            _tool_name = cmd.command.tool
+            try:
+                _param_sig = _json.dumps(cmd.command.params, ensure_ascii=False, sort_keys=True)
+            except Exception:
+                _param_sig = str(cmd.command.params)
+            _cmd_sig = f"{_tool_name}|{_param_sig}|{(result.output or result.error or '')[:80]}"
+            if _tool_name in self._FILE_TOOLS and str(getattr(result, "status", "")).lower() == "success":
+                self._file_tools_used.add(_tool_name)
+            try:
+                _ro = (getattr(result, "output", None) or getattr(result, "error", None) or "")
+                self._tool_result_log.append((_tool_name, str(_ro)[:200]))
+            except Exception:
+                pass
+            if getattr(self, "_prev_cmd_sig", None) == _cmd_sig:
+                self._identical_streak = getattr(self, "_identical_streak", 0) + 1
+            else:
+                self._identical_streak = 1
+            self._prev_cmd_sig = _cmd_sig
+
+            # ── 无进展循环守卫（工具轮转）──
+            # 上面的 _identical_streak 只防「同一 工具+参数+结果 连续 N 次」；
+            # 弱模型会「读→写→读→写」在两种工具间交替空转（参数略有差异时连
+            # 相同调用都算不上），streak 每次重置、守卫形同虚设，实测豆包 T3：
+            # 用户要 PPT，它在 file_read→docx_create 间空转 18 轮、540s 烧满超时。
+            # 规则：最近 10 次调用只在 ≤2 种工具间轮转且没有 done → 第 1 次注入强纠正
+            # （点破用户真实需求+该用哪个工具）；纠正后 12 次内仍空转 → 强制停止。
+            try:
+                if _tool_name != "done":
+                    self._cmd_sigs.append(_tool_name)
+                    if len(self._cmd_sigs) > 30:
+                        del self._cmd_sigs[:len(self._cmd_sigs) - 30]
+                    if len(self._cmd_sigs) >= 10 and len(set(self._cmd_sigs[-10:])) <= 2:
+                        if getattr(self, "_no_progress_baseline", None) is None:
+                            self._no_progress_baseline = len(self._cmd_sigs)
+                            _np_kinds = "/".join(sorted(set(self._cmd_sigs[-10:])))
+                            logger.warning(
+                                f"[Commander] 无进展循环守卫#1: 连续 10 次在 {_np_kinds} 间轮转，注入强纠正")
+                            self._emit(EventType.CORRECTION_SENT, {
+                                "text": f"检测到无进展循环：连续 10 次在 {_np_kinds} 间轮转，已注入强纠正"})
+                            current_input = (
+                                f"[SYSTEM] 你连续 10 次只在 {_np_kinds} 两种工具间来回空转，没有任何进展，"
+                                "也没有调用匹配用户真实需求的工具。\n"
+                                "立即：1) 确认用户到底要什么产物（PPT→pptx_create、Word→docx_create、"
+                                "文本→file_write、查资料→browser_search）；"
+                                "2) 停止重复调用，直接用正确的工具一次做完；3) 做完调用 done()。\n"
+                                f"用户的原始要求是：{(original_task or '')[:200]}"
+                            )
+                            continue
+                        elif len(self._cmd_sigs) - self._no_progress_baseline >= 12:
+                            _np_kinds = "/".join(sorted(set(self._cmd_sigs[-10:])))
+                            logger.error(
+                                f"[Commander] 无进展循环守卫#2: 纠正后仍 12+ 次在 {_np_kinds} 间空转，强制停止")
+                            self._emit(EventType.ERROR, {
+                                "text": f"Agent 无进展循环（在 {_np_kinds} 间轮转），纠正无效，已自动停止避免失控"})
+                            final_reply = (
+                                last_ai_text
+                                or f"（任务中止：Agent 在 {_np_kinds} 间空转 20+ 次，纠正后仍未调用正确工具/done，"
+                                   f"为避免失控已自动停止。请换一种说法再试，或切换到其它平台。）"
+                            )
+                            break
+            except Exception:
+                pass
+
             # done() = AI 自己声明任务完成 → 循环正常结束。
             # 是否完成由 AI 自行判断，脚本不替它决定、也不强制 done()。
-            if cmd.command.tool == "done":
+            if _tool_name == "done":
                 final_reply = self._strip_protocol(response) or last_ai_text or "[完成]"
+                # 【实测问题】豆包等弱平台经常 done() 里一个字都不写，用户侧就看到一条
+                # 空回复，明明文件已经生成好了却像没干活。这里用真实执行过的工具结果
+                # 生成一句实话总结，绝不让它显示空白。
+                _from_summary = False
+                _fr = (final_reply or "").strip()
+                if (not _fr) or _fr in ("[完成]", "完成", "done", "Done", "done()", "[done]"):
+                    final_reply = self._summarize_done()
+                    _from_summary = True
+                # 【实测缺陷·用户看不到答案】网页端弱模型（通义/豆包）常常只回一个
+                # 光秃秃的 @@@@{"tool":"done"}@@@@ 协议，一个字的自然语言都不写。
+                # 结果用户侧收到的「最终回复」是 _summarize_done() 拼出来的工具原始
+                # 输出（例如 6KB 的 Bing 抓取正文），而用户真正要的答案（「最相关的
+                # 一个链接标题」）根本没出现。这里打回一次，强制它把答案写出来。
+                if _from_summary and self._empty_done_retries < MAX_EMPTY_DONE:
+                    self._empty_done_retries += 1
+                    logger.warning(
+                        "[Commander] done() 未写任何自然语言答复，打回要求补写答案 #%d",
+                        self._empty_done_retries)
+                    self._emit(EventType.CORRECTION_SENT, {
+                        "text": "模型只回了一个空的 done()，已要求它用自然语言写出给用户的答复"
+                    })
+                    current_input = (
+                        "[SYSTEM] 你刚才只输出了 done() 协议，没有写任何给用户的答复文字。"
+                        "这样用户看不到你的答案，只会看到工具的原始输出（一堆网页抓取正文），"
+                        "这是不合格的。\n"
+                        "请重新输出：\n"
+                        "1) 先用自然语言把【用户要的答案】写出来（这是给用户看的正文）；\n"
+                        "2) 然后再输出 done() 协议收尾。\n"
+                        f"用户的原始要求是：{(original_task or '')[:200]}\n"
+                        "注意：答案要直接给结论（例如用户问链接标题，就写出那个标题和网址），"
+                        "不要复述工具返回的原始抓取内容。"
+                    )
+                    continue
+                _missing = self._claimed_but_missing_files(final_reply, original_task)
+                if _missing and self._fake_done_retries < MAX_FAKE_DONE:
+                    self._fake_done_retries += 1
+                    _gap = ("本任务要求产出文件，但你还没有真正调用工具创建它"
+                            if not self._file_tools_used else
+                            "工具报告成功，但磁盘上并不存在你声称的文件")
+                    _hint = (
+                        f"[系统·假完成拦截] 你刚才调用了 done()，但校验不通过：{_gap}。\n"
+                        f"缺失的文件：{', '.join(_missing[:3])}\n"
+                        f"你上一条回复的原文：{final_reply[:200]}\n"
+                        "请【真正调用工具】完成它（file_write / docx_create / pptx_create，"
+                        "参数里给出完整绝对路径），并确认工具返回成功。\n"
+                        "绝对不要只用自然语言宣称「已生成/已创建」。"
+                        "文件确实写好后，再调用 done()。"
+                    )
+                    self._emit(EventType.CORRECTION_SENT, {
+                        "text": f"拦截假完成：声称已生成但文件不存在（{_missing[0]}），已要求实际执行"
+                    })
+                    logger.warning(f"[Commander] 假完成拦截 #{self._fake_done_retries}: {_missing}")
+                    current_input = _hint + "\n" + (self._forced_tool_hint(original_task) or "")
+                    continue
+                # 【内容假完成拦截】文件确实生成了，但漏写了用户白纸黑字列出的条目
+                # （实测豆包 T2：要求追加 ③通风④土壤，它把 docx 整个重写回原来的 2 条，
+                #  追加的 2 条凭空蒸发，就喊 done()）。取出最新产物做关键词校验。
+                _art = self._latest_artifact_path()
+                _content_gap = self._missing_task_items(original_task, _art)
+                if _content_gap and self._fake_done_retries < MAX_FAKE_DONE:
+                    self._fake_done_retries += 1
+                    logger.warning(
+                        f"[Commander] 内容假完成拦截 #{self._fake_done_retries}: "
+                        f"产物 {_art} 缺少用户列出的条目 {','.join(_content_gap)}")
+                    self._emit(EventType.CORRECTION_SENT, {
+                        "text": f"拦截内容假完成：产物缺少用户点名的条目（{', '.join(_content_gap)}），已要求补全"})
+                    current_input = (
+                        f"[系统·内容校验不通过] 你刚才调用 done()，但你写进产物的内容不完整：\n"
+                        f"你要求落盘的是这些条目：{', '.join(_content_gap)}，可产物里一个都没有。\n"
+                        f"（最新产物：{_art}）\n"
+                        "请【真正调用 docx_create / file_write 把用户列出的全部条目都写进同一个文件】"
+                        "（追加/合并，不要丢掉已有内容），确认写入成功后再调用 done()。"
+                    )
+                    continue
+                # 【放弃语句一律打回】实测（2026-09-13 DeepSeek PDF 上传问答）：
+                # 模型在 done() 的收尾文案里直接写「抱歉，我无法在本次会话中可靠地
+                # 完成这一任务……我如实收尾」——任务根本没做就宣告结束。
+                # 放弃不算完成：打回，并明确告诉它它有工具（file_read 支持 PDF）。
+                if self._looks_like_giving_up(final_reply) and self._fake_done_retries < MAX_FAKE_DONE + 2:
+                    self._fake_done_retries += 1
+                    _att = getattr(self, "_last_attachment_paths", []) or []
+                    _att_hint = ""
+                    if _att:
+                        _att_hint = ("\n用户刚才上传的文件在这里（用 file_read 读取，支持 PDF）：\n"
+                                     + "\n".join(f"- {a}" for a in _att))
+                    logger.warning(f"[Commander] done() 收尾是放弃话术，打回 #{self._fake_done_retries}: "
+                                   f"{final_reply[:80]!r}")
+                    self._emit(EventType.CORRECTION_SENT, {
+                        "text": "检测到模型在收尾时放弃任务（「我无法完成/如实收尾」），已打回要求实际执行"
+                    })
+                    current_input = (
+                        "[SYSTEM] 你刚才调用了 done()，但收尾文案是「放弃 / 道歉 / 做不到」。"
+                        "这不算完成任务，系统不接受。\n"
+                        "你运行在本机上，有真实工具可用：file_read（支持读取 PDF / 文本）、"
+                        "file_write / docx_create / pptx_create / browser_search。"
+                        "禁止再说「我无法 / 请手动 / 超出能力」，禁止把任务丢回给用户。\n"
+                        + _att_hint +
+                        "\n请立刻实际调用工具完成任务，做完再调用 done()，"
+                        "并在 done() 里写一句真实的结果说明。"
+                    )
+                    continue
+                break
+
+            # 死循环保护：连续相同工具调用且结果完全没变化 → 先向模型下发「换策略」纠正，
+            # 纠正无效才优雅收尾（返回模型最后的真实回答，而不是抛 [错误] 让用户看到失败）。
+            if self._identical_streak >= 3:
+                logger.warning(
+                    f"[Commander] 重复工具调用 x{self._identical_streak}: {_tool_name}"
+                )
+                self._emit(EventType.CORRECTION_SENT,
+                           {"text": f"检测到连续 {self._identical_streak} 次相同工具调用 "
+                                    f"{_tool_name}，已要求模型更换策略"})
+                if self._identical_streak < 6:
+                    _hint = (
+                        f"[系统] 你已连续 {self._identical_streak} 次调用完全相同的工具 "
+                        f"{_tool_name}（参数也一样），且系统返回的结果一模一样。\n"
+                        f"上一次的结果是：{(result.output or result.error or '')[:400]}\n"
+                    )
+                    if _tool_name in ("raw_shell", "shell_exec", "bash"):
+                        _hint += (
+                            "重复执行同样的 shell 命令不会有任何新结果；本环境的 shell 可能"
+                            "并不支持该命令。请【立即停止使用 shell】，改用真实工具："
+                            "file_write / file_edit / docx_create / pptx_create / "
+                            "browser_search / webfetch。\n"
+                        )
+                    _hint += (
+                        "请立刻改变做法：换一个不同的工具或不同的参数。"
+                        "如果任务其实已经完成，请直接调用 done()，并用一两句自然语言"
+                        "把结果说给用户听。绝对不要再一次发送同样的调用。"
+                    )
+                    current_input = _hint
+                    continue
+                # 纠正 3 次仍无效 → 结束循环，但把模型已有的真实内容作为最终回复返回
+                logger.error(
+                    f"[Commander] 死循环：连续 {self._identical_streak} 次相同工具调用 "
+                    f"{_tool_name}，纠正无效，已停止重复操作"
+                )
+                self._emit(EventType.ERROR, {
+                    "text": f"检测到 Agent 重复执行同一个操作 {self._identical_streak} 次，"
+                            f"已自动停止以免卡死"
+                })
+                final_reply = (
+                    last_ai_text
+                    or self._strip_protocol(response)
+                    or f"（任务已中止：Agent 连续 {self._identical_streak} 次重复同一个操作 "
+                       f"{_tool_name}，为避免卡死已自动停止。请换一种说法再试一次。）"
+                )
                 break
 
             # 构建下一轮输入：只回传工具的真实执行结果（成功/失败都如实），
@@ -2011,6 +2769,7 @@ RAW 命令格式（直接执行shell）：
             current_input = (
                 f"[系统] 工具 {result.tool} 执行结果:\n{result.output or result.error}\n\n"
                 f"请继续；任务确实已完成时，调用 done() 结束。"
+                f"如果你刚才执行了相同的工具调用且结果没变化，请换方法或直接 done()。"
             )
 
         return final_reply or last_ai_text or "[完成]"
@@ -2147,6 +2906,106 @@ RAW 命令格式（直接执行shell）：
         # 标准工具调用
         return await self._tools.execute(tool_name, params)
 
+    def _summarize_done(self) -> str:
+        """done() 没写文案时，用真实执行过的工具结果生成一句实话总结。
+
+        实测豆包 file_write 成功建了文件，却回了个空的 done()，用户侧看到的就是
+        一条空白回复 —— 明明干完活了却像没干。这里如实汇报做了什么。
+        """
+        if not getattr(self, "_tool_result_log", None):
+            return "任务已完成。"
+        lines = []
+        for name, out in self._tool_result_log[-6:]:
+            o = " ".join(str(out).split())
+            if not o:
+                o = "已执行"
+            lines.append(f"- {name}：{o[:160]}")
+        body = "\n".join(lines)
+        return "已完成。执行记录：\n" + body
+
+    @staticmethod
+    def _looks_like_platform_error(text: str) -> bool:
+        """判断抓到的这段文本是不是「平台自身报错 / 网页 UI 噪音」，而不是模型回答。
+
+        实测案例（通义千问 Qwen Studio）：
+          - 「Oops! There was an issue connecting to Qwen3.8-Max.」
+          - 「你更喜欢哪个回复？请选择一个以继续。回复 1 … 我更喜欢这个回复」
+        这类内容既不是模型回答、又不是协议指令，如果按「没遵守协议」处理就会白白
+        空转好几轮；正确做法是判定为平台瞬时报错，直接重发同一条请求。
+        """
+        t = (text or "").strip()
+        if not t:
+            return False
+        strong = (
+            "oops! there was an issue connecting",
+            "an unexpected error occurred",
+            "你更喜欢哪个回复",
+            "我更喜欢这个回复",
+            "请选择一个以继续",
+            "此反馈将帮助我们评估",
+            # 元宝 A/B 反馈面板（实测会把真实回答顶掉）
+            "您正在提供关于", "您更喜欢哪个回答", "我更喜欢这个回答",
+            "the model is currently unavailable",
+            "系统繁忙",
+            "服务器繁忙",
+            "请求过于频繁",
+            "服务异常",
+            "网络异常",
+            "生成失败，请重试",
+            "内容生成失败",
+            # 会话静默失效时平台层可能回传的占位文案
+            "（未收到回复）",
+            "(未收到回复)",
+            "未收到回复",
+        )
+        low = t.lower()
+        return any(s.lower() in low for s in strong)
+
+    @staticmethod
+    def _looks_like_quota_block(text: str) -> bool:
+        """判断抓到的是不是「平台账号额度 / 使用次数耗尽」提示卡。
+
+        实测（豆包 2026-09-13）：页面底部固定弹一张卡
+        「近 7 天办公能力的免费额度用完了，我得休息一阵子了，预计 9 月 20 日 00:48
+        恢复为你服务…开通豆包订阅，免等待，继续为你服务。」
+        我们把这张卡当成模型回复读回来了（79 字），于是后面每一轮都拿到同一段提示，
+        任务被判成「模型不回协议」，白烧好几轮还说不清原因。
+        """
+        t = (text or "").strip()
+        if not t or len(t) > 300:
+            return False
+        toks = (
+            "免费额度用完", "免费额度已用完", "额度用完", "额度已用完", "额度用完了",
+            "免费额度不足", "额度不足", "次数已用完", "使用次数已达上限",
+            "今日额度已用完", "达到上限", "已达上限",
+            "恢复为你服务", "开通豆包订阅", "免等待，继续为你服务",
+            "休息一阵子", "稍后再来", "明天再来",
+            # 【实测 2026-09-13 通义】账号打到每日上限时页面回的是：
+            # 「Oops! There was an issue connecting to Qwen3.8-Max.\n
+            #   你已达到每日使用限制。请在 15 小时后再试。」
+            # 旧关键词表里没有这句 → 被当成「平台报错」重试 3 次（每轮 40s+ 白等），
+            # 最后才抛出「未收到模型回复」，用户白白等几分钟还不知道为什么。
+            "你已达到每日使用限制", "达到每日使用限制", "每日使用限制",
+            "使用限制", "使用次数已达上限", "今日使用次数已达上限",
+            "请在 15 小时后再试", "小时后再试",
+        )
+        return any(k in t for k in toks)
+
+    @staticmethod
+    def _implicit_done(text: str) -> bool:
+        """识别「自然语言形式的 done()」。
+
+        实测：豆包等网页聊天平台上的模型经常不写 @@@@ 协议，而是直接回
+        「……我是仙人掌 Agent…… done ()」。把它当成协议违规去纠正只会无限空转，
+        正确做法是识别出这个完成信号，直接把它的自然语言答复作为最终回复返回。
+        """
+        return bool(re.search(r"done\s*\(\s*\)", text or "", re.I))
+
+    @staticmethod
+    def _emit_implicit_done_clean(text: str) -> str:
+        """去掉自然语言里的 done() 痕迹，留下要展示给用户的正文。"""
+        return re.sub(r"done\s*\(\s*\)", "", text or "", flags=re.I).strip()
+
     def _emit(self, event_type: EventType, data=None):
         """触发事件回调"""
         if self._on_event:
@@ -2163,20 +3022,273 @@ RAW 命令格式（直接执行shell）：
         t = _re.sub(r"<<<RAW>>>.*?<<<RAW>>>", "", t, flags=_re.DOTALL)
         return t.strip()
 
+    # 中文/ASCII 混排路径被网页渲染或弱模型插空格的修复。
+    # 实测案例（豆包）：模型给出 "D:\ 软件 \XianRenZhangAgent\..."，
+    # 中文字符两侧被插入空格 → 工具报 [WinError 3] 系统找不到指定的路径。
+    _CJK = r"\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\u3000-\u303f\uff00-\uffef"
+
+    @classmethod
+    def _path_candidates(cls, raw: str) -> list:
+        """给出「原样 → 逐级修复」的候选路径，原样永远排第一（不破坏正常路径）。"""
+        import re as _re
+        s = str(raw or "")
+        if not s.strip():
+            return [s]
+        cands = [s]
+        t = s.strip()
+        t = t.strip("`").strip()
+        # 去掉首尾成对的引号（模型常把路径连引号一起写进 JSON 值）
+        for q in ('"', "'", "“", "”", "‘", "’"):
+            if t.startswith(q) and t.endswith(q) and len(t) > 1:
+                t = t[1:-1].strip()
+        if t != s:
+            cands.append(t)
+        # 中文字符相邻的空白是插入物：删掉（合法路径里中文两侧也不会带空格）
+        t2 = _re.sub(r"[ \t]+(?=[" + cls._CJK + r"])", "", t)
+        t2 = _re.sub(r"(?<=[" + cls._CJK + r"])[ \t]+", "", t2)
+        # 路径分隔符紧跟的空白同样是插入物（'\ mp2.docx'），
+        # 但「Program Files」这种段内空格必须保留 → 只删分隔符后面的空白
+        t2 = _re.sub(r"(?<=[\\/])[ \t]+", "", t2)
+        if t2 != t:
+            cands.append(t2)
+        # 最后兜底：干掉所有空白与换行（路径被折行读成空格的情形）
+        t3 = _re.sub(r"\s+", "", t2)
+        if t3 != t2:
+            cands.append(t3)
+        # 去重保序
+        out = []
+        for c in cands:
+            if c and c not in out:
+                out.append(c)
+        return out
+
     def _safe_path(self, p) -> "Path":
         """解析用户指定的文件/目录路径：
         - 相对路径 → 拼到工作目录（D 盘）
         - **绝对路径：原样尊重用户指定**（用户叫在哪生成就在哪生成，
           包括 C 盘或其它盘，脚本绝不擅自重定向/改写路径）
+        - 路径被网页渲染/弱模型插空格损坏时自动修复（见 _path_candidates）
         注意：agent 自身内部数据（profile/cookies/历史/任务/缓冲/子代理输出/
         Playwright 二进制）由 agent_core/xrz_paths.py 固定落在 D 盘，
         与「用户要求的产物输出路径」是两回事，互不影响。
         """
         from pathlib import Path as _P
-        p = _P(p)
-        if not p.is_absolute():
-            return _P(self._work_dir) / p
-        return p
+
+        def _mk(cand):
+            q = _P(cand)
+            return q if q.is_absolute() else _P(self._work_dir) / q
+
+        first = _mk(str(p or ""))
+        # 原始路径自身就以空白开头的文件名（'\ mp2.docx'）几乎一定是被插入空格，
+        # 这种情况不能凭「父目录存在」就原样采用，必须走修复候选。
+        _suspicious = bool(first.name) and (first.name != first.name.lstrip())
+        # 原样路径的父目录已存在（或它本身就是目录/盘符）→ 直接采用，绝不改写
+        try:
+            if (first.exists() or (first.parent.exists() and not _suspicious)):
+                return first
+        except (OSError, ValueError):
+            pass
+        for cand in self._path_candidates(p):
+            try:
+                q = _mk(cand)
+                q_suspicious = bool(q.name) and (q.name != q.name.lstrip())
+                if q.exists() or (q.parent.exists() and not q_suspicious):
+                    if q != first:
+                        logger.info(f"[路径修复] {p!r} → {q}")
+                    return q
+            except (OSError, ValueError):
+                continue
+        return first
+
+    # ── 假完成 / 未执行守卫 ──
+    _FILE_TOOLS = {"file_write", "file_edit", "docx_create", "pptx_create",
+                   "xlsx_create", "apply_patch", "dir_create", "file_copy", "file_move"}
+    _ART_EXT = (".docx", ".doc", ".pptx", ".ppt", ".xlsx", ".xls", ".pdf",
+                ".txt", ".md", ".csv", ".json", ".py", ".js", ".html")
+
+    @staticmethod
+    def _demanded_output_path(task_text: str) -> str:
+        """从任务原文里取出用户点名要求的产物路径（如 "path 设为 D:\\...\\a.pptx"）。"""
+        import re as _re
+        for raw in _re.findall(r"[A-Za-z]:[\\/][^\s\"'<>|?*]*?\.[A-Za-z0-9]{1,6}",
+                               str(task_text or "")):
+            if raw.lower().endswith(Commander._ART_EXT):
+                return raw
+        return ""
+
+    # 「放弃/拒绝/甩锅给用户」话术 —— 一律打回重做，绝不允许靠一句
+    # 「我无法…请你自己做」就结束任务（用户原话：检测到放弃语句自动打回）。
+    _GIVEUP_TOKENS = (
+        "我放弃", "放弃这个", "无法完成", "不能完成", "无法执行该", "我做不到", "做不到",
+        "我无法", "我不能", "我没办法", "我没有办法", "无法做到", "无法实现",
+        "请手动", "请你自己", "建议您自己", "请自行", "由你手动", "自己去完成",
+        "请复制粘贴到", "您可以复制到", "请粘贴到",
+        "我只是一个", "我只是个", "我并没有", "我没有能力", "超出我的能力",
+        "我无法访问你的", "我无法操作你的", "无法操作本地", "无法访问本地",
+        "I cannot", "I can't", "I am unable", "I'm unable", "unable to",
+    )
+
+    @classmethod
+    def _looks_like_giving_up(cls, text: str) -> bool:
+        """模型在甩锅/认输吗？是就打回重做。"""
+        t = str(text or "")
+        if not t:
+            return False
+        low = t.lower()
+        for k in cls._GIVEUP_TOKENS:
+            if k.isascii() and k.isalpha():
+                if k.lower() in low:
+                    return True
+            elif k in t:
+                return True
+        return False
+
+    def _forced_tool_hint(self, task_text: str) -> str:
+        """给弱模型一段「照着抄就行」的显式工具调用示例。
+
+        实测通义/豆包在连续几轮协议纠正后会陷入「道歉但不执行」，
+        空谈格式却不真的调用工具。此时把用户点名的路径直接写进示例 JSON，
+        模型照抄即可落地，比抽象地讲规则有效得多。
+        """
+        path = self._demanded_output_path(task_text)
+        if not path:
+            return ""
+        low = path.lower()
+        if low.endswith((".docx", ".doc")):
+            tool = "docx_create"
+            params = ('{"path":"%s","content":"# 标题\\n正文内容"}' % path.replace("\\", "\\\\"))
+        elif low.endswith((".pptx", ".ppt")):
+            tool = "pptx_create"
+            params = ('{"path":"%s","content":"# 第1页 综合测试\\n---\\n# 第2页 功能展示\\n---\\n# 第3页 谢谢"}'
+                      % path.replace("\\", "\\\\"))
+        elif low.endswith((".xlsx", ".xls", ".csv")):
+            tool = "xlsx_create"
+            params = '{"path":"%s","content":"列1,列2\\n值1,值2"}' % path.replace("\\", "\\\\")
+        elif low.endswith(".pdf"):
+            tool = "pdf_create"
+            params = ('{"path":"%s","content":"# 标题\\n正文内容"}' % path.replace("\\", "\\\\"))
+        else:
+            tool = "file_write"
+            params = '{"path":"%s","content":"文件内容"}' % path.replace("\\", "\\\\")
+        return (
+            "【照着抄】把下面的 JSON 原样输出（路径已经是用户要求的，不要再改动）：\n"
+            "@@@@\n"
+            '{"tool":"%s","params":%s,"id":"1"}\n'
+            "@@@@\n"
+            "不要道歉、不要解释、不要只说格式，直接把上面这段发出来即可。\n"
+            % (tool, params)
+        )
+
+    def _claimed_but_missing_files(self, reply: str, task_text: str = "") -> list:
+        """判断 done() 是否是「假完成」。返回声称已生成但磁盘上不存在的文件列表。
+
+        触发条件（任一）：
+          1) 回复里给出了具体产物路径，但磁盘上没有该文件；
+          2) 回复声称「已生成/已创建/已保存」某产物，而本次任务一次文件工具都没成功调用；
+          3) 【关键】任务原文明确要求把产物写到某个带后缀的路径（如
+             "path 设为 D:\\...\\mp2_doubao.pptx"），但本次任务没有任何文件工具成功调用
+             —— 实测豆包会把这类请求丢给网页自带的「豆包办公」沙箱自己生成，
+             全程只调用 done()，本机根本没有文件。
+        纯聊天任务绝不触发，避免误伤。
+        """
+        import re as _re
+        from pathlib import Path as _P
+        text = str(reply or "")
+        task = str(task_text or "")
+        paths = _re.findall(r"[A-Za-z]:\\[^\s\"'<>|?*]*?\.[A-Za-z0-9]{1,6}", text)
+        paths += _re.findall(r"[A-Za-z]:/[^\s\"'<>|?*]*?\.[A-Za-z0-9]{1,6}", text)
+        missing = []
+        for raw in paths:
+            if not raw.lower().endswith(self._ART_EXT):
+                continue
+            try:
+                q = _P(raw.strip().strip("`\"'"))
+                if not q.exists():
+                    missing.append(str(q))
+            except (OSError, ValueError):
+                continue
+        if missing:
+            return missing
+        # 任务原文点名要求产出某个文件路径 → 本次必须有文件工具成功执行过
+        if not self._file_tools_used and task:
+            tp = _re.findall(r"[A-Za-z]:[\\/][^\s\"'<>|?*]*?\.[A-Za-z0-9]{1,6}", task)
+            for raw in tp:
+                if not raw.lower().endswith(self._ART_EXT):
+                    continue
+                try:
+                    cand = self._safe_path(raw.strip().strip("`\"'"))
+                    if not cand.exists():
+                        return [str(cand)]
+                except (OSError, ValueError):
+                    continue
+        # 回复声称已生成产物，但整个任务一次文件工具都没调用过 → 也是假完成
+        claim = any(k in text for k in ("已生成", "已创建", "已保存", "生成完毕",
+                                        "文件已", "已写好", "已输出"))
+        asks_file = any(ext in text for ext in self._ART_EXT)
+        if claim and asks_file and not self._file_tools_used:
+            _m = _re.search(r"[\w\-.]+\.(?:docx|pptx|xlsx|pdf|txt|md|csv|json|py|js|html)",
+                            text, _re.I)
+            return [_m.group(0) if _m else "(未给出具体路径的产物)"]
+        return []
+
+    def _latest_artifact_path(self) -> str:
+        """本 run 内最近一次【真实写入且文件存在】的产物绝对路径（无则空）。
+
+        从 _tool_result_log（[(工具名, 结果摘要)]）里逆序找：取一个文件工具
+        （file_write/docx_create/pptx_create/...）成功输出里出现的、且磁盘上
+        确实存在的产物路径。用于 done() 时做「内容校验」——弱模型常声称写好了，
+        实际只写了一半（实测豆包：要求追加 ③通风④土壤，却把整个 docx 重写回
+        原来的 2 条，追加的 2 条凭空蒸发，就喊 done()）。
+        """
+        import re as _re
+        from pathlib import Path as _P
+        for _tool, _ro in reversed(getattr(self, "_tool_result_log", []) or []):
+            if _tool not in self._FILE_TOOLS:
+                continue
+            for m in _re.finditer(r"([A-Za-z]:[\\/][^\s\"'<>|?*]*?\.[A-Za-z0-9]{1,6})", _ro or ""):
+                raw = m.group(1)
+                if raw.lower().endswith(self._ART_EXT):
+                    try:
+                        p = _P(raw)
+                        if p.exists():
+                            return str(p)
+                    except (OSError, ValueError):
+                        continue
+        return ""
+
+    def _missing_task_items(self, task_text: str, artifact_path: str) -> list:
+        """任务里用中文圆圈编号（①②③④…）明确列出的条目关键词，在产物里缺失的列表。
+
+        仅当任务确实用了「③通风」「④土壤」这类编号条目时才生效——用户白纸黑字
+        列出来的条目应当全部落进产物。若最新产物里这些关键词一个都没有，说明弱
+        模型没真按用户列的要点写（常是重写时把要求的条目弄丢），应打回。
+        纯聊天 / 无编号条目的任务返回空，绝不误伤。
+        """
+        import re as _re
+        from pathlib import Path as _P
+        task = str(task_text or "")
+        if not task or not artifact_path:
+            return []
+        # 提取 ①..⑩ 编号后紧跟的 2-8 个汉字关键词
+        items = _re.findall(r"([①②③④⑤⑥⑦⑧⑨⑩])([\u4e00-\u9fff]{2,8})", task)
+        if not items:
+            return []
+        try:
+            p = _P(artifact_path)
+            if not p.exists():
+                return []
+            suf = p.suffix.lower()
+            if suf == ".docx":
+                import docx as _docx
+                art_text = "\n".join(par.text for par in _docx.Document(str(p)).paragraphs)
+            elif suf in (".txt", ".md", ".csv", ".json", ".py", ".html", ".js"):
+                art_text = p.read_text(encoding="utf-8", errors="ignore")
+            else:
+                return []   # pptx/xlsx/pdf 等暂不做关键词校验（避免误伤）
+        except Exception:
+            return []
+        return [kw for _, kw in items if kw not in art_text]
+
 
     # ============================================================
     # 错误纠正（commander fix）

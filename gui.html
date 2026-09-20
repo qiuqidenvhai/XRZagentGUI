@@ -269,6 +269,28 @@ body {
 .msg-error { align-self: flex-start; background: rgba(248,81,73,0.1); border: 1px solid rgba(248,81,73,0.3); color: var(--red); }
 .msg-question { align-self: center; background: rgba(216,154,255,0.12); border: 1px solid rgba(216,154,255,0.35); color: #d89aff; font-size: 13px; max-width: 90%; }
 
+/* 子代理事件卡片：把子代理内部的多轮工具调用聚合进一张可折叠卡（带"链接"到子任务） */
+.subagent-block {
+    align-self: flex-start; max-width: 95%;
+    background: rgba(88,166,255,0.06);
+    border: 1px solid rgba(88,166,255,0.35);
+    border-radius: 12px; overflow: hidden; font-size: 13px;
+}
+.subagent-block .sa-head {
+    display: flex; align-items: center; gap: 8px; padding: 8px 12px; cursor: pointer;
+    background: rgba(88,166,255,0.10); color: var(--blue); font-weight: 600; user-select: none;
+}
+.subagent-block .sa-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--blue); animation: pulse 1s infinite; }
+.subagent-block.done .sa-dot { animation: none; background: var(--green); }
+.subagent-block .sa-q { font-weight: 400; opacity: .78; font-size: 12px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.subagent-block .sa-status { font-weight: 400; font-size: 11px; padding: 2px 8px; border-radius: 8px; background: rgba(88,166,255,0.2); }
+.subagent-block .sa-status.done { background: rgba(63,185,80,0.2); color: var(--green); }
+.subagent-block .sa-body { padding: 6px 12px 10px; max-height: 240px; overflow: auto; }
+.subagent-block.collapsed .sa-body { display: none; }
+.subagent-block .sa-line { padding: 2px 0; opacity: .92; font-family: ui-monospace, Consolas, monospace; font-size: 12px; word-break: break-word; }
+.subagent-block .sa-line.err { color: var(--red); }
+.subagent-block .sa-line.ok { color: var(--green); }
+
 /* 思考过程块（可折叠） */
 .thinking-block {
     align-self: flex-start;
@@ -692,6 +714,42 @@ body {
 .history-item:hover .hi-delete { opacity: 1; }
 .history-item .hi-delete:hover { background: rgba(248,81,73,0.15); color: var(--red); }
 
+/* ── 历史任务视图：顶部横幅 + 按任务隔离的消息流 ──
+   点历史任务时进入「只读回看」模式，顶部横幅给出任务标识与返回入口；
+   消息沿用 .msg / .thinking-block 气泡样式，因此不会被挤成一坨。 */
+.hist-banner {
+    align-self: stretch;
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    background: rgba(88,166,255,0.10);
+    border: 1px solid rgba(88,166,255,0.35);
+    border-radius: 10px;
+    padding: 8px 12px;
+    font-size: 12px; color: var(--text);
+    position: sticky; top: 0; z-index: 5;
+    backdrop-filter: blur(4px);
+}
+.hist-banner .hb-tag {
+    background: rgba(88,166,255,0.18); color: var(--blue, #58a6ff);
+    border-radius: 999px; padding: 1px 8px; font-size: 11px; font-weight: 600;
+}
+.hist-banner .hb-title { font-weight: 600; max-width: 46%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hist-banner .hb-meta { color: var(--text2); font-size: 11px; }
+.hist-banner .hb-back {
+    margin-left: auto; cursor: pointer; border: 1px solid var(--border);
+    background: var(--bg3); color: var(--text); border-radius: 6px;
+    padding: 3px 10px; font-size: 11px;
+}
+.hist-banner .hb-back:hover { border-color: var(--green); color: var(--green); }
+.hist-note {
+    align-self: stretch; color: var(--text2); font-size: 11px;
+    border-left: 2px solid var(--border); padding: 4px 10px; margin: 2px 0;
+}
+.hist-sep {
+    align-self: center; color: var(--text2); font-size: 11px;
+    padding: 6px 0; letter-spacing: .5px;
+}
+.task-item.active { border-color: var(--green); background: rgba(63,185,80,0.10); }
+
 /* 附件预览 chips */
 .attach-list { display: none; flex-wrap: wrap; gap: 6px; padding: 0 16px 8px; }
 .attach-chip {
@@ -847,8 +905,12 @@ body {
 </div>
 
 <script>
-    // 优先使用 window.XIAOZHANG_API，否则回退到默认
-    const API = window.XIAOZHANG_API || window.location.origin || 'http://127.0.0.1:8888';
+    // 优先使用 window.XIAOZHANG_API，否则回退到默认。
+    // 注意：直接双击打开 html 时 location.origin === 'file://'，它是 truthy 值，
+    // 会把兜底地址顶掉，导致所有请求变成 file:///xxx 而被浏览器拒绝。
+    // 因此遇到 file: 协议必须当作「没有 origin」处理。
+    const _ORIGIN = (window.location.protocol === 'file:') ? '' : window.location.origin;
+    const API = window.XIAOZHANG_API || _ORIGIN || 'http://127.0.0.1:8888';
     console.log('[GUI] API 地址:', API);
 const msgDiv = document.getElementById('messages');
 const inputEl = document.getElementById('input');
@@ -933,10 +995,193 @@ function removeTask(id) {
 }
 
 function selectTask(id) {
-    activeTaskId = id;
+    // 点任务 = 切到该任务的上下文（实时转录里一般已有完整过程）
+    const t = TASKS.find(x => x.id === id);
+    openHistoryTask(id, null, t ? t.title : id, t ? t.platform : '', t && t.created_at
+        ? new Date(t.created_at).toLocaleString('zh-CN') : '');
+}
+
+// ══════════════════════════════════════════════════════════════
+// 历史任务视图：点哪个任务就显示哪个任务的上下文
+// ══════════════════════════════════════════════════════════════
+// 每个任务的过程（用户消息 / 思考 / 工具 / 最终回复）按 task_id 归档并持久化，
+// 因此重启后仍能逐项回看；更早的任务（没有转录）回退读会话 JSON 文件。
+let TRANSCRIPTS = {};
+let LAST_USER_TEXT = '';      // 待归属到下一个 task_started 的用户输入
+let CURRENT_TASK_ID = null;   // 当前正在跑的任务
+let HIST_VIEW = null;         // null = 实时视图；否则 {taskId}
+let LIVE_DOM_CACHE = null;    // 进入历史视图前的实时 DOM，用于返回
+const TR_KEY = 'xrz_transcripts_v1';
+
+function loadTranscripts() {
+    try { TRANSCRIPTS = JSON.parse(localStorage.getItem(TR_KEY) || '{}') || {}; }
+    catch (e) { TRANSCRIPTS = {}; }
+}
+function saveTranscripts() {
+    try {
+        const keys = Object.keys(TRANSCRIPTS);
+        if (keys.length > 60) keys.slice(0, keys.length - 60).forEach(k => delete TRANSCRIPTS[k]);
+        localStorage.setItem(TR_KEY, JSON.stringify(TRANSCRIPTS));
+    } catch (e) { /* 配额满时静默降级，不影响主流程 */ }
+}
+function recordStep(tid, kind, text) {
+    if (!tid || !text) return;
+    if (!TRANSCRIPTS[tid]) TRANSCRIPTS[tid] = [];
+    const steps = TRANSCRIPTS[tid];
+    // 同一工具相邻输出合并，避免刷屏
+    const last = steps[steps.length - 1];
+    if (last && last.kind === kind && kind === 'thinking') last.text = text;
+    else steps.push({ kind, text: String(text).slice(0, 20000), ts: Date.now() });
+    if (steps.length > 200) TRANSCRIPTS[tid] = steps.slice(-200);
+    saveTranscripts();
+}
+// SSE → 转录归档
+function stripProtocol(text) {
+    // 去掉 @@@@ {...} @@@@ 形式的工具协议块（元宝等平台回复被截断时也可能只剩开头标记）
+    let s = String(text || '');
+    s = s.replace(/@@@@[\s\S]*?@@@@/g, '');
+    s = s.replace(/@@@@[\s\S]*$/, '');   // 只有开头 @@@@ 的截断残块
+    return s.trim();
+}
+function archiveEvent(etype, data) {
+    const tid = CURRENT_TASK_ID;
+    if (etype === 'task_started') {
+        const t = data || {};
+        CURRENT_TASK_ID = String(t.task_id || '');
+        if (LAST_USER_TEXT) { recordStep(CURRENT_TASK_ID, 'user', LAST_USER_TEXT); LAST_USER_TEXT = ''; }
+        return;
+    }
+    if (!tid) return;
+    // 历史回看里不该露出模型用的 @@@@ 工具协议原文（那是给程序看的），
+    // 只保留它真正说给用户听的那部分；整段都是协议的话直接不记这一步。
+    const text = stripProtocol(data && data.text ? data.text : '');
+    if (!text && etype !== 'tool_start' && etype !== 'tool_end') return;
+    if (etype === 'ai_thinking') recordStep(tid, 'thinking', text);
+    else if (etype === 'thinking') recordStep(tid, 'plan', text);
+    else if (etype === 'tool_start') recordStep(tid, 'tool', `🔧 调用 ${(data && data.tool) || ''}`);
+    else if (etype === 'tool_end') {
+        const st = (data && data.status) || '';
+        const out = (data && data.output) || '';
+        recordStep(tid, 'tool', `🔧 ${(data && data.tool) || ''} → ${st}\n${String(out).slice(0, 3000)}`);
+    } else if (etype === 'ai_final_reply') recordStep(tid, 'ai', text);
+    else if (etype === 'question') recordStep(tid, 'question', text);
+}
+function histThinkBlock(title) {
+    const wrap = document.createElement('div');
+    wrap.className = 'thinking-block done';
+    const head = document.createElement('div');
+    head.className = 'think-head';
+    head.innerHTML = `<span class="dot"></span><span>${title}</span>`
+        + '<span style="margin-left:auto;font-size:11px;opacity:.6">点击折叠</span>';
+    const body = document.createElement('div');
+    body.className = 'think-body';
+    head.onclick = () => wrap.classList.toggle('collapsed');
+    wrap.appendChild(head); wrap.appendChild(body);
+    msgDiv.appendChild(wrap);
+    return body;
+}
+function pushHistBlock(body, text) {
+    const p = document.createElement('div');
+    p.className = 'think-step';
+    p.textContent = text;
+    body.appendChild(p);
+}
+function histNote(text) {
+    const el = document.createElement('div');
+    el.className = 'hist-note';
+    el.textContent = text;
+    msgDiv.appendChild(el);
+}
+// 把某任务的过程渲染进消息区
+function renderTranscript(taskId, steps, note) {
+    msgDiv.innerHTML = '';
+    const banner = document.createElement('div');
+    banner.className = 'hist-banner';
+    banner.innerHTML = '<span class="hb-tag">历史任务</span>'
+        + '<span class="hb-title"></span>'
+        + '<span class="hb-meta"></span>'
+        + '<span class="hb-back">← 返回当前对话</span>';
+    banner.querySelector('.hb-title').textContent = (HIST_VIEW && HIST_VIEW.title) || '(无标题)';
+    banner.querySelector('.hb-meta').textContent =
+        ((HIST_VIEW && HIST_VIEW.platform) || '') + ' · ' + ((HIST_VIEW && HIST_VIEW.time) || '')
+        + ' · ' + taskId;
+    banner.querySelector('.hb-back').onclick = closeHistoryView;
+    msgDiv.appendChild(banner);
+    if (note) histNote(note);
+    if (!steps || !steps.length) {
+        histNote('这条任务没有可回看的过程记录（可能是更早的历史，或当时未捕获到内容）。');
+        return;
+    }
+    let thinkBody = null;
+    for (const s of steps) {
+        if (s.kind === 'user') { thinkBody = null; addMsg(s.text, 'user'); }
+        else if (s.kind === 'ai') { thinkBody = null; addMsg(s.text, 'ai'); }
+        else if (s.kind === 'question') { thinkBody = null; addMsg('❓ ' + s.text, 'question'); }
+        else if (s.kind === 'thinking' || s.kind === 'plan') {
+            const isModel = s.kind === 'thinking';
+            if (!thinkBody || thinkBody._histKind !== s.kind) {
+                thinkBody = histThinkBlock(isModel ? '🧠 模型推理（深度思考）' : '🧠 思考过程（Agent 计划）');
+                thinkBody._histKind = s.kind;
+            }
+            pushHistBlock(thinkBody, s.text);
+        } else if (s.kind === 'tool') {
+            const pre = document.createElement('div');
+            pre.className = 'msg msg-log';
+            pre.style.whiteSpace = 'pre-wrap';
+            pre.textContent = s.text;
+            msgDiv.appendChild(pre);
+            thinkBody = null;
+        }
+    }
+    msgDiv.scrollTop = 0;
+}
+async function openHistoryTask(id, file, title, platform, time) {
+    if (!id) return;
+    if (HIST_VIEW) { closeHistoryView(); }   // 先回到实时视图，避免视图套娃
+    const steps = TRANSCRIPTS[id];
+    HIST_VIEW = { taskId: id, title: title || id, platform: platform || '', time: time || '' };
+    LIVE_DOM_CACHE = msgDiv.innerHTML;
+    if (steps && steps.length) {
+        renderTranscript(id, steps, null);
+    } else if (file) {
+        // 旧任务没有转录 → 回退读会话 JSON（只有用户/AI 文本，无思考）
+        try {
+            const r = await fetch(API + '/preview?path=' + encodeURIComponent(file),
+                { signal: AbortSignal.timeout(10000) });
+            const d = await safeJson(r);
+            const raw = d && d.raw ? d.raw : '';
+            const conv = raw ? JSON.parse(raw) : null;
+            const msgs = (conv && conv.messages) || [];
+            const conv2 = msgs.map(m => ({
+                kind: m.role === 'user' ? 'user' : 'ai',
+                text: m.content || ''
+            }));
+            renderTranscript(id, conv2,
+                '该任务由会话文件还原：仅含用户与 AI 的文本记录，'
+                + '当时未单独保存思考过程（思考过程从本次升级起按任务归档，之后的任务都可回看）。');
+        } catch (e) {
+            renderTranscript(id, [], '读取会话文件失败：' + e.message);
+        }
+    } else {
+        renderTranscript(id, [], null);
+    }
+    // 高亮
     document.querySelectorAll('.task-item').forEach(el => el.classList.remove('active'));
     const el = document.querySelector(`.task-item[onclick*="${id}"]`);
     if (el) el.classList.add('active');
+    activeTaskId = id;
+}
+function closeHistoryView() {
+    if (!HIST_VIEW) return;
+    HIST_VIEW = null;
+    if (LIVE_DOM_CACHE !== null) {
+        msgDiv.innerHTML = LIVE_DOM_CACHE;
+        LIVE_DOM_CACHE = null;
+    }
+    msgDiv.scrollTop = msgDiv.scrollHeight;
+    activeTaskId = null;
+    document.querySelectorAll('.task-item').forEach(el => el.classList.remove('active'));
+    resetThinking();
 }
 
 // ── 思考过程块（流式更新同一块，避免刷屏）──
@@ -1136,6 +1381,32 @@ function connectEvents() {
 
 // 取当Commander于发于SSE事件
 function handleGuiEvent(etype, data) {
+    // 先归档到任务转录（历史视图靠它回看，不受当前显示模式影响）
+    try { archiveEvent(etype, data); } catch (e) { console.warn('archive err', e); }
+    // ── 子代理事件：聚合进子代理卡片（带 subagent_task_id 标记，subagent_manager 转发）──
+    // 这些事件不再走普通工具卡/思考块，而是进专属子代理卡，用户能看到子代理内部多轮。
+    if (data && data.subagent_task_id) {
+        if (HIST_VIEW) return;   // 回看历史时不画实时子代理流（与现有 thinking/tool_end 一致）
+        upsertSubagentCard(data, etype);
+        return;
+    }
+    // 正在回看历史任务时，不要把这些实时事件画进历史视图里；
+    // 但仍要维护任务列表与发送锁，保证后台任务状态正确。
+    if (HIST_VIEW && (etype === 'ai_thinking' || etype === 'thinking'
+                      || etype === 'ai_final_reply' || etype === 'tool_end'
+                      || etype === 'question')) {
+        if (etype === 'ai_final_reply') {
+            sending = false;
+            setStatus('online');
+            const tid0 = (data && data.task_id) ? String(data.task_id) : null;
+            if (tid0) completeTask(tid0, data && data.type === 'error' ? 'failed' : 'done');
+        }
+        return;
+    }
+    if (etype === 'task_started') {
+        const tt = data || {};
+        addTask(tt.task_id || '', tt.title || '', tt.platform || CURRENT_PLATFORM);
+    }
     // 思考过程：实时渲染为可折叠的「思考过程」块
     if (etype === 'ai_thinking') {
         showThinking(data && data.text ? data.text : '');
@@ -1164,14 +1435,19 @@ function handleGuiEvent(etype, data) {
     }
     // 任务开始
     if (etype === 'task_started') {
-        const t = data || {};
-        addTask(t.task_id || '', t.title || '', t.platform || CURRENT_PLATFORM);
-        return;
+        return;   // 已在函数开头处理（addTask）
     }
     // Agent 向用户提问（对标 OpenCode question）
     if (etype === 'question') {
         const q = (data && data.question) ? data.question : '';
         addMsg('❓ ' + (q || '（Agent 向你提问）'), 'question');
+        return;
+    }
+    // 系统提示（不是错误）：例如「上一条任务还在执行，新指令已排队」。
+    // 之前这类提示只能复用 error 事件，GUI 会画成红色报错，误导用户。
+    if (etype === 'warning' || etype === 'info') {
+        const w = (data && data.text) ? data.text : '';
+        if (w) addMsg('⏳ ' + w, 'system');
         return;
     }
     // 会话列表变更（多会话管理）
@@ -1259,6 +1535,54 @@ function renderDiffLines(text) {
     return html;
 }
 
+// ── 子代理事件聚合渲染：把带 subagent_task_id 标记的事件，聚合进一张可折叠卡 ──
+const SUBAGENT_CARDS = {};  // task_id -> {head, body, status, lastType}
+function upsertSubagentCard(data, etype) {
+    const tid = data.subagent_task_id;
+    if (!tid) return;
+    let card = SUBAGENT_CARDS[tid];
+    if (!card) {
+        const wrap = document.createElement('div');
+        wrap.className = 'subagent-block';
+        const head = document.createElement('div');
+        head.className = 'sa-head';
+        head.innerHTML = `<span class="sa-dot"></span><span>🤖 子代理</span>`
+            + `<span class="sa-q">${escapeHtml(data.subagent_query || '')}</span>`
+            + `<span class="sa-status">运行中</span>`;
+        const body = document.createElement('div');
+        body.className = 'sa-body';
+        wrap.appendChild(head); wrap.appendChild(body);
+        head.onclick = () => wrap.classList.toggle('collapsed');
+        addMsgNode(wrap);
+        card = { wrap, head, body, statusEl: head.querySelector('.sa-status'),
+                 qEl: head.querySelector('.sa-q'), seen: 0 };
+        SUBAGENT_CARDS[tid] = card;
+    }
+    const et = data.subagent_type || etype || '';
+    const text = (typeof data === 'object' && data.text) ? data.text : (data.output || '');
+    // 工具调用一行：🔧 工具名 → 结果摘要；思考一行：💭 摘要
+    let line, cls = '';
+    if (et === 'tool_end') { line = '🔧 ' + (data.tool || '') + ' ✓'; cls = 'ok'; }
+    else if (et === 'tool_start') { line = '🔧 ' + (data.tool || '') + ' …'; }
+    else if (et === 'tool_error' || et === 'command_error') { line = '✗ ' + (data.tool || et) + ' ' + String(text).slice(0,120); cls = 'err'; }
+    else if (et === 'thinking') { line = '💭 ' + String(text).slice(0, 120); }
+    else { line = et + (text ? ' ' + String(text).slice(0,120) : ''); }
+    const div = document.createElement('div');
+    div.className = 'sa-line' + (cls ? ' ' + cls : '');
+    div.textContent = line;
+    card.body.appendChild(div);
+    card.body.scrollTop = card.body.scrollHeight;
+    card.seen++;
+    // 收尾：done / 成功标记 → 卡头变绿"已完成"
+    if (data.subagent_done || et === 'done') {
+        card.wrap.classList.add('done');
+        card.statusEl.textContent = '已完成';
+        card.statusEl.classList.add('done');
+    } else if (et === 'tool_error' || et === 'command_error') {
+        card.statusEl.textContent = '出错';
+    }
+}
+
 // 把任意 DOM 节点作为一条消息追加（避免 addMsg 的 innerHTML 转义处理）
 function addMsgNode(node) {
     const box = document.getElementById('messages');
@@ -1317,7 +1641,7 @@ async function loadHistory() {
                 `<div class="hi-delete" onclick="event.stopPropagation(); deleteTask('${t.id}')" title="删除">✕</div>`;
             item.onclick = () => {
                 toggleHistory(false);
-                sendInput('恢复对话 ' + t.id);
+                openHistoryTask(t.id, t.file, t.title, t.platform, time);
             };
             list.appendChild(item);
         }
@@ -1701,6 +2025,9 @@ async function sendInput(forceText) {
     const text = (forceText || inputEl.value).trim();
     if (!text) return;
 
+    // 正在回看历史任务时，一旦要发消息就自动回到实时视图
+    if (HIST_VIEW) closeHistoryView();
+
     // 【修复1】上一条还没回来时，明确告知用户，绝不静默丢弃输入
     // （旧代码是 `if (!text || sending) return;`，后端卡住时会把消息无声吃掉）
     if (sending) {
@@ -1735,6 +2062,8 @@ async function sendInput(forceText) {
     }
 
     if (!forceText) inputEl.value = '';
+    LAST_USER_TEXT = text;      // 归属到即将开始的这个任务（task_started 到达时归档）
+    CURRENT_TASK_ID = null;
     if (pendingAttachments.length) {
         addMsg('📎 附件 ' + pendingAttachments.length + ' 个：' + pendingAttachments.map(p => p.split(/[\\/]/).pop()).join('、'), 'log');
     }
@@ -1798,62 +2127,27 @@ function onModelChange(model) {
     }).catch(e => console.error('[GUI] 模型切换失败:', e));
 }
 
-// 切换思考模式（toggle 型：DeepSeek / 豆包 / 元宝）
+
+// ── 思考模式控件（已取消 AI 代劳）──
+// 以前这两个函数把「深度思考 开启/关闭」当自然语言发给 AI，让 AI 自己去网页上
+// 点按钮 —— 实测四个平台从未成功过，还把一句话变成一条"任务"污染历史。
+// 用户已决定取消该做法：深度思考不再由 AI 代开代关，这里也不再渲染入口。
+// （保留空函数是为了防止残留的 onclick 引用报错）
 function toggleThinking() {
-    if (!CURRENT_PLATFORM_CFG) return;
-    const btn = document.getElementById('thinkingToggleBtn');
-    if (!btn) return;
-    const isOn = btn.classList.contains('active');
-    const cmd = isOn ? '深度思考 关闭' : '深度思考 开启';
-    sendCmd(cmd);
-    btn.classList.toggle('active');
-    btn.textContent = isOn ? '🧠 思考: 关' : '🧠 思考: 开';
+    if (typeof addMsg === 'function') {
+        addMsg('🧠 深度思考已改为界面直控：本版本不再让 AI 代开代关。'
+             + '如需切换，请直接在网页平台上切换，或等待后续版本提供直控接口。', 'system');
+    }
 }
+function setThinkingMode(val) { toggleThinking(); }
 
-// 切换思考模式（select 型：通义千问 - 深度/快速/自动）
-function setThinkingMode(val) {
-    if (!CURRENT_PLATFORM_CFG) return;
-    const map = { deep: '深度思考 开启', fast: '深度思考 关闭', auto: '自动模式' };
-    const cmd = map[val];
-    if (cmd) sendCmd(cmd);
-    // 同步按钮高亮
-    document.querySelectorAll('.thinking-opt-btn').forEach(b => b.classList.remove('active'));
-    const target = document.getElementById('thinking-' + val);
-    if (target) target.classList.add('active');
-}
-
-// 渲染思考控件（根据 thinking_mode 决定显示 toggle 还是 select）
+// 渲染思考控件（已取消：不再渲染 AI 代开关的入口）
 function renderThinkingControl(cfg) {
     const container = document.getElementById('thinkingControl');
     if (!container) return;
     container.innerHTML = '';
     if (!cfg) return;
-    const mode = cfg.thinking_mode || 'toggle';
-    if (mode === 'select') {
-        // 通义：三个选项按钮
-        const opts = [
-            { val: 'deep', label: '深度思考', icon: '🧠' },
-            { val: 'fast', label: '快速', icon: '⚡' },
-            { val: 'auto', label: '自动', icon: '🔄' },
-        ];
-        opts.forEach(o => {
-            const b = document.createElement('button');
-            b.className = 'qa-btn thinking-opt-btn';
-            b.id = 'thinking-' + o.val;
-            b.textContent = o.icon + ' ' + o.label;
-            b.onclick = () => setThinkingMode(o.val);
-            container.appendChild(b);
-        });
-    } else {
-        // toggle：开关按钮
-        const b = document.createElement('button');
-        b.id = 'thinkingToggleBtn';
-        b.className = 'tool-select';
-        b.style.cssText = 'min-width:80px;padding:6px 12px;font-size:13px;border-radius:6px;cursor:pointer;border:1px solid var(--border);background:var(--bg3);color:var(--text);';
-        b.textContent = '🧠 思考: 关';
-        b.onclick = toggleThinking;
-        container.appendChild(b);
-    }
+    return;
 }
 
 // 渲染模型下拉框
@@ -1935,6 +2229,7 @@ setInterval(async () => {
 }, 5000);
 
 // 初始连接
+loadTranscripts();   // 载入按任务归档的过程记录（历史任务回看用）
 (async () => {
     for (let i = 0; i < 30; i++) {
         try {

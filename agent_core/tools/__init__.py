@@ -29,6 +29,7 @@ TOOL_MANIFEST = [
     # 文档生成
     ("docx_create", "生成 Word 文档", ["content", "filename", "path"]),
     ("pptx_create", "生成 PPT", ["content", "filename", "path"]),
+    ("pdf_create", "生成 PDF（reportlab，支持中文）", ["content", "filename", "path"]),
     # 记忆
     ("remember", "保存记忆", ["content", "tags"]),
     ("recall", "回忆记忆", ["query"]),

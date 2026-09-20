@@ -201,6 +201,37 @@ def parse_to_slides(raw_content: Any, deck_title: str) -> List[Dict[str, Any]]:
             {"heading": str(deck_title), "bullets": [], "kind": "content"}
         ]
 
+    # ── 形态 D：显式分页写法「第1页「综合测试」，第2页「功能展示」，第3页「谢谢」」──
+    # 这是用户/模型描述 PPT 结构最常见的写法，但旧代码完全不认：
+    # 整句被当成【一页的一个要点】→ 要 3 页最后只出 1~2 页，页数严重对不上。
+    # 这里先把「第N页」切成段，每段解析成一页。
+    _joined = "\n".join(lines)
+    _markers = list(re.finditer(r"第\s*(\d+)\s*页", _joined))
+    if len(_markers) >= 2:
+        _out: List[Dict[str, Any]] = []
+        for _i, _m in enumerate(_markers):
+            _seg = _joined[_m.start(): (_markers[_i + 1].start()
+                                        if _i + 1 < len(_markers) else len(_joined))]
+            _seg = re.sub(r"^第\s*\d+\s*页\s*[:：\-–—,，、]?\s*", "", _seg)
+            _seg = _seg.strip(" ，,。;；-—:：")
+            if not _seg:
+                continue
+            # 标题优先取「…」/引号里的内容，其次取冒号/换行前的一段
+            _hm = re.match(r"^[「『\[\"']([^」』\]\"']+)[」』\]\"']", _seg)
+            if _hm:
+                _heading = _hm.group(1).strip()
+                _rest = _seg[_hm.end():].strip(" ，,。;；-—:：")
+            else:
+                _parts = re.split(r"[:：\n]", _seg, maxsplit=1)
+                _heading = _parts[0].strip() or "标题"
+                _rest = _parts[1].strip(" ，,。;；-—:：") if len(_parts) > 1 else ""
+            _bullets = [_truncate(_strip_md(x)) for x in _norm_lines(_rest)] if _rest else []
+            _bullets = [b for b in _bullets if b]
+            _out.append({"heading": _truncate(_heading), "bullets": _bullets,
+                         "kind": "content"})
+        if _out:
+            return _split_long_slides(_out)
+
     # 形态 C：纯文本 → 按行分页
     if not lines:
         return [{"heading": deck_title, "bullets": [], "kind": "content"}]
@@ -217,6 +248,12 @@ def parse_to_slides(raw_content: Any, deck_title: str) -> List[Dict[str, Any]]:
         bullets = [b for b in bullets if b]
         slides.append({"heading": heading, "bullets": bullets, "kind": "content"})
     return _split_long_slides(slides)
+
+
+def _is_closing_slide(heading: str) -> bool:
+    """判断这一页是不是「结束页」（谢谢/感谢/Q&A…），是的话用模板结尾页承载。"""
+    h = str(heading or "").lower()
+    return any(t in h for t in ("谢谢", "感谢", "thank", "结束", "问答", "q&a"))
 
 
 def _split_long_slides(slides: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -261,6 +298,7 @@ def build_edits_json(
     slides: List[Dict[str, Any]],
     deck_title: str,
     subtitle: str = "",
+    requested_count: int = 0,
 ) -> Dict[str, Any]:
     """把解析好的幻灯片列表转成 build_pptx.py 需要的 edits.json 结构。"""
     template_dir = TEMPLATES_DIR / template_slug
@@ -342,6 +380,10 @@ def build_edits_json(
     for sd in slides:
         heading = sd.get("heading", "")
         bullets = sd.get("bullets", [])
+        # 最后一页是结束页（谢谢/感谢…）时直接交给结尾页承载，
+        # 别再给它单独开章节页 + 内容页，否则「要 3 页」会变成 5~6 页。
+        if sd is slides[-1] and _is_closing_slide(heading):
+            continue
         if not bullets:
             continue
 
@@ -392,9 +434,56 @@ def build_edits_json(
                                       "new_text": bullet_text[: content_slots[ci].get("max_chars", 72)]})
                 content_used += 1
 
+    # ── 3.5 补齐：只有标题、没有正文要点的页不能被整页丢掉 ──
+    # 上面 `if not bullets: continue` 会把「第2页「功能展示」」这类纯标题页直接跳过，
+    # 实测「要 5 页」最后只剩「封面 + 结尾」3 页，用户的内容凭空消失。
+    # 这里按缺口用模板剩余的内容页补齐（结尾页在步骤 4 追加，先给它留好位置）。
+    # requested_count 是用户原始要求的总页数（第一页可能已被拿去当封面），
+    # 用它来算补齐目标，保证「要几页就出几页」。
+    _requested = requested_count or len(slides)
+    _closing = bool(slides) and _is_closing_slide(slides[-1].get("heading", ""))
+    _target = max(1, _requested - (1 if (ending_slides and _closing) else 0))
+    if len(selected) < _target:
+        _used = set(selected)
+        _heading_only = [sd.get("heading", "") for sd in slides
+                         if not (sd.get("bullets") or []) and sd.get("heading")
+                         and not _is_closing_slide(sd.get("heading", ""))]
+        _hi = 0
+        for _cs in content_slides:
+            if len(selected) >= _target:
+                break
+            if _cs in _used:
+                continue
+            _h = _heading_only[_hi] if _hi < len(_heading_only) else ""
+            _hi += 1
+            selected.append(_cs)
+            _used.add(_cs)
+            _cp = next((p for p in all_pages if p["slide_number"] == _cs), None)
+            if _cp and _h:
+                for slot in _cp.get("text_slots", []):
+                    role = str(slot.get("role", ""))
+                    if "body" in role.lower() or "面包屑" in role:
+                        continue
+                    edits.append({"slide": _cs, "slot_id": slot["slot_id"],
+                                  "new_text": _h[: slot.get("max_chars", 40)]})
+                    break
+
     # ── 4. 结尾页 ──
-    if ending_slides:
+    # 只在「用户最后一页本身就是结束页」或「加上结尾页不会超出要求页数」时才加，
+    # 否则会出现「要 3 页出 4 页」这种多出来的空致谢页。
+    if ending_slides and (_closing or len(selected) + 1 <= _requested):
         selected.append(ending_slides[0])
+
+    # 章节页（section_divider）只是装饰：超过要求页数时优先删它，
+    # 保证「要几页就出几页」，不因为模板自作主张塞装饰页而超页数。
+    _sec_set = set(section_slides) - {cover_s}
+    _i = 0
+    while len(selected) > _requested and _i < len(selected):
+        if selected[_i] in _sec_set:
+            _removed = selected.pop(_i)
+            edits[:] = [e for e in edits if e.get("slide") != _removed]
+        else:
+            _i += 1
 
     selected = list(dict.fromkeys(selected))
 
@@ -422,14 +511,29 @@ def build_pptx(out_path, raw_content: Any, deck_title: str = "演示文稿",
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
     slides = parse_to_slides(raw_content, deck_title)
+    # 诊断日志：页数对不上时，一眼就能看出是「AI 没传内容」还是「解析把页吞了」
+    print(f"[pptx_builder] 解析到 {len(slides)} 页: "
+          + " / ".join(f"{s.get('heading', '')}({len(s.get('bullets') or [])}条)"
+                       for s in slides))
     if not slides:
         slides = [{"heading": deck_title, "bullets": [], "kind": "content"}]
+
+    # 用户说「第1页「综合测试」，第2页…」时，第一页就是封面。
+    # 没给标题（deck_title 默认取文件名）时就用第一页的标题做封面标题，
+    # 并且第一页不再额外占一页内容页 —— 否则封面写着文件名，
+    # 「综合测试」又被塞进正文页，看着像内容莫名其妙少了一页。
+    _requested_count = len(slides)
+    if slides and str(deck_title).strip() == out_path.stem and slides[0].get("heading"):
+        deck_title = str(slides[0]["heading"]).strip()
+        if len(slides) > 1:
+            slides = slides[1:]
 
     template_slug = select_template(theme_name)
     print(f"[pptx_builder] 选用模板: {template_slug} ({TEMPLATE_CATALOG.get(template_slug, {}).get('name', '?')})")
 
     try:
-        edits_spec = build_edits_json(template_slug, slides, deck_title, subtitle)
+        edits_spec = build_edits_json(template_slug, slides, deck_title, subtitle,
+                                      requested_count=_requested_count)
     except FileNotFoundError as e:
         print(f"[pptx_builder] ⚠ 模板文件缺失，回退到纯色绘制: {e}")
         return _fallback_build(out_path, slides, deck_title, theme_name, subtitle)
@@ -453,21 +557,27 @@ def build_pptx(out_path, raw_content: Any, deck_title: str = "演示文稿",
             print(f"[pptx_builder] build_pptx.py 失败: {result.stderr}")
             return _fallback_build(out_path, slides, deck_title, theme_name, subtitle)
 
+        _titles = [str(deck_title)] + [str(s.get("heading", "") or "") for s in slides]
         print(f"[pptx_builder] ✅ PPT 生成成功: {out_path} ({edits_spec['_meta']['total_selected']} 页, {edits_spec['_meta']['total_edits']} 处修改)")
         return {
             "path": str(out_path),
             "slides": edits_spec["_meta"]["total_selected"],
+            "titles": _titles,
             "theme": template_slug,
             "template_name": TEMPLATE_CATALOG.get(template_slug, {}).get("name", template_slug),
         }
     finally:
         # 中间文件只是过程产物：清理失败（文件被占用 / 权限受限 / 回收站不可用）
         # 绝不能影响已经生成好的 PPT，否则会让调用方误判为「生成失败」。
+        # 注意这里拦的是 BaseException 而非 Exception：某些环境（沙箱 / 安全策略）
+        # 拦截文件删除时抛的是 SystemExit（BaseException 子类），用 except Exception
+        # 根本兜不住，异常会穿透到 asyncio 任务里把整个事件循环线程打死。
         try:
             if tmp_edits.exists():
                 tmp_edits.unlink(missing_ok=True)
-        except Exception as e:
-            print(f"[pptx_builder] ⚠ 中间文件清理失败（不影响 PPT）: {tmp_edits.name}: {e}")
+        except BaseException as e:  # noqa: BLE001
+            print(f"[pptx_builder] ⚠ 中间文件清理失败（不影响 PPT）: {tmp_edits.name}: "
+                  f"{type(e).__name__}: {e}")
 
 
 def _fallback_build(out_path, slides, deck_title, theme_name, subtitle):

@@ -21,6 +21,13 @@ _global_manager: Optional["SubAgentManager"] = None
 # 旧实现只靠 LLM 提示约束；进程内化后一旦失控会卡死母代理，故在代码层硬限。
 _SUBAGENT_DEPTH = 0
 
+# 互斥锁：防止多个子代理同时操作共享浏览器导致崩溃
+# （日志里看到的 'NoneType has no attribute is_closed'、页面已关闭、重启循环等）
+_subagent_lock: Optional[asyncio.Lock] = None
+
+# 最大并发子代理数（超过就排队，避免挤垮母浏览器）
+_MAX_CONCURRENT_SUBAGENTS = 1
+
 # 浏览器数据目录（全部落在 D 盘项目目录内，绝不写 C:\Users\...）
 from agent_core.xrz_paths import (
     NEW_BROWSER_DATA_ROOT,
@@ -111,10 +118,18 @@ class SubAgentManager:
         self._closed = False
         # 母代理的浏览器管理器（用于在同一浏览器内开子窗口，共享登录态）
         self._mother_bm = None
+        # 母代理的事件回调（用于把子代理内部的多轮工具调用转发给 GUI）
+        self._event_forwarder = None
 
     def set_browser_manager(self, bm):
         """注入母代理的 BrowserManager，子代理将复用同一浏览器开新窗口。"""
         self._mother_bm = bm
+
+    def set_event_forwarder(self, cb):
+        """注入母代理的事件回调（一般是接到 GUI _gui_event_log 的那个函数）。
+        子代理的 Commander 事件会带 `_subagent` 标记转发给它，让 GUI 能看到
+        子代理内部的多轮工具调用（而非只有母代理侧的 task/wait_task 两个气泡）。"""
+        self._event_forwarder = cb
 
     # ─────────────────────────────────────────────────────────
     # 凭据管理 API（给母代理/子代理共用）
@@ -309,8 +324,16 @@ class SubAgentManager:
         实例里开一个「新窗口」（新 page）。新窗口与母代理 page 相互独立，但共享同一个
         浏览器进程与持久化上下文，因此 cookies / 登录态 100% 继承，无需复制任何 profile，
         也不会有第二个浏览器实例抢 SingletonLock。
+
+        ★ 并发修复：加互斥锁，同一时间最多 1 个子代理操作共享浏览器，
+        避免多子代理并发导致浏览器崩溃 / 死引用。
         """
-        global _SUBAGENT_DEPTH
+        global _SUBAGENT_DEPTH, _subagent_lock, _MAX_CONCURRENT_SUBAGENTS
+
+        # 初始化互斥锁（惰性创建，必须在 event loop 内）
+        if _subagent_lock is None:
+            _subagent_lock = asyncio.Lock()
+
         # 硬限制：子代理内部不能再派生子代理（MAX_DEPTH=1）
         if _SUBAGENT_DEPTH >= 1:
             task_id = f"subagent_{int(time.time()*1000)}"
@@ -346,8 +369,12 @@ class SubAgentManager:
         )
         self._tasks[task_id] = task
 
-        # 后台运行（非阻塞，母代理立即拿到 task_id 继续）
-        asyncio.create_task(self._run_subagent_in_process(task, query, task_type, task_dir))
+        # ★★★ 并发修复：串行化子代理执行，避免多子代理挤垮共享浏览器 ★★★
+        async def _guarded_run():
+            async with _subagent_lock:
+                await self._run_subagent_in_process(task, query, task_type, task_dir)
+
+        asyncio.create_task(_guarded_run())
         return task_id
 
     async def _run_subagent_in_process(self, task: SubAgentTask, query: str,
@@ -377,11 +404,53 @@ class SubAgentManager:
                 raise RuntimeError("子窗口未携带登录态（同一浏览器上下文共享异常，需排查）")
 
             # 3) 用子窗口的浏览器构建一个完整的子代理（自带 Commander 循环）
-            session = DeepSeekSession(child_bm)
+            # 按浏览器类型构造会话：平台浏览器（通义/豆包/元宝）用 PlatformSession
+            # （接口与 DeepSeekSession 对齐，Commander 无需改动），DeepSeek 浏览器用
+            # DeepSeekSession。这是子代理能在【所有平台】跑通的关键——以前硬编码
+            # DeepSeekSession，平台浏览器传进去会话类型不匹配（spawn_child 也只在
+            # DeepSeek BrowserManager 上有），子代理在非 DeepSeek 平台根本起不来。
+            _bm_type = type(child_bm).__name__
+            if _bm_type == "PlatformBrowserManager":
+                from .platform_browser import PlatformSession
+                session = PlatformSession(child_bm)
+            else:
+                session = DeepSeekSession(child_bm)
+            # 【GUI 显示修复】把子代理内部的多轮工具调用转发给母代理的事件回调
+            # （该回调接到 GUI 的 _gui_event_log）。否则子代理事件流完全孤立，
+            # GUI 只能看到母代理侧的 task/wait_task 两个气泡，子代理在内部跑了几轮
+            # 工具调用、生成了哪些文件，界面全看不到。
+            # 只转发过程性事件（data 都是 dict，GUI 卡片好画）。command_success/command_error
+            # 的 data 是 str(ExecutionResult)，不纳入，done 收尾改用 tool_end(done) 标记。
+            _SA_KEEP = {"thinking", "tool_start", "tool_end", "tool_error"}
+            _fwd = self._event_forwarder
+            _tid = task.task_id
+            _q = task.query[:120]
+
+            def _child_on_event(evt):
+                if _fwd is None:
+                    return
+                try:
+                    from .commander import AgentEvent
+                    name = evt.event_type.value if hasattr(evt.event_type, "value") else str(evt.event_type)
+                    if name not in _SA_KEEP:
+                        return  # 子代理 ai_final_reply 不当母代理收尾（避免提前结束母任务）
+                    d = evt.data
+                    d2 = dict(d) if isinstance(d, dict) else {"text": d}
+                    d2["subagent_task_id"] = _tid
+                    d2["subagent_query"] = _q
+                    d2["subagent_type"] = name
+                    # done 工具收尾 → GUI 卡片标「已完成」
+                    if isinstance(d, dict) and d.get("tool") == "done":
+                        d2["subagent_done"] = True
+                    _fwd(AgentEvent(event_type=evt.event_type, data=d2))
+                except Exception:
+                    pass
+
             commander = Commander(
                 browser_manager=child_bm,
                 session=session,
                 work_dir=str(work),
+                on_event=_child_on_event,
             )
             await commander.start(session=session)
 
@@ -407,6 +476,12 @@ class SubAgentManager:
                 f"3. 完成后必须调用 done() 工具汇报结果\n"
                 f"4. 若生成文档/报告，用 docx_create 或 file_write 写到 {work}\n"
                 f"5. 把你的核心发现和结论写在 done 之前的回复里（母代理会读取）\n"
+                f"6. 【禁止重复】绝不连续两次发送完全相同的工具调用；上次结果一样时\n"
+                f"   必须换方法或直接 done()，否则会被判定死循环。\n"
+                f"7. 【禁止提问】你没有向用户提问的权限，遇到信息不全时自行选择最合理的\n"
+                f"   默认方案推进到底，不要停下来等回复。\n"
+                f"8. 【禁止 shell】不要输出 <<<RAW>>> 或 shell 命令；读写文件请用\n"
+                f"   file_write / file_read，查资料请用 browser_search。\n"
             )
 
             reply = await commander.run_with_loop(
@@ -440,31 +515,56 @@ class SubAgentManager:
                             pass
 
             # 5) 构建结构化结果
+            # ★★★ 修复：全量检测错误，不只看第一行 ★★★
+            # 另修复：空回复 / 优雅中止（死循环保护触发）也必须算失败，
+            # 否则会把「什么都没做」的子代理记成 success 并把空 findings 交给母代理。
+            is_error = False
+            error_msg = None
+            if not (reply or "").strip():
+                is_error = True
+                error_msg = "子代理未返回任何内容（模型无回复或抓取失败）"
+            else:
+                stripped = reply.strip()
+                first_line = stripped.split("\n")[0] if stripped else ""
+                if (
+                    stripped.startswith("[错误]")
+                    or "失败" in first_line
+                    or "未收到" in first_line
+                    or "AI 调用失败" in reply
+                    or "消息发送失败" in reply
+                    or "任务已中止" in reply
+                    or "已自动停止" in reply
+                    or "死循环" in reply
+                ):
+                    is_error = True
+                    error_msg = stripped[:300]
+
             findings = "\n\n".join(findings_parts) if findings_parts else (reply or "")
             result_data = SubAgentResult(
-                success=True,
+                success=not is_error,
                 findings=findings,
                 output=reply or "",
                 files=files,
                 scraped_count=len(files),
+                error=error_msg,
             )
 
-            # ★★★ 关键修复：写入 result.json 到磁盘 ★★★
-            # 母代理通过 check_task / wait_task 依赖此文件检测完成状态。
-            # 不写此文件 → _refresh_task_status 永远认为任务在 RUNNING → 通信断裂。
+            # ★★★ 修复：根据实际结果写 success 字段 ★★★
             rp = Path(result_path)
             rp.parent.mkdir(parents=True, exist_ok=True)
             rp.write_text(json.dumps({
-                "success": True,
+                "success": not is_error,
                 "findings": findings,
                 "output": reply or "",
                 "files": files,
                 "scraped_count": len(files),
+                "error": error_msg,
             }, ensure_ascii=False, indent=2), encoding="utf-8")
 
             task.result = result_data
-            task.status = TaskStatus.DONE
-            print(f"[SubAgent] {task.task_id} 完成！结果已写入 {result_path}")
+            task.status = TaskStatus.DONE if not is_error else TaskStatus.FAILED
+            status_label = "完成" if not is_error else "失败"
+            print(f"[SubAgent] {task.task_id} {status_label}！结果已写入 {result_path}" + (f"（错误：{error_msg}）" if error_msg else ""))
         except Exception as e:
             import traceback
             traceback.print_exc()

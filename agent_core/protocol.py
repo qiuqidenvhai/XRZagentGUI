@@ -90,16 +90,36 @@ class Protocol:
         绝不从裸文本自动抓取 JSON（否则协议约束形同虚设）。
         """
         positions = [m.start() for m in re.finditer(re.escape(CMD_BEGIN), text)]
-        if len(positions) < 2:
-            # 没有成对的 @@@@ → 协议违规，报错让 AI 纠正，不自动兜底。
+        if not positions:
+            # 连开头 @@@@ 都没有 → 协议违规，报错让 AI 纠正，不自动兜底。
             return None
         start = positions[0] + len(CMD_BEGIN)
-        end = positions[1]
-        raw = text[start:end].strip()
+        _brace_note = ""
+        if len(positions) >= 2:
+            end = positions[1]
+            raw = text[start:end].strip()
+        else:
+            # 【实测】元宝会把回复截断，收尾 @@@@ 丢失，但开头 @@@@ 和完整 JSON 都在
+            # （尾部到 "id":"1"} 为止）。这种情况不算协议违规，把平衡的 {...} 截出来，
+            # 补一个「收尾 @@@@ 缺失」的修复说明，绝不能把好好的工具指令整个丢掉。
+            # 先补花括号，再做平衡截取：否则 _extract_balanced_json 会命中
+            # "params":{ 这个内层花括号，截出 {"path":...} 这种残缺对象。
+            raw, _brace_note = self._ensure_object_braces(text[start:].strip())
+            sub = self._extract_balanced_json(raw)
+            if not sub:
+                return None
+            raw = sub
         if not raw:
             return None
 
+        if not _brace_note:
+            raw, _brace_note = self._ensure_object_braces(raw)
+
         obj, fixed, note = self._parse_json_robust(raw)
+        if _brace_note:
+            note = (note + " + " if note else "") + _brace_note
+        if obj is not None and len(positions) < 2:
+            note = (note + " + " if note else "") + "补全缺失的收尾@@@@（平台把回复截断了）"
         if obj is None:
             return None
 
@@ -118,6 +138,61 @@ class Protocol:
             fixed=fixed is not None,
             fix_note=note or "",
         )
+
+    @staticmethod
+    def _extract_balanced_json(s: str) -> str:
+        """从文本里截取第一个括号平衡的 {...}（正确处理字符串与转义）。
+        用于收尾 @@@@ 被平台截断时的兜底提取。"""
+        for i, ch in enumerate(s):
+            if ch != "{":
+                continue
+            depth = 0
+            in_str = False
+            esc = False
+            for j in range(i, len(s)):
+                c = s[j]
+                if in_str:
+                    if esc:
+                        esc = False
+                    elif c == "\\":
+                        esc = True
+                    elif c == '"':
+                        in_str = False
+                    continue
+                if c == '"':
+                    in_str = True
+                elif c == "{":
+                    depth += 1
+                elif c == "}":
+                    depth -= 1
+                    if depth == 0:
+                        return s[i:j + 1]
+            break
+        return ""
+
+    @staticmethod
+    def _ensure_object_braces(raw: str):
+        """把「丢了最外层花括号的对象体」补回花括号。
+
+        实测（2026-09-13 DeepSeek 生成 pptx）：模型输出
+            "tool":"pptx_create","params":{"path":"..."},"id":"1"
+        少了首尾的 { }。不补的话整条工具指令会被判为协议违规而丢弃。
+        只做最小干预：仅当文本不是以 { / [ 开头、且看起来是 "key": ... 序列时才补。
+        """
+        s = (raw or "").strip()
+        if not s or s[0] in "{[":
+            return s, ""
+        if not re.match(r'^["\']?(tool|type)["\']?\s*:', s):
+            return s, ""
+        note = ""
+        t = s.rstrip().rstrip(";").rstrip().rstrip(",")
+        if not t.startswith("{"):
+            t = "{" + t
+            note = "补全缺失的最外层花括号"
+        if not t.endswith("}"):
+            t = t + "}"
+            note = (note + " + " if note else "") + "补全缺失的收尾花括号"
+        return t, note
 
     # ---- 鲁棒解析（主入口）----
     def _parse_json_robust(self, raw: str) -> Tuple[Optional[dict], Optional[str], str]:
@@ -145,8 +220,38 @@ class Protocol:
             except Exception:
                 pass
 
+        # 2.6) 同上，但只缺【收尾】花括号：@@@@{"tool":"x","params":{...},"id":"1"@@@@
+        _t = (cleaned or raw or "").strip()
+        if _t.startswith("{") and '"tool"' in _t and _t.count("{") > _t.count("}"):
+            cand = _t + "}" * (_t.count("{") - _t.count("}"))
+            try:
+                obj = json.loads(cand)
+                if isinstance(obj, dict) and obj.get("tool"):
+                    note = (note + " + " if note else "") + "补全缺失的收尾花括号"
+                    return obj, cand, note
+            except Exception:
+                pass
+
         # 3) 自动修复常见语法错误
         fixed, fix_note = self._try_fix(cleaned)
+
+        # 【实测缺陷 2026-09-13 DeepSeek 生成 pptx】模型写成
+        #   @@@@"tool":"pptx_create","params":{"path":"..."},"id":"1"@@@@
+        # —— 最外层的 { } 整个漏了。旧逻辑先经过 _clean_json_text
+        # （它会从第一个 '{' 截起，正好落在 "params":{ 上），
+        # 解析结果变成 {"path":...} —— 没有 tool 字段 → 整条工具指令被丢弃，
+        # 上层于是反复「纠正」，纠正 20 轮 × 每轮 20~40s → 任务超时、PPT 永远出不来。
+        # 这里在最外层补一对花括号再试；只在补完确实能解析出带 tool 的对象时才采用。
+        _s = (cleaned or "").strip()
+        if _s and _s[0] not in "{[" and '"tool"' in _s:
+            for cand in ("{" + _s + "}", "{" + _s):
+                try:
+                    obj = json.loads(cand)
+                except Exception:
+                    continue
+                if isinstance(obj, dict) and obj.get("tool"):
+                    note = (note + " + " if note else "") + "补全缺失的最外层花括号"
+                    return obj, cand, note
         if fix_note:
             note = (note + " + " if note else "") + fix_note
         try:
@@ -165,6 +270,20 @@ class Protocol:
                 return obj, fixed2, note
             except Exception:
                 pass
+
+        # 5) 最后兜底：以 { 开头但收尾花括号没配平（实测模型会漏写最后的 } ）
+        _s2 = (cleaned or fixed or "").strip()
+        if _s2.startswith("{") and '"tool"' in _s2:
+            gap = _s2.count("{") - _s2.count("}")
+            if gap > 0:
+                cand = _s2 + "}" * gap
+                try:
+                    obj = json.loads(cand)
+                    if isinstance(obj, dict) and obj.get("tool"):
+                        note = (note + " + " if note else "") + "补全缺失的收尾花括号"
+                        return obj, cand, note
+                except Exception:
+                    pass
 
         return None, None, note
 

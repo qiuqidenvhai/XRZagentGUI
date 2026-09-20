@@ -33,6 +33,7 @@ class Message:
     """单条消息"""
     role: str  # "user" | "assistant" | "system"
     content: str
+    internal: bool = False  # True = Agent 内部控制轮（工具结果/协议纠正），不写进历史
 
 
 @dataclass
@@ -348,8 +349,8 @@ def _delete_task(task_id: str) -> bool:
         try:
             Path(file_path).unlink()
             logger.info(f"已删除任务对话文件: {file_path}")
-        except Exception as e:
-            logger.warning(f"删除任务对话文件失败: {e}")
+        except BaseException as e:  # noqa: BLE001 删除拦截可能抛 SystemExit，不能让它逃逸
+            logger.warning(f"删除任务对话文件失败: {type(e).__name__}: {e}")
 
     # 2) 该任务登记的临时文件（未登记的产物文件一律不碰）
     removed = 0
@@ -362,8 +363,8 @@ def _delete_task(task_id: str) -> bool:
             elif fp.is_dir():
                 shutil.rmtree(fp, ignore_errors=True)
                 removed += 1
-        except Exception as e:
-            logger.warning(f"删除临时文件失败 {p}: {e}")
+        except BaseException as e:  # noqa: BLE001 同上：拦截删除的异常可能是 BaseException
+            logger.warning(f"删除临时文件失败 {p}: {type(e).__name__}: {e}")
     if removed:
         logger.info(f"已清理任务 {task_id} 的 {removed} 个临时文件")
 
@@ -435,6 +436,9 @@ class DeepSeekSession:
         # 绝不把 agent 自己的原话再发回给模型（避免回声/污染/上下文膨胀）。
         # agent 若需回顾自身历史，调用 recall 工具从记忆里取。
         self._action_log: List[str] = []
+        # 【修复】整个会话复用同一个会话 JSON：以前每次保存都新建时间戳文件，
+        # 一次任务会在历史里刷出几十条重复记录。
+        self._conv_file_path = ""
 
     def set_on_event(self, cb):
         """设置事件回调，把「思考过程」等事件推给 GUI（参数: event_type, data）"""
@@ -495,8 +499,13 @@ class DeepSeekSession:
         self._messages.insert(0, Message(role="system", content=system_prompt))
         logger.info("系统提示词已设置")
 
-    async def send(self, text: str, attachments: list = None) -> str:
-        """发送消息并获取回复（含自动历史持久化，支持 attachments 附件上传）"""
+    async def send(self, text: str, attachments: list = None,
+                   internal: bool = False) -> str:
+        """发送消息并获取回复（含自动历史持久化，支持 attachments 附件上传）
+
+        internal=True 表示 Agent 内部控制轮（工具结果回传 / 协议纠正 / 继续指令），
+        不写进对话历史文件，避免历史记录被 [系统] 工具…执行结果 这类噪音淹没。
+        """
         if not self._logged_in:
             await self.initialize()
 
@@ -510,7 +519,7 @@ class DeepSeekSession:
             return response
 
         # 常规消息
-        self._messages.append(Message(role="user", content=text))
+        self._messages.append(Message(role="user", content=text, internal=bool(internal)))
 
         # 附件上传（在发送文本前，保证文件预览出现在输入框）
         if attachments:
@@ -545,10 +554,14 @@ class DeepSeekSession:
         return response
 
     def _maybe_save_conversation(self):
-        """每 5 轮或会话结束时自动持久化"""
-        user_count = sum(1 for m in self._messages if m.role == "user")
-        if user_count % 5 == 0 or user_count == 0:
-            self._do_save_conversation()
+        """每轮都持久化。
+
+        【修复】以前是「每 5 条用户消息才存一次」，结果绝大多数任务只有 1 条用户消息
+        → 任务跑完根本不落盘，历史里啥也没有；而自愈清空上下文后 user_count 变 0，
+        又变成「每轮都新建文件」→ 一次任务刷出几十条历史。
+        现在会话 JSON 路径固定复用，每轮覆盖写同一个文件，既不会漏存也不会刷屏。
+        """
+        self._do_save_conversation()
 
     def _do_save_conversation(self):
         """实际执行持久化（同时更新方案一/方案二的落盘点）"""
@@ -560,7 +573,7 @@ class DeepSeekSession:
             platform=self._platform,
             session_id=self._session_id,
             url=url,
-            messages=list(self._messages),
+            messages=self._visible_messages(),
             tags=[],
         )
         # 方案二：消息 JSON —— 顺手落一份平台 JSON 备份（restore 时回退用）
@@ -570,20 +583,39 @@ class DeepSeekSession:
             logger.warning(f"对话 JSON 备份失败（不影响方案一）: {e}")
         logger.info(f"对话已自动持久化 (session={self._session_id}, url={'有' if url else '无'})")
 
+    def _visible_messages(self) -> list:
+        """过滤掉内部轮（工具结果/协议纠正）和系统提示词，只留用户真实说的话 + AI 回复。
+
+        【修复】系统提示词（6~7KB 的工具协议）以前也会被写进会话 JSON，
+        导致历史文件里第一条永远是整篇提示词，回看时被一大段指令糊脸。
+        """
+        return [m for m in self._messages
+                if not getattr(m, "internal", False) and m.role != "system"]
+
     def _save_conv_json(self, file_path: str = None) -> str:
-        """方案二：把消息落盘成平台 JSON（URL 一并记下，便于交叉校验）"""
+        """方案二：把消息落盘成平台 JSON（URL 一并记下，便于交叉校验）
+
+        只写用户真实对话：内部工具结果轮不落盘。
+        """
         if file_path is None:
-            ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-            file_path = str(_task_conv_dir() / f"conv_{self._platform}_{ts}.json")
+            # 同一会话固定一个文件：历史里一条任务只占一行，且标题能取到用户原话
+            if not getattr(self, "_conv_file_path", ""):
+                ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+                self._conv_file_path = str(_task_conv_dir() / f"conv_{self._platform}_{ts}.json")
+            file_path = self._conv_file_path
+        else:
+            self._conv_file_path = file_path
         data = {
             "platform": self._platform,
             "url": self.get_current_url(),
             "session_id": self._session_id,
-            "messages": [{"role": m.role, "content": m.content} for m in self._messages],
+            "messages": [{"role": m.role, "content": m.content}
+                         for m in self._visible_messages()],
         }
         Path(file_path).write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
         # 把这次对话登记为【一个独立任务】（标题=首条用户消息）
-        _record_task(self._platform, file_path, self.get_current_url(), self._messages)
+        _record_task(self._platform, file_path, self.get_current_url(),
+                     self._visible_messages())
         return file_path
 
     def _generate_session_id(self):
@@ -656,6 +688,8 @@ class DeepSeekSession:
             self._messages.clear()
             for m in data.get("messages", []):
                 self._messages.append(Message(role=m["role"], content=m["content"]))
+            # 恢复的是哪个文件，后续就继续写回这个文件（否则恢复后一保存又建新文件）
+            self._conv_file_path = file_path
             # restore 后 commander.start 会用 set_system_prompt 重新插入协议
             logger.info(f"对话已从 {file_path} 加载，共 {len(self._messages)} 条消息")
             return True

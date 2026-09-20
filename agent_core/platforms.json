@@ -104,11 +104,14 @@
       "div[role='switch']:has-text('深度')"
     ],
     "thinking_mode": "toggle",
+    "supports_thinking": false,
+    "_thinking_note": "2026-09-13 实测：豆包网页端没有可用的「深度思考」toggle（button:has-text('深度思考') / deep-think 类名均不存在）。旧实现退而去点工具栏的「快速」按钮，把页面点进异常态 → 之后连续 210s 收不到任何回复。故标注 supports_thinking=false：不点任何按钮，由上层如实告知模型。",
     "attach_button_selector": "input[type=file], .UploadFileInput, [class*='Attach'] input, [class*='upload']",
     "multi_file": true,
-    "response_selector": ".agent-chat__bubble",
+    "response_selector": "[class*=\"md-box-root\"]",
+    "user_bubble_selector": "[class*=\"bg-g-send\"], [class*=\"send-msg-bubble\"]",
     "thinking_selector": "[class*='thinking'], [class*='reasoning'], [class*='think']",
-    "generating_selector": ".stop-button, [class*='stop']",
+    "generating_selector": "[class*=\"break-btn\"], [class*=\"stop-btn\"]",
     "login_texts": [
       "登录",
       "Log in"
@@ -153,7 +156,8 @@
         "label": "视频生成",
         "selector": "text=视频生成"
       }
-    ]
+    ],
+    "_dom_note": "2026-09-12 实测：消息列表 [class*=message-list-]；用户气泡 .content-<hash> + .bg-g-send-msg-bubble-bg；正文渲染 [class*=md-box-root]；停止按钮 [class*=break-btn-]；旧值 .agent-chat__bubble 为元宝类名，豆包不匹配（page_msg 恒为 0）"
   },
   "yuanbao": {
     "platform": "yuanbao",
@@ -185,21 +189,19 @@
     "icon": "✨",
     "models": [
       {
-        "value": "hunyuan-pro",
-        "label": "混元 Pro"
+        "value": "hy3",
+        "label": "Hy3",
+        "selector": "button[class*=\"max-w-[180px]\"]||button[aria-label='选择模型']||[role='menuitemradio']:has-text('Hy3')"
       },
       {
-        "value": "hunyuan-t1",
-        "label": "混元 T1（深度思考）"
-      },
-      {
-        "value": "deepseek-v3",
-        "label": "DeepSeek V3"
-      },
-      {
-        "value": "deepseek-r1",
-        "label": "DeepSeek R1（推理）"
+        "value": "deepseek",
+        "label": "DeepSeek",
+        "selector": "button[class*=\"max-w-[180px]\"]||button[aria-label='选择模型']||[role='menuitemradio']:has-text('DeepSeek')"
       }
+    ],
+    "_models_note": "2026-09-13 实测（probe_yuanbao/）：元宝新版 UI 的模型/模式藏在底部工具栏「深度思考∨」下拉里。结构：模型 = Hy3（推荐日常）/ DeepSeek（适合深度思考）/ Hy4 preview（处理复杂任务，仅支持专家模式，禁用）；模式 = 快速回答 / 深度思考 / 专家模式（专家模式=使用工具处理多步任务，是元宝自己的沙箱，严禁进入）。选择器走三步：点工具栏触发按钮 → 点「选择模型」行（aria-label）→ 点子菜单里的模型项（role=menuitemradio）。terminal.pyc 的 _two_step 支持 || 多步连点。",
+    "forbidden_modes": [
+      "专家模式"
     ]
   }
 }
