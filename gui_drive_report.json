@@ -1,0 +1,80 @@
+{
+  "ts": "2026-09-13 14:32:47",
+  "results": [
+    {
+      "tag": "gui_backend_ready",
+      "ok": true,
+      "detail": "后端就绪"
+    },
+    {
+      "tag": "gui_bridge",
+      "ok": true,
+      "detail": "测试桥已连上面板页面"
+    },
+    {
+      "tag": "gui_panel_ready",
+      "ok": true,
+      "detail": "面板渲染完成"
+    },
+    {
+      "tag": "gui_initial_status",
+      "ok": true,
+      "detail": "状态栏='已连接' 消息数=1"
+    },
+    {
+      "tag": "gui_basic_new_msgs",
+      "ok": true,
+      "detail": "新增气泡 5 条，状态栏='已连接'"
+    },
+    {
+      "tag": "gui_basic_answer",
+      "ok": true,
+      "detail": "面板尾部：[开始工具] {\"tool\":\"done\"} || [命令成功] ExecutionResult(id='9', status='success', tool='done', output='任务完成', error='') || 任务已按要求完成，用户明确说不用调用工具，我只需显式输出 done 协议收尾。"
+    },
+    {
+      "tag": "gui_basic_thinking",
+      "ok": true,
+      "detail": "思考块数量=1 内容=[{\"cls\": \"thinking-block done\", \"text\": \"🧠 思考过程（Agent 计划）\\n点击折叠\\n用户明确说了“不用调用工具”，只要求直接列出 5 个章节标题和每章一句话说明，那我就直接在对话里输出这份大纲，不调用任何工具，输出完调用 done() 收尾。\\n\\nPython 异步编程入门 · 学习大纲\\n\\n异步编程是什么：从同步阻塞说起\\n用生活化的例子理解同步、阻塞与并发，说清异步要解决的核心痛点。\\n\\n协程与 async/await "
+    },
+    {
+      "tag": "gui_basic_input_cleared",
+      "ok": true,
+      "detail": "发送后输入框残留=''"
+    },
+    {
+      "tag": "gui_tool_file",
+      "ok": true,
+      "detail": "gui_异步编程学习笔记.docx exists=True size=37349"
+    },
+    {
+      "tag": "gui_tool_shown",
+      "ok": true,
+      "detail": "面板是否展示 docx_create 工具调用=True"
+    },
+    {
+      "tag": "gui_tool_steps",
+      "ok": true,
+      "detail": "工具调用步骤展示 2 条：['用户明确说了“不用调用工具”，只要求直接列出 5 个章节标题和每章一句话说明，那我就直接在对话里输出这份大纲，不调用任何工具，输出完调用 done() 收尾。\\n\\nPython 异步编程入门 · 学习大纲\\n\\n异步编程是什么：从同步阻塞说起\\n用生活化的例子理解同步、阻塞与并发，说清异步要解决的核心痛点。\\n\\n协程与 async/await 基础\\n掌握 async def 定义协程、await 挂起等待，写出第一个可运行的异步函数。\\n\\n事件循环（Event Loop）的运行机制\\n搞懂事件循环如何调度任务、为什么异步代码必须跑在事件循环里。\\n\\n并发执行：asyncio 常用 API 与任务管理\\n学会用 asyncio.gather、create_task、TaskGroup 同时跑多个任务并处理结果与超时。\\n\\n实战与避坑：异步 I/O、混用同步代码与常见错误\\n用 aiohttp 等做真实网络请求，识别“假异步”、阻塞调用等典型陷阱。\\n\\n需要的话，我可以再帮你把每章细化成知识点清单或配套练习。\\n\\ndone()', '用户这次明"
+    },
+    {
+      "tag": "gui_history_open",
+      "ok": true,
+      "detail": "opened='btn' 抽屉打开=False 历史条目=444 列表HTML='帮我整理一份「Python 异步编程入门」的学习大纲，直接列出 5 个章节标题、每章一句话说明，不用调用工具\\nDEEPSEEK\\n2026-09-13 14:32:11\\n✕\\n帮我用一句话说明什么是事件循环，直接回答，不要调用任何工具\\nDEEPSEEK\\n2026-09-13 14:24:13\\n✕\\n(无标题对话)\\nYUANB'"
+    },
+    {
+      "tag": "gui_history_switch",
+      "ok": true,
+      "detail": "点击的历史任务='帮我整理一份「Python 异步编程入门」的学习大纲，直接列出 5 个章节标题、每章一句话说明，不用调用工具' 出现历史横幅=True 横幅标题='帮我整理一份「Python 异步编程入门」的学习大纲，直接列出 5 个章节标题、每章一句话说明，不用调用工具' 展示消息数=8"
+    },
+    {
+      "tag": "gui_history_content",
+      "ok": true,
+      "detail": "历史视图里应该有该任务的上下文消息，实际 n_msg=8"
+    },
+    {
+      "tag": "gui_history_back",
+      "ok": true,
+      "detail": "返回后横幅=False"
+    }
+  ]
+}

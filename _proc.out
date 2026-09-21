@@ -1,0 +1,9 @@
+netconn_err TypeError('net_connections() takes from 0 to 1 positional arguments but 2 were given')
+4192 pythonw.exe :: D:\软件\Python\pythonw.exe D:\软件\XianRenZhangAgent\terminal.py
+13464 python.exe :: D:\软件\Python\python.exe -c 
+import psutil
+out=[]
+try:
+    for c in psutil.net_connections('inet',4):
+        try:
+            if c.laddr and c.laddr[1

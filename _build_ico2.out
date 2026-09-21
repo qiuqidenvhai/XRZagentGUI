@@ -1,0 +1,11 @@
+SRC (256, 256) RGBA
+WROTE __xianrenzhang_icon.ico 370070
+WROTE __browser_cactus_icon.ico 370070
+WROTE xianrenzhang_cactus.ico 370070
+VERIFY reserved 0 type 1 count 6
+  entry0: 16x16 bpp=32 png=False
+  entry1: 32x32 bpp=32 png=False
+  entry2: 48x48 bpp=32 png=False
+  entry3: 64x64 bpp=32 png=False
+  entry4: 128x128 bpp=32 png=False
+  entry5: 256x256 bpp=32 png=False

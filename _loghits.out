@@ -1,0 +1,52 @@
+{
+ "_backend2.log": {
+  "size": 5031,
+  "counts": {
+   "页面未初始化": 0,
+   "消息发送失败": 0,
+   "浏览器重启失败": 0,
+   "start_new_conversation": 0,
+   "新对话": 2
+  }
+ },
+ "_backend4.log": {
+  "size": 91287,
+  "counts": {
+   "页面未初始化": 0,
+   "消息发送失败": 0,
+   "浏览器重启失败": 0,
+   "start_new_conversation": 0,
+   "新对话": 2
+  }
+ },
+ "_backend5.log": {
+  "size": 57291,
+  "counts": {
+   "页面未初始化": 0,
+   "消息发送失败": 0,
+   "浏览器重启失败": 0,
+   "start_new_conversation": 0,
+   "新对话": 2
+  }
+ },
+ "_backend_restart.log": {
+  "size": 56238,
+  "counts": {
+   "页面未初始化": 0,
+   "消息发送失败": 0,
+   "浏览器重启失败": 0,
+   "start_new_conversation": 0,
+   "新对话": 2
+  }
+ },
+ "_backend_v7.log": {
+  "size": 58126,
+  "counts": {
+   "页面未初始化": 0,
+   "消息发送失败": 0,
+   "浏览器重启失败": 0,
+   "start_new_conversation": 0,
+   "新对话": 2
+  }
+ }
+}

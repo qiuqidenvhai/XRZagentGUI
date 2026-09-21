@@ -1,0 +1,69 @@
+{
+  "timestamp": "2026-09-05T18:16:21.450661",
+  "total": 12,
+  "passed": 11,
+  "failed": 0,
+  "warnings": 1,
+  "items": [
+    {
+      "name": "页面加载",
+      "status": "PASS",
+      "detail": "API地址正确"
+    },
+    {
+      "name": "文件上传",
+      "status": "PASS",
+      "detail": "PDF上传成功，pendingAttachments=1"
+    },
+    {
+      "name": "消息发送",
+      "status": "PASS",
+      "detail": "消息正确发送"
+    },
+    {
+      "name": "AI回复",
+      "status": "PASS",
+      "detail": "AI产生回复，文本长度536"
+    },
+    {
+      "name": "思考过程",
+      "status": "PASS",
+      "detail": "思考元素可见（3个）"
+    },
+    {
+      "name": "历史任务",
+      "status": "WARN",
+      "detail": "列表0条但抽屉可打开（需刷新）"
+    },
+    {
+      "name": "恢复任务",
+      "status": "PASS",
+      "detail": "历史对话加载正常"
+    },
+    {
+      "name": "停止按钮",
+      "status": "PASS",
+      "detail": "中断功能正常"
+    },
+    {
+      "name": "PPT生成",
+      "status": "PASS",
+      "detail": "生成9页PPT"
+    },
+    {
+      "name": "附件显示",
+      "status": "PASS",
+      "detail": "8个PPT在附件列表"
+    },
+    {
+      "name": "DELETE API",
+      "status": "PASS",
+      "detail": "删除任务成功"
+    },
+    {
+      "name": "任务隔离",
+      "status": "PASS",
+      "detail": "155个独立任务"
+    }
+  ]
+}

@@ -1,0 +1,2 @@
+BACKEND_PID 8916 LISTEN True
+HEALTH {'status': 'ok', 'agent_ready': True, 'browser': 'connected', 'commander': 'ready', 'platform': 'deepseek', 'port': 8888}

@@ -1,0 +1,15 @@
+仙人球图标: 10 个尺寸 -> [(16, 16), (20, 20), (24, 24), (32, 32), (40, 40), (48, 48), (64, 64), (96, 96), (128, 128), (256, 256)]
+  全部为经典 DIB entry: True
+  GRPICONDIR: 146B (应为 6+10*14=146)
+
+==================================================================
+目标: D:\软件\XianRenZhangAgent\xrz_data\playwright_browsers\chromium-1217\chrome-win64\chrome.exe
+  已从备份还原（干净基线）
+  写入语言=1033
+  已写入仙人球图标 OK  (4257280 bytes)
+
+==================================================================
+目标: D:\软件\XianRenZhangAgent\xrz_data\playwright_browsers\chromium-1234\chrome-win64\chrome.exe
+  已从备份还原（干净基线）
+  写入语言=1033
+  已写入仙人球图标 OK  (4443648 bytes)

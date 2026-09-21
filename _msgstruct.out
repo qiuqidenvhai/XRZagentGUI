@@ -1,0 +1,19 @@
+=== .ds-message elements ===
+ds-message[0]: <div class="d29f3d7d ds-message _63c77b1" style="--panel-width: 0px;"><div class="fbb737a4"><div class="ds-collapsible-text" style="max-height: 192px; transition: none;"><div><span>[系统指令-你必须严格遵守] 你是仙人掌 Agent（XianRenZhang Agent），一个自主 AI 助手，支
+ds-message[1]: <div class="ds-message _63c77b1" style="--panel-width: 0px;"><div class="_74c0879" style="--collapsible-area-title-height: 34px; --group-title-sticky-base-top: 0px; --group-title-sticky-top: calc(var(--group-title-sticky-base-top) - var(--d
+ds-message[2]: <div class="d29f3d7d ds-message _63c77b1" style="--panel-width: 0px;"><div class="fbb737a4"><div class="ds-collapsible-text" style="max-height: 192px; transition: none;"><div><span>[系统指令-你必须严格遵守] 你是仙人掌 Agent（XianRenZhang Agent），一个自主 AI 助手，支
+ds-message[3]: <div class="ds-message _63c77b1" style="--panel-width: 0px;"><div class="_74c0879" style="--collapsible-area-title-height: 34px; --group-title-sticky-base-top: 0px; --group-title-sticky-top: calc(var(--group-title-sticky-base-top) - var(--d
+
+=== .ds-markdown: how many, and is it inside ds-message? ===
+ds-markdown count=12
+first ds-message idx=172022, first ds-markdown idx=189773 (markdown after message? True)
+
+=== .ds-assistant-message-main-content ===
+  assistant-content[0]: <div class="ds-markdown ds-assistant-message-main-content"><p class="ds-markdown-paragraph"><span class="">水在零摄氏度（标准大气压）
+  assistant-content[1]: <div class="ds-markdown ds-assistant-message-main-content"><p class="ds-markdown-paragraph"><span class="">水在零摄氏度（标准大气压）
+
+=== message-list / virtual-list containers ===
+ds-virtual-list      count=7
+message-list         count=2
+conversation         count=9
+chat-list            count=0

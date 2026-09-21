@@ -1,0 +1,4 @@
+22096 gone (psutil.NoSuchProcess(pid=22096, msg='process PID not found'))
+terminal.py procs: ['10840 python.exe']
+port8888=False
+log_mtime=1789881978 now=1789905684

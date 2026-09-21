@@ -23,10 +23,24 @@ _SUBAGENT_DEPTH = 0
 
 # 互斥锁：防止多个子代理同时操作共享浏览器导致崩溃
 # （日志里看到的 'NoneType has no attribute is_closed'、页面已关闭、重启循环等）
+#
+# 【2026-09-21 用户明确要求·改为真并发】
+# 用户的诉求（原话）：「子母代理不是可以在一个浏览器里开两个标签吗，那多任务当然可以呀」。
+# 旧实现用一把全局锁 + MAX_CONCURRENT=1 把所有子代理串成一条队列，理由是「怕挤垮共享
+# 浏览器」。但这个理由不成立：每个子代理走 mother.spawn_child()，得到的是【同一个浏览器
+# 上下文里的独立 page（标签页）】—— 各自有独立的输入框、独立的 DOM、独立的等待循环，
+# 彼此不会抢同一个 page。真正会造成互相踩踏的是「多个协程操作同一个 page」，而
+# spawn_child 从设计上就避免了这点（这也正是它存在的意义）。
+# 所以并发上限提到 4（保守值：一个浏览器里同时 4 个标签完全在 Chromium 能力范围内，
+# 又不至于把用户的机器/网络压垮），并且不再用全局锁串行化。
 _subagent_lock: Optional[asyncio.Lock] = None
 
-# 最大并发子代理数（超过就排队，避免挤垮母浏览器）
-_MAX_CONCURRENT_SUBAGENTS = 1
+# 并发闸门：最多 N 个子代理同时执行（N = _MAX_CONCURRENT_SUBAGENTS）。
+# 用 Semaphore 而非 Lock —— Lock 会把多任务串成队列，Semaphore(N>1) 才是真并发。
+_subagent_sem: Optional[asyncio.Semaphore] = None
+
+# 最大并发子代理数（每个子代理 = 同一浏览器里的一个独立标签页）
+_MAX_CONCURRENT_SUBAGENTS = 4
 
 # 浏览器数据目录（全部落在 D 盘项目目录内，绝不写 C:\Users\...）
 from agent_core.xrz_paths import (
@@ -328,11 +342,13 @@ class SubAgentManager:
         ★ 并发修复：加互斥锁，同一时间最多 1 个子代理操作共享浏览器，
         避免多子代理并发导致浏览器崩溃 / 死引用。
         """
-        global _SUBAGENT_DEPTH, _subagent_lock, _MAX_CONCURRENT_SUBAGENTS
+        global _SUBAGENT_DEPTH, _subagent_lock, _subagent_sem, _MAX_CONCURRENT_SUBAGENTS
 
-        # 初始化互斥锁（惰性创建，必须在 event loop 内）
+        # 初始化并发闸门（惰性创建，必须在 event loop 内）
         if _subagent_lock is None:
             _subagent_lock = asyncio.Lock()
+        if _subagent_sem is None:
+            _subagent_sem = asyncio.Semaphore(_MAX_CONCURRENT_SUBAGENTS)
 
         # 硬限制：子代理内部不能再派生子代理（MAX_DEPTH=1）
         if _SUBAGENT_DEPTH >= 1:
@@ -369,9 +385,14 @@ class SubAgentManager:
         )
         self._tasks[task_id] = task
 
-        # ★★★ 并发修复：串行化子代理执行，避免多子代理挤垮共享浏览器 ★★★
+        # ★★★ 真并发：每个子代理在【同一浏览器的独立标签页】里跑 ★★★
+        # 用 Semaphore(_MAX_CONCURRENT_SUBAGENTS) 而不是 Lock()：
+        #   - Lock 是「同一时刻只允许 1 个」，会把多任务硬串成队列（用户明确反对的那件事）；
+        #   - Semaphore(N) 是「最多 N 个同时跑」，N>1 时多任务真并行。
+        # 因为每个子代理有自己独立的 page（spawn_child 产出的新标签页），
+        # 并发执行不会互相抢输入框/抢「最后一条消息」，不存在串台风险。
         async def _guarded_run():
-            async with _subagent_lock:
+            async with _subagent_sem:
                 await self._run_subagent_in_process(task, query, task_type, task_dir)
 
         asyncio.create_task(_guarded_run())

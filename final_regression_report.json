@@ -1,0 +1,75 @@
+{
+  "ts": "2026-09-12 21:56:00",
+  "results": [
+    {
+      "tag": "backend_health",
+      "ok": true,
+      "detail": "唯一后端已连接（不会打开第二个 DeepSeek 浏览器）"
+    },
+    {
+      "tag": "deepseek_instances_baseline",
+      "ok": true,
+      "detail": "基线 DeepSeek 浏览器实例数=1（应为1；本次证明绝不双开）"
+    },
+    {
+      "tag": "deepseek__chat",
+      "ok": true,
+      "detail": "valid=True tools=['done', 'raw_shell'] final='思考：用户最新指令是\"切换到 deepseek 平台\"，与前几次平台切换同类，由运行环境侧完成，无对应工具可调，直接结束'"
+    },
+    {
+      "tag": "deepseek__chat__no_second_browser",
+      "ok": true,
+      "detail": "DeepSeek 实例数=1（基线1，应恒定）"
+    },
+    {
+      "tag": "deepseek__file_write",
+      "ok": true,
+      "detail": "valid=True tools=['done', 'raw_shell'] final='思考：用户最新指令是\"切换到 deepseek 平台\"，与前几次平台切换同类，由运行环境侧完成，无对应工具可调，直接结束'"
+    },
+    {
+      "tag": "deepseek__file_write__no_second_browser",
+      "ok": true,
+      "detail": "DeepSeek 实例数=1（基线1，应恒定）"
+    },
+    {
+      "tag": "deepseek__docx",
+      "ok": true,
+      "detail": "valid=True tools=['done', 'file_write', 'raw_shell'] final='思考：用户最新指令是\"切换到 deepseek 平台\"，与前几次平台切换同类，由运行环境侧完成，无对应工具可调，直接结束'"
+    },
+    {
+      "tag": "deepseek__docx_file",
+      "ok": false,
+      "detail": "new_docx=[] explicit_exists=False"
+    },
+    {
+      "tag": "deepseek__docx__no_second_browser",
+      "ok": true,
+      "detail": "DeepSeek 实例数=1（基线1，应恒定）"
+    },
+    {
+      "tag": "deepseek__pptx",
+      "ok": true,
+      "detail": "valid=True tools=['done', 'file_read', 'file_write', 'raw_shell'] final='思考：用户最新指令是\"切换到 deepseek 平台\"，与前几次平台切换同类，由运行环境侧完成，无对应工具可调，直接结束'"
+    },
+    {
+      "tag": "deepseek__pptx_file",
+      "ok": false,
+      "detail": "new_pptx=[] explicit_exists=False"
+    },
+    {
+      "tag": "deepseek__pptx__no_second_browser",
+      "ok": true,
+      "detail": "DeepSeek 实例数=1（基线1，应恒定）"
+    },
+    {
+      "tag": "deepseek__search",
+      "ok": true,
+      "detail": "valid=True tools=['docx_create', 'done', 'file_read', 'file_write', 'raw_shell'] final='思考：用户最新指令是\"切换到 deepseek 平台\"，与前几次平台切换同类，由运行环境侧完成，无对应工具可调，直接结束'"
+    },
+    {
+      "tag": "deepseek__search__no_second_browser",
+      "ok": true,
+      "detail": "DeepSeek 实例数=1（基线1，应恒定）"
+    }
+  ]
+}

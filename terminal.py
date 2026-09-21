@@ -149,5 +149,22 @@ try:
 except Exception as _e:  # 补丁失败不影响后端正常启动
     print("[XRZ-Files] 热补丁安装线程启动失败（不影响后端）:", _e, flush=True)
 
+# ── 2.9.2) 只读 /dom 端点：dump 当前活动浏览器页面 HTML，用于核对平台选择器 ──
+# 网页更新后 platforms.json 的选择器会过期，靠它核对"标志还是旧的"（详见 _dom_dump_patch.py）。
+try:
+    import _dom_dump_patch as _xrz_dom
+    _xrz_dom.install(_mod, _HERE)
+except Exception as _e:  # 补丁失败不影响后端正常启动
+    print("[XRZ-DOM] 热补丁安装线程启动失败（不影响后端）:", _e, flush=True)
+
+# ── 2.9.3) 多任务真并行：每个任务一张独立标签页，不再排队 ──
+# 用户明确要求：子母代理能在同一浏览器开两个标签，多任务必须并行，
+# 不允许出现「上一个任务正在执行需要排队」。详见 _parallel_tasks_patch.py。
+try:
+    import _parallel_tasks_patch as _xrz_par
+    _xrz_par.install(_mod, _HERE)
+except Exception as _e:  # 补丁失败不影响后端正常启动
+    print("[XRZ-Parallel] 热补丁安装线程启动失败（不影响后端）:", _e, flush=True)
+
 exec(_code, _mod.__dict__)
 

@@ -5,18 +5,21 @@
     "url": "https://chat.deepseek.com",
     "chat_url": "https://chat.deepseek.com",
     "input_selector": "textarea",
-    "send_selector": "button[type='submit']",
+    "send_selector": "",
+    "_send_note": "2026-09-20 真机 DOM 核对（/dom 端点 dump）：新版 DeepSeek 网页的输入框仍是 textarea（class=ds-scroll-area，placeholder『给 DeepSeek 发送消息』），但发送键已不是 button[type='submit']（整页 0 匹配，旧标志失效）。真实发送靠输入框回车；platform_browser.send_message 的 CDP 受信 Enter（windowsVirtualKeyCode=13）已实测可用。故 send_selector 置空走 Enter 路径，不再依赖过期的 submit 按钮。",
     "upload_button_selector": "",
     "thinking_toggle_selectors": [
-      "button:has-text('深度思考')",
-      "[class*='depth'] button",
-      "div[role='switch']:has-text('深度')"
+      "div.ds-toggle-button:has-text('深度思考')",
+      "div[class*='ds-toggle-button']:has-text('深度思考')",
+      "[class*='ds-toggle-button']:has-text('深度思考')"
     ],
+    "_thinking_note": "2026-09-21 真机 DOM 核对（/dom 端点 dump chat.deepseek.com）：工具栏只有两个 div.ds-toggle-button —— 「深度思考」与「智能搜索」，开启态 class 含 ds-toggle-button--selected、aria-pressed=true。页面**没有**任何模型下拉（role=radio/menuitem/combobox/aria-haspopup 全为 0 匹配），所以不要配置 models 切换。",
     "thinking_mode": "toggle",
     "attach_button_selector": "",
     "multi_file": true,
-    "response_selector": "[class*='message']:last-child",
-    "thinking_selector": "",
+    "response_selector": "[class*='ds-think-content'], [class*='ds-assistant-message-main-content']",
+    "_response_note": "2026-09-21 真机 DOM 核对（/dom dump）：一次 AI 回复在 DOM 里是两层 —— 外层 .ds-think-content（思考面板，含「已思考（用时 N 秒）」+推理正文），以及紧随其后的 .ds-markdown.ds-assistant-message-main-content（用户真正要看的回复）。旧值 \"[class*=message]:last-child\" 只有一个节点 → JS 走 else 分支整段读 innerText，把思考面板的「已思考（用时 1 秒）」也当成回复内容写进会话记录（实测会话 json 里 assistant 内容开头就是「已思考（用时 1 秒）」），并进一步被当作上一轮回复回灌给模型。改用上面两个 class 后：计数按「回复块」算，且能按 class 精确剔除思考面板。",
+    "thinking_selector": ".ds-think-content .ds-markdown",
     "generating_selector": ".loading, [class*='generating']",
     "login_texts": [
       "登录",
@@ -26,23 +29,13 @@
     "viewport_height": 900,
     "display": "DeepSeek",
     "icon": "💭",
-    "models": [
-      {
-        "value": "quick",
-        "label": "快速模式",
-        "selector": "div[role='radio']:has-text('快速模式')"
-      },
-      {
-        "value": "expert",
-        "label": "专家模式",
-        "selector": "div[role='radio']:has-text('专家模式')"
-      },
-      {
-        "value": "vision",
-        "label": "识图模式",
-        "selector": "div[role='radio']:has-text('识图模式')"
-      }
-    ]
+    "models": [],
+    "search_toggle_selectors": [
+      "div.ds-toggle-button:has-text('智能搜索')",
+      "div[class*='ds-toggle-button']:has-text('智能搜索')"
+    ],
+    "_models_note": "2026-09-21 核实：DeepSeek 网页版当前**没有**模型/模式选择器。旧配置里的『快速模式/专家模式/识图模式』是臆造的（页面 0 匹配），已删除。「深度思考」通过 thinking_toggle_selectors 开关，不是模型选项。",
+    "_thinking_selector_note": "2026-09-21 真机 DOM 核对（/probe 端点在活页面上跑 JS 验证）：DeepSeek 一次回答的 DOM 结构是 —— 外层 div.ds-think-content（思考面板，内含三块：图标 div、折叠标题 div._9ecc93a、以及真正的推理正文 div.ds-markdown） 紧随其后是 div.ds-markdown.ds-assistant-message-main-content（用户真正要看的回复）。旧值空字符串会让 wait_response 里的 if thinking_sel and on_thinking 恒为假 —— GUI 的「模型推理（深度思考）」块永远收不到任何内容（用户报的「思考过程显示有大问题」根因）。实测折叠态下 ._9ecc93a 的 innerText 为空，推理正文只在 .ds-markdown 里（123 字真实推理），所以直接选 .ds-think-content .ds-markdown 即可，既拿到正文又天然排除标题。"
   },
   "tongyi": {
     "platform": "tongyi",

@@ -5,6 +5,7 @@ session.py — DeepSeek 会话管理
 import asyncio
 import logging
 import json
+import re as _re
 from typing import Optional, List, Callable
 from dataclasses import dataclass
 from enum import Enum
@@ -399,6 +400,49 @@ def list_all_tasks() -> list:
     return _list_tasks(platform=None)
 
 
+# 「思考过程」折叠条标题行（DeepSeek/千问/豆包等平台在推理正文前渲染的那一行）。
+# 实测形态：「已思考（用时 1 秒）」「深度思考（用时 12 秒）」「已完成思考」等。
+# 注意：只匹配【整行就是标题】或【标题紧跟换行】的情形，绝不匹配行内出现的同名字样
+# ——否则会把模型正文里正常引用这句话的句子也剪掉（第一版就犯了这个错）。
+_THINK_HEADER_LINE = _re.compile(
+    r"^[\s]*(?:已完成|已深度|已|完成)?(?:深度)?思考\s*(?:[（(][^）)\n]{0,20}[）)])?[\s]*$",
+    _re.M)
+
+
+def _strip_thinking_header(text: str) -> str:
+    """剥掉模型回复里混进来的「已思考（用时 N 秒）」折叠条标题。
+
+    为什么要在一个这么窄的地方下功夫：这行字是平台 UI 渲染出来的，不是模型写的内容。
+    一旦被读进 assistant 内容，就会①落盘污染历史，②下一轮作为上下文回灌给模型，
+    让模型以为自己上一轮说过这句话。真机已复现（会话 json 开头就是它）。
+
+    实现要点（踩过两次坑后的定稿）：
+      · 逐行判断，只删「整行恰好是标题」的行 —— 天然不会误伤正文里引用该字样的句子；
+      · 逐行处理时，若发现某行【以标题开头且后面还有正文】，只切掉标题那一段；
+      · 全删光时返回空串（调用方负责决定是否回退），不能反过来把原文还回去，
+        否则「回复内容就只有一行标题」这种最该清理的情况反而清不掉。
+    """
+    if not text:
+        return text
+    try:
+        kept = []
+        for line in text.split("\n"):
+            if _THINK_HEADER_LINE.match(line):
+                continue   # 整行都是标题 → 丢弃
+            # 标题与正文挤在同一行：剥掉开头的标题片段，保留正文
+            m = _re.match(
+                r"[\s]*(?:已完成|已深度|已|完成)?(?:深度)?思考[（(]用时[^）)]{0,20}[）)]"
+                r"\s*(?=\S)",
+                line)
+            if m:
+                line = line[m.end():]
+            kept.append(line)
+        out = _re.sub(r"\n{3,}", "\n\n", "\n".join(kept)).strip()
+        return out
+    except Exception:
+        return text
+
+
 # ============================================================
 # 会话配置
 # ============================================================
@@ -537,9 +581,29 @@ class DeepSeekSession:
 
         await self._bm.save_cookies()
 
+        # 【2026-09-21 真机修复·思考过程显示为空的根因】
+        # 这里原来写死了 thinking_selector="[class*='thinking'], [class*='reasoning'],
+        # [class*='思考']" —— 三个 pattern 全都不匹配 DeepSeek 的真实思考面板 class
+        # `.ds-think-content`（真机 /probe 实测：0 匹配）。后果：整个任务过程中
+        # ai_thinking 事件一条都不发 → GUI 的「🧠 模型推理（深度思考）」块永远空白
+        # （用户报「思考过程显示有大问题」）。
+        # 正确做法：优先用平台 profile 里配置的 thinking_selector（platforms.json 已按
+        # 真机 DOM 逐个平台核对过），只有平台没配时才回落到通用兜底 pattern。
+        # 注意：self._bm 可能是 PlatformBrowserManager（有 .profile），也可能是
+        # browser.py 的 BrowserManager（没有 .profile）——必须用 getattr 兜住，
+        # 否则会抛 `'BrowserManager' object has no attribute 'profile'` 把整轮打挂。
+        _think_sel = ""
+        try:
+            _prof = getattr(self._bm, "profile", None)
+            _think_sel = (getattr(_prof, "thinking_selector", "") or "").strip()
+        except Exception:
+            _think_sel = ""
+        if not _think_sel:
+            _think_sel = "[class*='thinking'], [class*='reasoning'], [class*='think'], [class*='思考']"
+
         response = await self._bm.wait_response(
             on_thinking=self._emit_thinking,
-            thinking_selector="[class*='thinking'], [class*='reasoning'], [class*='思考']",
+            thinking_selector=_think_sel,
         )
         if response:
             self._messages.append(Message(role="assistant", content=response))
@@ -588,9 +652,23 @@ class DeepSeekSession:
 
         【修复】系统提示词（6~7KB 的工具协议）以前也会被写进会话 JSON，
         导致历史文件里第一条永远是整篇提示词，回看时被一大段指令糊脸。
+
+        【2026-09-21 修复·思考标题污染】DeepSeek 的思考面板折叠条会渲染
+        「已思考（用时 1 秒）」这样一行，实测被整段读进 assistant 内容里落盘
+        （真机验证：conv_deepseek_*.json 的 assistant 内容开头就是它）。
+        这里统一在「落盘前的唯一收口」剥掉该行，两个落盘点（URL 索引 + JSON 备份）
+        都走这个函数，改一处即可全覆盖。
         """
-        return [m for m in self._messages
-                if not getattr(m, "internal", False) and m.role != "system"]
+        out = []
+        for m in self._messages:
+            if getattr(m, "internal", False) or m.role == "system":
+                continue
+            content = m.content
+            if m.role == "assistant" and isinstance(content, str) and content:
+                content = _strip_thinking_header(content)
+            out.append(Message(role=m.role, content=content,
+                               internal=getattr(m, "internal", False)))
+        return out
 
     def _save_conv_json(self, file_path: str = None) -> str:
         """方案二：把消息落盘成平台 JSON（URL 一并记下，便于交叉校验）

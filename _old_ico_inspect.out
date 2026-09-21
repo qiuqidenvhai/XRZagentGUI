@@ -1,0 +1,8 @@
+OLD header reserved 0 type 1 count 7
+  entry0: 16x16 bpp=32 png=False magic=28000000
+  entry1: 24x24 bpp=32 png=False magic=28000000
+  entry2: 32x32 bpp=32 png=False magic=28000000
+  entry3: 48x48 bpp=32 png=False magic=28000000
+  entry4: 64x64 bpp=32 png=False magic=28000000
+  entry5: 128x128 bpp=32 png=False magic=28000000
+  entry6: 256x256 bpp=32 png=False magic=28000000

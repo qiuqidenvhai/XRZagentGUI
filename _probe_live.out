@@ -1,0 +1,29 @@
+
+########## 切到 通义千问 (tongyi) ##########
+[switch] 已切换到 通义千问，已携带切换前的对话背景
+[chat]  ok=False  posted=True
+[chat]  tools=[]
+[chat]  errs=['该平台账号额度已耗尽：Oops! There was an issue connecting to Qwen3.8-Max.\n你已达到每日使用限制。请等待 57 分钟后重试。']
+[chat]  final='[平台额度耗尽] Oops! There was an issue connecting to Qwen3.8-Max.\n你已达到每日使用限制。请等待 57 分钟后重试。\n\n这不是本软件的问题：该网页账号的免费额度 / 使用次数已用完，网页只回额度提示、不再回答。请等额度恢复、开通订阅，或切换到其它平台。'
+
+########## 切到 豆包 (doubao) ##########
+[switch] 已切换到 豆包，已携带切换前的对话背景
+[chat]  ok=True  posted=True
+[chat]  tools=['done']
+[chat]  errs=[]
+[chat]  final='1 加 1 等于 2'
+
+########## 切到 元宝 (yuanbao) ##########
+[switch] 已切换到 元宝，已携带切换前的对话背景（尚未登录，请在弹出的窗口中登录后再发任务）
+[chat]  ok=True  posted=True
+[chat]  tools=[]
+[chat]  errs=[]
+[chat]  final='[需要登录] [元宝] 平台未登录，请先在打开的浏览器窗口里登录，再重新发任务'
+
+
+========== 汇总 ==========
+{
+  "tongyi": "[平台额度耗尽] Oops! There was an issue connecting to Qwen3.8-Max.\n你已达到每日使用限制。请等待 57 分钟后重试。\n\n这不是本软件的问题：该网页账号的免费额度 / 使用次数已用完，网页只回额度提示、不再回答。请等额度恢复、开通订阅，或切换到其它平台。",
+  "doubao": "1 加 1 等于 2",
+  "yuanbao": "[需要登录] [元宝] 平台未登录，请先在打开的浏览器窗口里登录，再重新发任务"
+}

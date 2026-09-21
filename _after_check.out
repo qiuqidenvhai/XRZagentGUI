@@ -1,0 +1,18 @@
+DOM len=269983
+--- candidate send-button / reply containers (hydrated) ---
+<button>                                 count=1
+aria-label*=send                         count=0
+aria-label=发送                            count=0
+aria-label*=submit                       count=0
+type=submit                              count=0
+class*=(message|msg|markdown|conversation) count=16
+ds-message                               count=4
+markdown                                 count=13
+data-slot=                               count=0
+role=log                                 count=0
+
+--- all aria-label values present ---
+  aria-label: 朗读
+
+--- buttons with their aria-label / title / text ---
+  BTN [] inner='\'+g.b+"'

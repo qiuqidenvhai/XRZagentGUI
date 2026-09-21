@@ -1,0 +1,1 @@
+READY {'status': 'ok', 'agent_ready': False, 'browser': 'connected', 'commander': 'not ready', 'platform': 'deepseek', 'port': 8888}

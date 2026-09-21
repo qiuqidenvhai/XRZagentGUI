@@ -1,0 +1,122 @@
+{
+ "url": "https://www.doubao.com/chat/",
+ "title": "豆包 - 字节跳动旗下 AI 智能助手",
+ "frames": [
+  {
+   "index": 0,
+   "name": "main",
+   "url": "https://www.doubao.com/chat/",
+   "len": 864,
+   "hint_hits": [],
+   "preview": "豆包\n新工作任务\nCtrl J\n新对话\nCtrl Shift K\n定时任务\n连接器 · 技能 · 伙伴\n云盘\nAPI 服务\n更多\n置顶\n主对话\n项目\n创建新项目\n最近\n仙人掌 Agent 任务执行\n仙人掌 Agent 任务执行\n仙人掌 Agent 任务执行\n仙人掌 Agent 任务执行\n仙人掌 Agent 任务执行\n仙人掌 Agent 任务执行\n仙人掌 Agent 任务执行\n仙人掌 Agent 任务执行\n仙人掌 Agent 任务执行\n仙人掌 Agent 任务执行\n仙人掌 Agent 任务执行\n仙人掌 Agent 任务执行\n仙人掌 Agent 任务执行\n仙人掌 Agent 任务执行\n仙人掌 Agent 任务执行\n仙人掌 Agent 任务执行\n仙人掌 Agent 任务执行\n仙人掌 Agent 任务执行\n仙人掌 Agent 任务执行\n仙人掌Agent任务执行\n仙人掌 Agent 任务执行\n仙人掌"
+  },
+  {
+   "index": 1,
+   "name": "",
+   "url": "https://www.doubao.com/drive-iframe/drive/home/",
+   "len": 21,
+   "hint_hits": [],
+   "preview": "使用云盘，代表你已阅读并同意\n云盘使用须知"
+  }
+ ],
+ "elements": [
+  {
+   "label": "main",
+   "tag": "img",
+   "w": 36,
+   "h": 36,
+   "src": "https://p26-passport.byteacctimg.com/img/user-avatar/assets/e7b19241fb224cea967dfaea35448102_1080_1080.png~300x300.image",
+   "alt": ""
+  },
+  {
+   "label": "main",
+   "tag": "button",
+   "txt": "豆包"
+  },
+  {
+   "label": "main",
+   "tag": "button",
+   "txt": "创建新项目"
+  },
+  {
+   "label": "main",
+   "tag": "button",
+   "txt": "啊就"
+  },
+  {
+   "label": "main",
+   "tag": "button",
+   "txt": "对话"
+  },
+  {
+   "label": "main",
+   "tag": "button",
+   "txt": "工作"
+  },
+  {
+   "label": "main",
+   "tag": "button",
+   "txt": "资讯：赛力斯华为调整合作模式 问界开启专属专营"
+  },
+  {
+   "label": "main",
+   "tag": "button",
+   "txt": "西语在跨境电商中有什么作用？"
+  },
+  {
+   "label": "main",
+   "tag": "button",
+   "txt": "俄罗斯女孩在日常生活中有哪些文化习惯？"
+  },
+  {
+   "label": "main",
+   "tag": "button",
+   "txt": "蒙特利尔的官方语言是什么？"
+  },
+  {
+   "label": "main",
+   "tag": "button",
+   "txt": "对话"
+  },
+  {
+   "label": "main",
+   "tag": "button",
+   "txt": "视频生成"
+  },
+  {
+   "label": "main",
+   "tag": "button",
+   "txt": "帮我写作"
+  },
+  {
+   "label": "main",
+   "tag": "button",
+   "txt": "图像生成"
+  },
+  {
+   "label": "main",
+   "tag": "button",
+   "txt": "翻译"
+  },
+  {
+   "label": "main",
+   "tag": "button",
+   "txt": "音乐生成"
+  },
+  {
+   "label": "main",
+   "tag": "button",
+   "txt": "AI 播客"
+  },
+  {
+   "label": "main",
+   "tag": "button",
+   "txt": "更多"
+  },
+  {
+   "label": "main",
+   "tag": "button",
+   "txt": "豆包 快速"
+  }
+ ]
+}

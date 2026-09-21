@@ -1,0 +1,3 @@
+/html -> fail <HTTPError 404: 'Not Found'>
+/debug -> fail <HTTPError 404: 'Not Found'>
+/html?fresh=1 -> fail <HTTPError 404: 'Not Found'>

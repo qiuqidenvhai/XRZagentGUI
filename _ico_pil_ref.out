@@ -1,0 +1,16 @@
+PIL ICO written 10576
+PIL ICO header reserved 0 type 1 count 6
+  entry0: 16x16 bpp=32 png=True sz=535 biHeight=218103808
+  entry1: 32x32 bpp=32 png=True sz=1094 biHeight=218103808
+  entry2: 48x48 bpp=32 png=True sz=1590 biHeight=218103808
+  entry3: 64x64 bpp=32 png=True sz=2065 biHeight=218103808
+  entry4: 128x128 bpp=32 png=True sz=3801 biHeight=218103808
+  entry5: 256x256 bpp=32 png=True sz=1389 biHeight=218103808
+Traceback (most recent call last):
+  File "D:\软件\XianRenZhangAgent\_ico_pil_ref.py", line 56, in <module>
+    print('PIL ICO bottom-up(bottom-half brown):', round(brown_ratio(xor_to_img(xor,256,flip=True)),4))
+                                                                     ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "D:\软件\XianRenZhangAgent\_ico_pil_ref.py", line 36, in xor_to_img
+    b,g,r,a = xor[base+x*4:base+x*4+4]
+    ^^^^^^^
+ValueError: not enough values to unpack (expected 4, got 0)

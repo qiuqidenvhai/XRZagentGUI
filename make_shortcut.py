@@ -20,7 +20,26 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 LNK = os.path.join(HERE, "启动仙人掌.lnk")
 ICO = os.path.join(HERE, "__xianrenzhang_icon.ico")
+
+
+def _newest_icon():
+    """Prefer a content-hashed icon filename (__xianrenzhang_icon_<md5>.ico).
+
+    Windows caches shortcut icons by path; rewriting the same path often keeps
+    showing the stale icon. Using a fresh unique filename forces a re-read.
+    """
+    import glob as _glob
+    cands = sorted(
+        _glob.glob(os.path.join(HERE, "__xianrenzhang_icon_*.ico")),
+        key=lambda p: os.path.getmtime(p),
+        reverse=True,
+    )
+    return cands[0] if cands else ICO
+
+
 DESKTOP_APP = os.path.join(HERE, "desktop_app.py")
+DESKTOP = os.path.join(os.path.expanduser("~"), "Desktop")
+LNK_DESKTOP = os.path.join(DESKTOP, "启动仙人掌.lnk")
 APP_ID = "XianRenZhang.Agent.Desktop.1"
 
 
@@ -77,6 +96,8 @@ def main():
     if not pythonw or not os.path.exists(pythonw):
         print("ERROR: no pythonw.exe found", file=sys.stderr)
         return 1
+    ico_use = _newest_icon()
+    print(f"  icon used: {ico_use}")
 
     ps = (
         "$ws = New-Object -ComObject WScript.Shell;"
@@ -84,10 +105,15 @@ def main():
         "$s.TargetPath = " + ps_quote(pythonw) + ";"
         "$s.Arguments = " + ps_quote('"' + DESKTOP_APP + '"') + ";"
         "$s.WorkingDirectory = " + ps_quote(HERE) + ";"
-        "$s.IconLocation = " + ps_quote(ICO + ",0") + ";"
+        "$s.IconLocation = " + ps_quote(ico_use + ",0") + ";"
         "$s.Description = '仙人掌 Agent';"
         "$s.WindowStyle = 1;"  # normal (visible)
         "$s.Save();"
+        # mirror to the desktop (this is the copy the user actually clicks)
+        "$d = " + ps_quote(DESKTOP) + ";"
+        "if (Test-Path $d) {"
+        "  Copy-Item -LiteralPath " + ps_quote(LNK) + " -Destination " + ps_quote(LNK_DESKTOP) + " -Force;"
+        "}"
     )
 
     try:
@@ -104,10 +130,13 @@ def main():
     if not os.path.exists(LNK):
         print(f"ERROR: shortcut not created at {LNK}", file=sys.stderr)
         return 1
+    if not os.path.exists(LNK_DESKTOP):
+        print(f"WARN: desktop copy missing: {LNK_DESKTOP}", file=sys.stderr)
     print(f"Shortcut ready: {LNK}")
+    print(f"  desktop:  {LNK_DESKTOP} -> exists={os.path.exists(LNK_DESKTOP)}")
     print(f"  pythonw:  {pythonw}")
     print(f"  target:   desktop_app.py")
-    print(f"  icon:     {ICO}")
+    print(f"  icon:     {ico_use}")
     return 0
 
 

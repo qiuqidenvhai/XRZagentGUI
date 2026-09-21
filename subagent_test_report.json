@@ -1,0 +1,47 @@
+[
+  {
+    "tag": "backend_ready",
+    "ok": true,
+    "detail": "{\"status\": \"ok\", \"agent_ready\": true, \"browser\": \"connected\", \"commander\": \"ready\", \"platform\": \"deepseek\", \"port\": 8888}"
+  },
+  {
+    "tag": "subagent_dispatched",
+    "ok": true,
+    "detail": "{\"type\": \"accepted\", \"text\": \"命令已接收，正在处理...\", \"async_task\": true}"
+  },
+  {
+    "tag": "sse_events_received",
+    "ok": true,
+    "detail": "共收到 183 个事件"
+  },
+  {
+    "tag": "sse_thinking_events",
+    "ok": true,
+    "detail": "思考事件数=34, 首条=[系统指令-你必须严格遵守]\n你是仙人掌 Agent（XianRenZhang Agent），一个自主 AI 助手，支持多平台 LLM。\n\n=== 核心指令 ="
+  },
+  {
+    "tag": "sse_ai_reply",
+    "ok": true,
+    "detail": "AI 最终回复: [错误] AI 调用失败: Locator.fill: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator(\"textarea\").first\n    - locator resolved to <textarea rows=\"2\""
+  },
+  {
+    "tag": "subagent_events",
+    "ok": true,
+    "detail": "子代理相关事件数=36"
+  },
+  {
+    "tag": "subagent_dir",
+    "ok": false,
+    "detail": "目录不存在: D:\\软件\\XianRenZhangAgent\\xrz_data\\XianRenZhang_tasks\\subagent"
+  },
+  {
+    "tag": "url_subagent_dispatched",
+    "ok": true,
+    "detail": "{\"type\": \"accepted\", \"text\": \"命令已接收，正在处理...\", \"async_task\": true}"
+  },
+  {
+    "tag": "url_subagent_reply",
+    "ok": true,
+    "detail": "AI 回复: [错误] AI 调用失败: Locator.fill: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator(\"textarea\").first\n    - locator "
+  }
+]

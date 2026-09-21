@@ -1,0 +1,220 @@
+{
+  "ts": "2026-09-14 08:28:26",
+  "results": [
+    {
+      "tag": "backend_health",
+      "ok": true,
+      "detail": "{'status': 'ok', 'agent_ready': True, 'browser': 'connected', 'commander': 'ready', 'platform': 'deepseek', 'port': 8888}"
+    },
+    {
+      "tag": "deepseek_count_baseline",
+      "ok": true,
+      "detail": "基线 DeepSeek 实例数=1（必须为1）"
+    },
+    {
+      "tag": "tongyi__switch",
+      "ok": true,
+      "detail": "resp=已切换到 通义千问，已携带切换前的对话背景 health.platform=tongyi"
+    },
+    {
+      "tag": "tongyi__switch_no_double",
+      "ok": true,
+      "detail": "DeepSeek 实例数=1"
+    },
+    {
+      "tag": "tongyi__model_switch",
+      "ok": true,
+      "detail": "qwen3.8-max->qwen3.7-plus: {\"type\": \"ok\", \"text\": \"模型切换中：Qwen3.7-Plus（后台执行）\"}"
+    },
+    {
+      "tag": "tongyi__model_switch_back",
+      "ok": true,
+      "detail": "qwen3.7-plus->qwen3.8-max: {\"type\": \"ok\", \"text\": \"模型切换中：Qwen3.8-Max（后台执行）\"}"
+    },
+    {
+      "tag": "tongyi__chat",
+      "ok": true,
+      "detail": "task=task_1789344395127 final='AI Agent（人工智能代理）是一种不仅能进行对话，还能自主规划步骤并调用各种外部工具来主动完成复杂任务的智能系统。作为仙人掌 Agent，我可以直接在您的电脑上真实创建与编辑各类文档、联网搜索与抓取网页、管理任务进度' errs=[]"
+    },
+    {
+      "tag": "tongyi__file_write",
+      "ok": true,
+      "detail": "tools=['done', 'file_write'] found=D:\\软件\\XianRenZhangAgent\\xrz_data\\XianRenZhang_tasks\\gui_session\\mp2_tongyi.txt final='文件已成功创建并写入内容。'"
+    },
+    {
+      "tag": "tongyi__docx",
+      "ok": true,
+      "detail": "tools=['docx_create', 'done'] new=['mp2_tongyi.docx'] final='所有任务已圆满完成！Word 文档 mp2_tongyi.docx 已成功生成在您的指定路径（D:\\\\软件\\\\XianRenZhangAgent'"
+    },
+    {
+      "tag": "tongyi__docx_file",
+      "ok": true,
+      "detail": "exists=True size=36675 new=['mp2_tongyi.docx']"
+    },
+    {
+      "tag": "tongyi__pptx",
+      "ok": true,
+      "detail": "tools=['done', 'pptx_create'] new=[] final='我已经为您完成了所有指定的测试任务：\\n用三句话向您解释了什么是 AI Agent 以及我能帮您做的事情。\\n成功在指定路径创建了文本文件 mp'"
+    },
+    {
+      "tag": "tongyi__pptx_file",
+      "ok": true,
+      "detail": "exists=True size=3801371 new=[]"
+    },
+    {
+      "tag": "tongyi__browser_search",
+      "ok": true,
+      "detail": "tools=['browser_search', 'done'] final='通过搜索结果可以看到，与「Python asyncio 官方文档」最相关的链接是 Python 官方网站（Welcome to Python.org）。所有要求'"
+    },
+    {
+      "tag": "tongyi__no_double_browser",
+      "ok": true,
+      "detail": "平台 tongyi 全部测试后 DeepSeek 实例数=1（基线1）"
+    },
+    {
+      "tag": "doubao__switch",
+      "ok": true,
+      "detail": "resp=已切换到 豆包，已携带切换前的对话背景 health.platform=doubao"
+    },
+    {
+      "tag": "doubao__switch_no_double",
+      "ok": true,
+      "detail": "DeepSeek 实例数=1"
+    },
+    {
+      "tag": "doubao__model_switch",
+      "ok": true,
+      "detail": "仅有 1 个普通聊天模式（其余是平台沙箱，不切），保持 doubao-mode-0: {\"type\": \"ok\", \"text\": \"模型切换中：对话（后台执行）\"}"
+    },
+    {
+      "tag": "doubao__chat",
+      "ok": true,
+      "detail": "task=task_1789344804701 final='AI Agent 是拥有自主思考与工具调用能力的智能体，能拆解目标并执行连贯任务，并非只能单次问答。\\n我能够撰写文案、整理材料、创建各类文档，还可以执行文件处理、信息查询等一系列操作。\\n我会读懂你的整体需求，自动拆分步骤' errs=[]"
+    },
+    {
+      "tag": "doubao__file_write",
+      "ok": true,
+      "detail": "tools=['done', 'file_write'] found=D:\\软件\\XianRenZhangAgent\\xrz_data\\XianRenZhang_tasks\\gui_session\\mp2_doubao.txt final='文件 mp2_doubao.txt 已经创建完成，写入内容：doubao 工具测试成功。'"
+    },
+    {
+      "tag": "doubao__docx",
+      "ok": true,
+      "detail": "tools=['docx_create', 'done'] new=[] final='已成功生成 Word 文档，文件路径：D:\\\\ 软件 \\\\XianRenZhangAgent\\\\xrz_data\\\\XianRenZhang_tas'"
+    },
+    {
+      "tag": "doubao__docx_file",
+      "ok": true,
+      "detail": "exists=True size=36676 new=[]"
+    },
+    {
+      "tag": "doubao__pptx",
+      "ok": null,
+      "detail": "SKIP：该平台账号额度耗尽（非本软件缺陷）"
+    },
+    {
+      "tag": "doubao__pptx_file",
+      "ok": null,
+      "detail": "SKIP：该平台账号额度耗尽（非本软件缺陷）"
+    },
+    {
+      "tag": "doubao__browser_search",
+      "ok": true,
+      "detail": "tools=['browser_search', 'done'] final='Python asyncio 官方文档最相关链接标题：Python.org（Python 官网，asyncio 文档归属站点）'"
+    },
+    {
+      "tag": "doubao__no_double_browser",
+      "ok": true,
+      "detail": "平台 doubao 全部测试后 DeepSeek 实例数=1（基线1）"
+    },
+    {
+      "tag": "yuanbao__switch",
+      "ok": true,
+      "detail": "resp=已切换到 元宝，已携带切换前的对话背景（尚未登录，请在弹出的窗口中登录后再发任务） health.platform=yuanbao"
+    },
+    {
+      "tag": "yuanbao__switch_no_double",
+      "ok": true,
+      "detail": "DeepSeek 实例数=1"
+    },
+    {
+      "tag": "yuanbao__model_switch",
+      "ok": true,
+      "detail": "hy3->deepseek: {\"type\": \"ok\", \"text\": \"模型切换中：DeepSeek（后台执行）\"}"
+    },
+    {
+      "tag": "yuanbao__model_switch_back",
+      "ok": true,
+      "detail": "deepseek->hy3: {\"type\": \"ok\", \"text\": \"模型切换中：Hy3（后台执行）\"}"
+    },
+    {
+      "tag": "yuanbao__chat",
+      "ok": null,
+      "detail": "SKIP：该平台未登录（需用户扫码登录，非本软件缺陷）"
+    },
+    {
+      "tag": "yuanbao__file_write",
+      "ok": null,
+      "detail": "SKIP：该平台未登录（需用户扫码登录，非本软件缺陷）"
+    },
+    {
+      "tag": "yuanbao__docx",
+      "ok": null,
+      "detail": "SKIP：该平台未登录（需用户扫码登录，非本软件缺陷）"
+    },
+    {
+      "tag": "yuanbao__docx_file",
+      "ok": null,
+      "detail": "SKIP：该平台未登录（需用户扫码登录，非本软件缺陷）"
+    },
+    {
+      "tag": "yuanbao__pptx",
+      "ok": null,
+      "detail": "SKIP：该平台未登录（需用户扫码登录，非本软件缺陷）"
+    },
+    {
+      "tag": "yuanbao__pptx_file",
+      "ok": null,
+      "detail": "SKIP：该平台未登录（需用户扫码登录，非本软件缺陷）"
+    },
+    {
+      "tag": "yuanbao__browser_search",
+      "ok": null,
+      "detail": "SKIP：该平台未登录（需用户扫码登录，非本软件缺陷）"
+    },
+    {
+      "tag": "yuanbao__no_double_browser",
+      "ok": true,
+      "detail": "DeepSeek 实例数=1"
+    },
+    {
+      "tag": "upload_http",
+      "ok": true,
+      "detail": "{'type': 'ok', 'files': [{'path': 'D:\\\\软件\\\\XianRenZhangAgent\\\\xrz_data\\\\gui_attachments\\\\95e764f368e44cc49ce41127fd4ebe01.pdf', 'name': 'test_smoke.pd"
+    },
+    {
+      "tag": "upload_qa",
+      "ok": true,
+      "detail": "final='PDF 内容已读到，全文只有一句 \"Hello Smoke\"，可直接给出概括。\\n\\n这份 PDF 内容极简，全篇仅有一句问候语 \"Hello Smoke\"，没有其他实质性信息，因此可概括为：它是一份只包含一句问候语「Hello Smoke」的' errs=[]"
+    },
+    {
+      "tag": "upload__no_double",
+      "ok": true,
+      "detail": "DeepSeek 实例数=1"
+    },
+    {
+      "tag": "subagent_dispatch",
+      "ok": true,
+      "detail": "accepted=True"
+    },
+    {
+      "tag": "subagent_monitor",
+      "ok": true,
+      "detail": "ai_final_reply=1 tool_events=2 markers=[] types={'task_started': 1, 'thinking': 1, 'memory_reminder': 1, 'command_detected': 1, 'tool_start': 1, 'tool_end': 1, 'command_success': 1, 'ai_final_reply': 1}"
+    },
+    {
+      "tag": "subagent__no_double",
+      "ok": true,
+      "detail": "DeepSeek 实例数=1（母+子共用同一浏览器）"
+    }
+  ]
+}

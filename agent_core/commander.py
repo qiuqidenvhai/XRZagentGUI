@@ -175,6 +175,21 @@ class ToolRegistry:
 
 
 # ============================================================
+# 按「网页标签页」分桶的执行锁
+# ------------------------------------------------------------
+# 为什么要按 page 分桶、而不是一把全局锁：
+#   用户的核心诉求是「多任务必须能并行」——子母代理在一个浏览器里开两个标签页，
+#   各跑各的；不同任务还可以用不同 AI 平台。用一把全局锁会把它们硬串成队列，
+#   并弹出「上一条任务还在执行，你的新指令已排队」这种让用户以为软件在偷懒的提示。
+#   但「同一标签页被两条指令同时驱动」确实会串台（输入框交替输入、抢最后一条回复），
+#   所以锁不能取消，只能【收窄到 page 粒度】：
+#     · 不同 page → 不同锁 → 真并行（这是绝大多数并发场景，包括子代理/跨平台）
+#     · 同一 page → 同一把锁 → 串行保护（真正的危险场景）
+# key 用 id(page)：同一个标签页对象 id 稳定，不同标签页必然不同。
+_PAGE_LOCKS: dict = {}
+
+
+# ============================================================
 # 主控制器 Commander
 # ============================================================
 
@@ -1997,6 +2012,27 @@ class Commander:
    作为「🧠 思考过程」展示给用户，让用户看到你的推理链路。
    这条思考过程也必须保留。
 
+7.1 【思考 / 答复 严格分离·极其重要】协议块之外的文字有【两种】，不要混淆：
+   (a) **调工具那几轮**（本轮的协议是 file_write / browser_search 等工具）：
+       协议块外写「我的计划 / 我在想什么」——这段只是思考过程，用户【不会】把它
+       当成最终答复。可以随便写你的推理。
+   (b) **收尾那一轮**（本轮协议是 done()）：协议块外面的文字会被【原样】当作
+       「最终答复」直接展示给用户，请看的是用户不是你自己。
+       所以这里【绝对不许】写推理过程、自我盘算、规则复述之类的内容，
+       例如【严禁】出现：
+         × 「用户要求…」「根据系统提示…」「系统要求我用协议格式…」
+         × 「我需要在 done 之前的自然语言里写…」「这有点矛盾…」「让我想想…」
+         × 「我应该输出…」「最合理做法是…」「现在系统是在纠正我…」
+       done() 之前只写【给用户看的结果正文】：
+         直接给结论 / 答案 / 做了什么 / 产物路径。
+       举例（用户要求「只回复 IA62748」）：
+         ✓ 正确：IA62748  然后 @@@@{{"tool":"done",...}}@@@@
+         × 错误：用户要求只回复那串字符。系统要求用协议格式。我需要在 done
+                 之前的自然语言里写要说的内容…IA62748
+       再举例（用户要求生成一份文档）：
+         ✓ 正确：已生成文档，保存在 D:\\...\\report.docx（共 3 个章节）。
+         × 错误：我需要先调用 docx_create，然后确认结果再 done()。
+
 8. **文件类任务必须用工具真实完成，绝不许让用户复制粘贴**：你运行在用户的本机电脑上，
    `docx_create` / `pptx_create` / `file_write` / `file_edit` 等工具由本地运行时
    【真实执行】，会在用户电脑上真的生成或修改文件。当用户要求生成 Word / PPT / 文本文件、
@@ -2108,51 +2144,76 @@ class Commander:
 
     async def run(self, user_instruction: str, file_path: Optional[str] = None,
                   context_hints: str = "") -> str:
-        """run() 的并发闸门。
+        """执行一次任务（真并发：只要每个 Commander 有自己的网页标签页，就互不阻塞）。
 
-        【实测缺陷·必须串行】后端 /command 没有任何并发保护：上一条任务还在跑时
-        再发一条指令，两个 run() 会【同时驱动同一个网页会话】（同一浏览器、同一
-        PlatformSession / DeepSeekSession）。后果是灾难性的且难以察觉：
-          · 两条指令的消息在同一个网页输入框里交替发出 → 模型收到串台上下文；
-          · 两个 wait_response 抢同一个页面的「最后一条消息」→ 回复张冠李戴；
-          · 会话自愈（换新会话/轮数计数）被两次调用互相触发 → 无限换会话空转；
-          · 最终表现为「任务卡死、最终回复丢失（final=''）」。
-        这里用 asyncio.Lock 把 run() 串行化：后来的指令排队等前一条跑完再执行。
+        ── 历史与纠正（2026-09-21）────────────────────────────────────────
+        旧实现：一把全局 asyncio.Lock 把【所有】run() 串行化，并在抢不到锁时弹
+        「上一条任务还在执行，你的新指令已排队」。它的立论是「两个 run() 会同时驱动
+        同一个网页会话」——这对【共享同一个 page】的情况成立，但被当成了全局策略，
+        于是出现了用户强烈反对的那条离谱提示：
+            「怎么会出现上一个任务正在执行需要排队的离谱信息」
+            「子母代理不是可以在一个浏览器里开两个标签吗，那多任务当然可以呀」
+        用户是对的。真正需要保护的从来不是「整个进程」，而是**同一个 page**。
+        每个子代理/并发任务都会走 spawn_child() 拿到【同一浏览器里的独立标签页】，
+        各自有独立输入框、独立 DOM、独立等待循环，根本不会抢「最后一条消息」。
+
+        ── 现在的策略 ────────────────────────────────────────────────────
+        用「按 page 分桶的锁」：锁的 key 是当前 page 的身份。
+          · 不同 page（并发任务 / 子代理 / 跨平台）→ 不同锁 → 真并行，不排队、不提示；
+          · 同一个 page（极端情况下两条指令打到同一个标签页）→ 同一把锁 → 串行保护，
+            这才是旧逻辑真正想防的场景，而且此时给出的也是明确的错误提示而不是
+            「排队」这种让用户以为软件在偷懒的话术。
         """
+        import asyncio as _aio
+
+        # 取出「这个 Commander 正在驱动的 page」作为分桶 key。
+        # 拿不到 page 身份时退回自身 id —— 语义等价于「每个 Commander 一把锁」，
+        # 既不会误串行化别人，自己也不会被并发驱动。
+        key = None
         try:
-            import asyncio as _aio
-            _lock = getattr(self, "_run_lock", None)
-            if _lock is None:
-                _lock = _aio.Lock()
-                self._run_lock = _lock
+            bm = getattr(self, "_bm", None)
+            page = getattr(bm, "_page", None) if bm is not None else None
+            if page is not None:
+                # 用 id(page) 作身份：同一标签页必然同 id，不同标签页必然不同 id
+                key = ("page", id(page))
         except Exception:
-            _lock = None
-        if _lock is None:
-            return await self._run_impl(user_instruction, file_path, context_hints)
-        if _lock.locked():
-            logger.warning("[Commander] 上一条任务仍在执行，新指令已排队（避免同一网页会话被并发驱动）")
+            key = None
+        if key is None:
+            key = ("commander", id(self))
+
+        lock = _PAGE_LOCKS.get(key)
+        if lock is None:
+            lock = _aio.Lock()
+            _PAGE_LOCKS[key] = lock
+        self._run_lock = lock
+
+        busy = lock.locked()
+        if busy:
+            # 同一个标签页被两条指令同时驱动 —— 这是真会串台的场景，必须串行。
+            # 但措辞要说清「是同一个标签页」，而不是笼统的「排队」，
+            # 免得用户以为是软件在无谓地排队。
+            logger.warning("[Commander] 同一网页标签页已有任务在执行，本次等待其完成")
             try:
                 _warn_evt = getattr(EventType, "WARNING", None) or EventType.ERROR
                 self._emit(_warn_evt, {
-                    "text": "上一条任务还在执行，你的新指令已排队，稍后自动执行"
+                    "text": "该标签页上有任务正在执行，本次任务等它结束后自动开始"
                 })
             except Exception:
                 pass
-        # 排队等待有上限：不能因为上一条任务卡住就让后面所有指令永远排队
-        # （否则用户会发现「发什么都没反应」，比并发串台还难排查）。
+
         try:
-            await _aio.wait_for(_lock.acquire(), timeout=600)
+            await _aio.wait_for(lock.acquire(), timeout=1800)
         except Exception:
-            logger.error("[Commander] 等待上一条任务让出执行权超时（600s），放弃本次指令")
+            logger.error("[Commander] 等待同一标签页让出执行权超时（1800s），放弃本次指令")
             try:
                 self._emit(EventType.ERROR, {
-                    "text": "上一条任务超过 10 分钟仍未结束，本次指令已取消。"
-                            "请先中断上一条任务（或重启软件）再试。"
+                    "text": "该标签页上的上一个任务超过 30 分钟仍未结束（很可能卡住了），"
+                            "本次指令已取消。可点「暂停」中断它，或开新任务用新标签页。"
                 })
             except Exception:
                 pass
-            return "[错误] 上一条任务长时间未结束（很可能卡住了），本次指令已取消。" \
-                   "请先中断上一条任务，或重启软件。"
+            return "[错误] 该标签页上的上一个任务长时间未结束（很可能卡住了），本次指令已取消。"
+
         try:
             return await self._run_impl(user_instruction, file_path, context_hints)
         except BaseException as e:  # noqa: BLE001 - 最后一道防线，见下方说明
@@ -2183,7 +2244,7 @@ class Commander:
             return f"[错误] 任务中断（{exc_name}）: {e}"
         finally:
             try:
-                _lock.release()
+                lock.release()
             except Exception:
                 pass
 
@@ -2648,6 +2709,48 @@ class Commander:
                         "不要复述工具返回的原始抓取内容。"
                     )
                     continue
+                # 【实测缺陷·推理泄漏】推理型模型（DeepSeek-R1 系）会把思维链写进正文，
+                # 收尾轮 done() 前面那段自然语言就成了它的自言自语：
+                #   「用户要求只回复那串字符。系统要求用协议格式。我需要在 done 之前的
+                #    自然语言里写要说的内容，然后调用 done()。\n\nIA62748」
+                # 用户侧看到的「最终回复」= 这段盘算（真正的答案被埋在末尾）。
+                # 检测到就在打回一次，逼它只写答案；重试超限则退化为工具真实结果摘要，
+                # 总之【绝不允许】把推理过程当成最终答复展示。
+                if self._looks_like_reasoning(final_reply):
+                    self._reasoning_leak_retries = getattr(self, "_reasoning_leak_retries", 0) + 1
+                    if self._reasoning_leak_retries <= MAX_REASONING_LEAK:
+                        logger.warning(
+                            "[Commander] done() 前是推理过程（非答复），打回 #%d: %r",
+                            self._reasoning_leak_retries, final_reply[:120])
+                        self._emit(EventType.CORRECTION_SENT, {
+                            "text": "检测到模型把「思考过程」当成最终答复输出，已打回要求只写结果正文"
+                        })
+                        current_input = (
+                            "[SYSTEM] 你刚才 done() 前面写的不是给用户的答复，而是你自己的"
+                            "思考/盘算（例如「用户要求…」「系统要求…」「我需要在 done 之前…」"
+                            "「我该输出…」）。这段文字会被【原样】当作最终答复展示给用户，"
+                            "用户看不懂也不想看。\n"
+                            "规则：done() 协议块【之外】的文字 = 直接给用户看的结果正文。\n"
+                            "· 只写结论 / 答案 / 做了什么 / 产物路径；\n"
+                            "· 【禁止】复述系统规则、禁止谈协议格式、禁止写「我准备怎么做」；\n"
+                            "· 【禁止】出现「用户要求」「系统要求」「我应该」「我需要」这类字样。\n"
+                            f"用户的原始要求是：{(original_task or '')[:200]}\n"
+                            "请重新输出：先写【给用户看的答案正文】，再输出 "
+                            "@@@@{\"tool\":\"done\",\"params\":{},\"id\":\"9\"}@@@@。"
+                        )
+                        continue
+                    # 打回多次仍泄：#1 先看看工具里有没有真实结论可摘
+                    _tool_text = self._last_tool_text(original_task)
+                    if _tool_text:
+                        logger.warning("[Commander] 推理泄漏打回无效，改用工具真实结果作为答复")
+                        final_reply = _tool_text
+                    elif last_ai_text and not self._looks_like_reasoning(last_ai_text):
+                        final_reply = last_ai_text
+                    else:
+                        # 实在没有可用正文 → 如实摘要，至少不是一段自言自语
+                        logger.warning("[Commander] 推理泄漏打回无效且无工具结论，退回摘要")
+                        final_reply = self._summarize_done()
+                        _from_summary = True
                 _missing = self._claimed_but_missing_files(final_reply, original_task)
                 if _missing and self._fake_done_retries < MAX_FAKE_DONE:
                     self._fake_done_retries += 1
@@ -2924,6 +3027,49 @@ class Commander:
         return "已完成。执行记录：\n" + body
 
     @staticmethod
+    def _looks_like_reasoning(text: str) -> bool:
+        """判断 done() 前面那段自然语言【是模型的自言自语】而不是给用户的答复。
+
+        实测（2026-09-21 DeepSeek 真机）：DeepSeek 是推理型模型，它会把思维链
+        写在正文里。收尾轮它写的是：
+          「用户要求只回复那串字符。系统要求用协议格式。我需要在 done 之前的
+           自然语言里写要说的内容，然后调用 done()。\n\nIA62748」
+        —— 用户侧看到的「最终回复」就成了这段盘算，而真正的答案 IA62748 被埋在末尾。
+
+        这类文本的特征是「在谈论任务/指令/协议本身」，而不是在交付结果。
+        命中即视为推理垃圾，由调用方改用 _summarize_done() 或打回重写。
+        """
+        import re as _re
+        t = (text or "").strip()
+        if not t:
+            return False
+        # 强特征：直接复述/讨论系统指令、协议、自己的输出动作
+        strong = (
+            "系统要求", "系统提示", "系统指令", "根据规则", "根据系统",
+            "协议格式", "协议块", "协议行", "@@@@ json", "@@@@协议",
+            "done 之前", "done() 之前", "之前的自然语言", "自然语言里写",
+            "我需要在", "我应该", "我可以输出", "我需要输出", "我需要重新",
+            "最合理做法", "让我想想", "我需要先", "我需要调用",
+            "用户要求我", "用户只发了", "用户这条", "用户刚才", "用户的原始要求",
+            "这看起来像", "可能是在测试", "没有明确任务", "没有实际任务",
+            "没有具体任务", "不需要调用工具", "任务已经完成，我", "我直接",
+            "这条消息", "本轮", "我之前的回复", "我上一条",
+        )
+        low = t.lower()
+        for k in strong:
+            if k.lower() in low:
+                return True
+        # 弱特征：第一人称盘算语气成堆出现（≥3 个「我+动词」式标记）
+        weak = ("我应该", "我需要", "我打算", "我将", "我要", "我可以", "我不能确定",
+                "我直接", "我判断", "我决定", "我理解", "我认为")
+        if sum(1 for k in weak if k in t) >= 3:
+            return True
+        # 弱特征：出现「思考/推理」这类自我描述
+        if _re.search(r"(思考过程|推理过程|思维链|chain[- ]of[- ]thought)", t, _re.I):
+            return True
+        return False
+
+    @staticmethod
     def _looks_like_platform_error(text: str) -> bool:
         """判断抓到的这段文本是不是「平台自身报错 / 网页 UI 噪音」，而不是模型回答。
 
@@ -3020,6 +3166,14 @@ class Commander:
         import re as _re
         t = _re.sub(r"@@@@.*?@@@@", "", text or "", flags=_re.DOTALL)
         t = _re.sub(r"<<<RAW>>>.*?<<<RAW>>>", "", t, flags=_re.DOTALL)
+        # 【2026-09-21 真机修复】剥掉平台 UI 的「思考面板折叠条」文案。
+        # DeepSeek 每次回答前会渲染一条可折叠的思考面板，其标题是
+        #「已思考（用时 1 秒）」；由于它和回答同属一个消息容器，读取 innerText 时
+        # 会被当成回复正文的开头（实测会话 json 里 assistant 内容是
+        #「已思考（用时 1 秒）\n\n用户要求…」），进而写进上下文回灌给模型，
+        # 让模型误以为上一轮是在「思考」而不是「回答」。
+        # 这里做统一兜底清洗（浏览器侧已按选择器剔除，这里是第二道防线）。
+        t = _re.sub(r"(?:已完成|已深度|已|完成)?(?:深度)?思考[（(]用时[^）)]{0,20}[）)]", "", t)
         return t.strip()
 
     # 中文/ASCII 混排路径被网页渲染或弱模型插空格的修复。

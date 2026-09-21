@@ -1,0 +1,12 @@
+browser_get_html -> 0
+browser_screenshot -> 0
+browser_get_text -> 0
+dom -> 1
+DOM -> 0
+/debug -> 1
+/api -> 0
+/dump -> 0
+self._page.content -> 0
+get_content -> 0
+/html -> 1
+routes sample: []

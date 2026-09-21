@@ -1,0 +1,21 @@
+=== all ds-button elements (opening tags) ===
+
+=== stop / generating / loading indicators present? ===
+ds-stop        count=0
+generating     count=0
+.loading       count=0
+loading        count=0
+stop           count=0
+pause          count=0
+thinking       count=0
+
+=== ds-think / collapsible (thinking) present? ===
+ds-think-content count=2
+ds-collapsible-text count=4
+深度思考             count=7
+联网搜索             count=0
+深度               count=13
+
+=== composer toolbar toggle labels ===
+  label: 深度思考
+  label: 智能搜索

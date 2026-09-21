@@ -1,0 +1,93 @@
+[
+ {
+  "i": 0,
+  "fmt": "bmp",
+  "w": 16,
+  "h": 16,
+  "decoded": [
+   16,
+   16
+  ],
+  "opaque%": 14.8,
+  "green%": 9.0,
+  "preview": "_ico_v2_16px_bmp.png"
+ },
+ {
+  "i": 1,
+  "fmt": "bmp",
+  "w": 24,
+  "h": 24,
+  "decoded": [
+   24,
+   24
+  ],
+  "opaque%": 14.8,
+  "green%": 8.3,
+  "preview": "_ico_v2_24px_bmp.png"
+ },
+ {
+  "i": 2,
+  "fmt": "bmp",
+  "w": 32,
+  "h": 32,
+  "decoded": [
+   32,
+   32
+  ],
+  "opaque%": 14.2,
+  "green%": 7.8,
+  "preview": "_ico_v2_32px_bmp.png"
+ },
+ {
+  "i": 3,
+  "fmt": "bmp",
+  "w": 48,
+  "h": 48,
+  "decoded": [
+   48,
+   48
+  ],
+  "opaque%": 14.3,
+  "green%": 8.2,
+  "preview": "_ico_v2_48px_bmp.png"
+ },
+ {
+  "i": 4,
+  "fmt": "bmp",
+  "w": 64,
+  "h": 64,
+  "decoded": [
+   64,
+   64
+  ],
+  "opaque%": 14.6,
+  "green%": 8.3,
+  "preview": "_ico_v2_64px_bmp.png"
+ },
+ {
+  "i": 5,
+  "fmt": "bmp",
+  "w": 128,
+  "h": 128,
+  "decoded": [
+   128,
+   128
+  ],
+  "opaque%": 14.3,
+  "green%": 8.1,
+  "preview": "_ico_v2_128px_bmp.png"
+ },
+ {
+  "i": 6,
+  "fmt": "bmp",
+  "w": 0,
+  "h": 0,
+  "decoded": [
+   256,
+   256
+  ],
+  "opaque%": 14.7,
+  "green%": 8.3,
+  "preview": "_ico_v2_256px_bmp.png"
+ }
+]

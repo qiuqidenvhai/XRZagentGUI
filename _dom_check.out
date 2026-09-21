@@ -1,0 +1,17 @@
+DOM len=185239
+url contains chat.deepseek.com: True
+--- platforms.json current deepseek selectors ---
+input_selector='textarea'  (textarea tag) count=1
+send_selector=button[type='submit'] count=0
+response_selector=[class*='message'] count=0
+contenteditable=true               count=0
+aria-label=发送                      count=0
+placeholder (any)                  count=1
+<button> (any)                     count=1
+composer (class/word)              count=0
+data-role                          count=0
+ds-message/ds-markdown/message-content count=0
+
+--- enumerate distinct input-ish elements ---
+  TEXTAREA: <textarea class="_27c9245 ds-scroll-area ds-scroll-area--show-on-focus-within ds-scroll-area--enabled d96f2d2a" placeholder="给 DeepSeek 发送消息 " rows="2" autocomp
+  sample button texts: ['\'+g.b+"']

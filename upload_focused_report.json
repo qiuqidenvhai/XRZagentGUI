@@ -1,0 +1,26 @@
+{
+  "ts": "2026-09-12 21:28:15",
+  "running": false,
+  "results": [
+    {
+      "tag": "pdf_exists",
+      "ok": true,
+      "detail": "D:\\workbuddy工作区\\2026-08-11-21-39-15\\test_smoke.pdf"
+    },
+    {
+      "tag": "upload_http",
+      "ok": true,
+      "detail": "HTTP 200 data={'type': 'ok', 'files': [{'path': 'D:\\\\软件\\\\XianRenZhangAgent\\\\xrz_data\\\\gui_attachments\\\\7722c59b0b44463c815cab9af17a02d"
+    },
+    {
+      "tag": "upload_qa",
+      "ok": true,
+      "detail": "valid=True final='[完成]'"
+    }
+  ],
+  "summary": {
+    "total": 3,
+    "passed": 3,
+    "failed": 0
+  }
+}

@@ -1,0 +1,13 @@
+{
+ "conn8888": [
+  {
+   "pid": 4192,
+   "status": "LISTEN"
+  }
+ ],
+ "proc": {
+  "pid": 4192,
+  "cmd": "D:\\软件\\Python\\pythonw.exe D:\\软件\\XianRenZhangAgent\\terminal.py",
+  "created": 1789864626.5975251
+ }
+}

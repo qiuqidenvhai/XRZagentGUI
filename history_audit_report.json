@@ -1,0 +1,5405 @@
+{
+  "total": 382,
+  "healthy": 0,
+  "broken": 382,
+  "by_platform": {
+    "tongyi": 57,
+    "deepseek": 314,
+    "doubao": 4,
+    "yuanbao": 7
+  },
+  "issue_kinds": {
+    "A": 379,
+    "D": 57,
+    "B": 61,
+    "G": 152,
+    "C": 150,
+    "F": 1
+  },
+  "items": [
+    {
+      "file": "conv_tongyi_20260913_001144.json",
+      "id": "tongyi_20260913_001144",
+      "issues": [
+        "A 内部提示词被写进历史（4 条，例：[系统] 工具 set_deep_think 执行结果:\n深度思考已开启\n\n请继）",
+        "D 状态行被当成 AI 回复 ×10（例：已经完成思考\n@@@@\n{\"tool\":）"
+      ],
+      "n": 20,
+      "n_user": 10,
+      "n_ai": 10,
+      "platform": "tongyi",
+      "title": "深度思考 开启",
+      "mtime": 1789229504.80834
+    },
+    {
+      "file": "conv_tongyi_20260913_000813.json",
+      "id": "tongyi_20260913_000813",
+      "issues": [
+        "A 内部提示词被写进历史（2 条，例：[系统] 工具 set_deep_think 执行结果:\n深度思考已开启\n\n请继）",
+        "D 状态行被当成 AI 回复 ×5（例：已经完成思考\n@@@@\n{\"tool\":）"
+      ],
+      "n": 10,
+      "n_user": 5,
+      "n_ai": 5,
+      "platform": "tongyi",
+      "title": "深度思考 开启",
+      "mtime": 1789229293.9987535
+    },
+    {
+      "file": "conv_deepseek_20260913_000331.json",
+      "id": "deepseek_20260913_000331",
+      "issues": [
+        "A 内部提示词被写进历史（4 条，例：[系统] 工具 set_deep_think 执行结果:\n深度思考已开启\n\n请继）"
+      ],
+      "n": 21,
+      "n_user": 10,
+      "n_ai": 10,
+      "platform": "deepseek",
+      "title": "深度思考 开启",
+      "mtime": 1789229011.6201108
+    },
+    {
+      "file": "conv_deepseek_20260913_000136.json",
+      "id": "deepseek_20260913_000136",
+      "issues": [
+        "A 内部提示词被写进历史（2 条，例：[系统] 工具 set_deep_think 执行结果:\n深度思考已开启\n\n请继）"
+      ],
+      "n": 11,
+      "n_user": 5,
+      "n_ai": 5,
+      "platform": "deepseek",
+      "title": "深度思考 开启",
+      "mtime": 1789228896.9137576
+    },
+    {
+      "file": "conv_doubao_20260912_235658.json",
+      "id": "doubao_20260912_235658",
+      "issues": [
+        "B 空回复/未收到回复 ×2"
+      ],
+      "n": 10,
+      "n_user": 5,
+      "n_ai": 5,
+      "platform": "doubao",
+      "title": "你好，请用一句话介绍你自己",
+      "mtime": 1789228618.4282134
+    },
+    {
+      "file": "conv_doubao_20260912_235329.json",
+      "id": "doubao_20260912_235329",
+      "issues": [
+        "B 空回复/未收到回复 ×1"
+      ],
+      "n": 9,
+      "n_user": 5,
+      "n_ai": 4,
+      "platform": "doubao",
+      "title": "你好，请用一句话介绍你自己",
+      "mtime": 1789228409.7163966
+    },
+    {
+      "file": "conv_doubao_20260912_233801.json",
+      "id": "doubao_20260912_233801",
+      "issues": [
+        "A 内部提示词被写进历史（3 条，例：[系统] 工具 shell_exec 执行结果:\n[退出码 1]\n\n'命令内容'）",
+        "G 回声污染：2/4 条 assistant 内容其实是 Agent 自己发出去的提示词（50%）",
+        "B 空回复/未收到回复 ×1"
+      ],
+      "n": 9,
+      "n_user": 5,
+      "n_ai": 4,
+      "platform": "doubao",
+      "title": "你好，请用一句话介绍你自己",
+      "mtime": 1789227481.8729732
+    },
+    {
+      "file": "conv_yuanbao_20260912_232446.json",
+      "id": "yuanbao_20260912_232446",
+      "issues": [
+        "A 内部提示词被写进历史（4 条，例：[系统] 工具 shell_exec 执行结果:\n[退出码 1]\n\n'' ڲⲿ）",
+        "G 回声污染：5/5 条 assistant 内容其实是 Agent 自己发出去的提示词（100%）"
+      ],
+      "n": 10,
+      "n_user": 5,
+      "n_ai": 5,
+      "platform": "yuanbao",
+      "title": "你好，请用一句话回复即可",
+      "mtime": 1789226686.2748823
+    },
+    {
+      "file": "conv_doubao_20260912_230720.json",
+      "id": "doubao_20260912_230720",
+      "issues": [
+        "A 内部提示词被写进历史（6 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "B 空回复/未收到回复 ×7"
+      ],
+      "n": 17,
+      "n_user": 10,
+      "n_ai": 7,
+      "platform": "doubao",
+      "title": "深度思考 开启",
+      "mtime": 1789225640.7400458
+    },
+    {
+      "file": "conv_tongyi_20260912_224526.json",
+      "id": "tongyi_20260912_224526",
+      "issues": [
+        "A 内部提示词被写进历史（8 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "D 状态行被当成 AI 回复 ×13（例：已经完成思考\n我是 Qwen3.8。）"
+      ],
+      "n": 30,
+      "n_user": 15,
+      "n_ai": 15,
+      "platform": "tongyi",
+      "title": "请用一句话说明你是什么模型（不要调用任何工具）",
+      "mtime": 1789224326.4634929
+    },
+    {
+      "file": "conv_tongyi_20260912_224157.json",
+      "id": "tongyi_20260912_224157",
+      "issues": [
+        "A 内部提示词被写进历史（5 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "D 状态行被当成 AI 回复 ×7（例：已经完成思考\n我是 Qwen3.8。）"
+      ],
+      "n": 19,
+      "n_user": 10,
+      "n_ai": 9,
+      "platform": "tongyi",
+      "title": "请用一句话说明你是什么模型（不要调用任何工具）",
+      "mtime": 1789224117.6772716
+    },
+    {
+      "file": "conv_tongyi_20260912_223600.json",
+      "id": "tongyi_20260912_223600",
+      "issues": [
+        "A 内部提示词被写进历史（2 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "D 状态行被当成 AI 回复 ×5（例：已经完成思考\n我是 Qwen3.8。）"
+      ],
+      "n": 10,
+      "n_user": 5,
+      "n_ai": 5,
+      "platform": "tongyi",
+      "title": "请用一句话说明你是什么模型（不要调用任何工具）",
+      "mtime": 1789223760.9546423
+    },
+    {
+      "file": "conv_deepseek_20260912_223327.json",
+      "id": "deepseek_20260912_223327",
+      "issues": [
+        "A 内部提示词被写进历史（8 条，例：[系统] 工具 set_deep_think 执行结果:\n深度思考已开启\n\n请继）"
+      ],
+      "n": 31,
+      "n_user": 15,
+      "n_ai": 15,
+      "platform": "deepseek",
+      "title": "深度思考 开启",
+      "mtime": 1789223607.1794755
+    },
+    {
+      "file": "conv_deepseek_20260912_223150.json",
+      "id": "deepseek_20260912_223150",
+      "issues": [
+        "A 内部提示词被写进历史（5 条，例：[系统] 工具 set_deep_think 执行结果:\n深度思考已开启\n\n请继）"
+      ],
+      "n": 21,
+      "n_user": 10,
+      "n_ai": 10,
+      "platform": "deepseek",
+      "title": "深度思考 开启",
+      "mtime": 1789223511.0028055
+    },
+    {
+      "file": "conv_deepseek_20260912_223019.json",
+      "id": "deepseek_20260912_223019",
+      "issues": [
+        "A 内部提示词被写进历史（2 条，例：[系统] 工具 set_deep_think 执行结果:\n深度思考已开启\n\n请继）"
+      ],
+      "n": 11,
+      "n_user": 5,
+      "n_ai": 5,
+      "platform": "deepseek",
+      "title": "深度思考 开启",
+      "mtime": 1789223419.662208
+    },
+    {
+      "file": "conv_tongyi_20260912_221657.json",
+      "id": "tongyi_20260912_221657",
+      "issues": [
+        "A 内部提示词被写进历史（3 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "B 空回复/未收到回复 ×1",
+        "D 状态行被当成 AI 回复 ×3（例：已经完成思考\n我是由 Qwen3.8 模）"
+      ],
+      "n": 9,
+      "n_user": 5,
+      "n_ai": 4,
+      "platform": "tongyi",
+      "title": "请用一句话说明你是什么模型/平台（不要调用任何工具）",
+      "mtime": 1789222617.160898
+    },
+    {
+      "file": "conv_deepseek_20260912_221005.json",
+      "id": "deepseek_20260912_221005",
+      "issues": [
+        "A 内部提示词被写进历史（4 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 21,
+      "n_user": 10,
+      "n_ai": 10,
+      "platform": "deepseek",
+      "title": "请用一句话解释什么是 Python 装饰器（不要调用任何工具）",
+      "mtime": 1789222205.5155535
+    },
+    {
+      "file": "conv_deepseek_20260912_220757.json",
+      "id": "deepseek_20260912_220757",
+      "issues": [
+        "A 内部提示词被写进历史（2 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 11,
+      "n_user": 5,
+      "n_ai": 5,
+      "platform": "deepseek",
+      "title": "请用一句话解释什么是 Python 装饰器（不要调用任何工具）",
+      "mtime": 1789222077.5753217
+    },
+    {
+      "file": "conv_deepseek_20260912_215611.json",
+      "id": "deepseek_20260912_215611",
+      "issues": [
+        "A 内部提示词被写进历史（33 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "C 失控增长：消息数 116（同一任务被反复重发叠加）"
+      ],
+      "n": 116,
+      "n_user": 60,
+      "n_ai": 55,
+      "platform": "deepseek",
+      "title": "切换到 deepseek 平台",
+      "mtime": 1789221371.7289627
+    },
+    {
+      "file": "conv_deepseek_20260912_215549.json",
+      "id": "deepseek_20260912_215549",
+      "issues": [
+        "A 内部提示词被写进历史（30 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "C 失控增长：消息数 107（同一任务被反复重发叠加）"
+      ],
+      "n": 107,
+      "n_user": 55,
+      "n_ai": 51,
+      "platform": "deepseek",
+      "title": "切换到 deepseek 平台",
+      "mtime": 1789221349.535704
+    },
+    {
+      "file": "conv_deepseek_20260912_215441.json",
+      "id": "deepseek_20260912_215441",
+      "issues": [
+        "A 内部提示词被写进历史（23 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 90,
+      "n_user": 45,
+      "n_ai": 44,
+      "platform": "deepseek",
+      "title": "切换到 deepseek 平台",
+      "mtime": 1789221281.7420275
+    },
+    {
+      "file": "conv_deepseek_20260912_215206.json",
+      "id": "deepseek_20260912_215206",
+      "issues": [
+        "A 内部提示词被写进历史（22 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 80,
+      "n_user": 40,
+      "n_ai": 39,
+      "platform": "deepseek",
+      "title": "切换到 deepseek 平台",
+      "mtime": 1789221126.732723
+    },
+    {
+      "file": "conv_deepseek_20260912_214930.json",
+      "id": "deepseek_20260912_214930",
+      "issues": [
+        "A 内部提示词被写进历史（22 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 71,
+      "n_user": 35,
+      "n_ai": 35,
+      "platform": "deepseek",
+      "title": "切换到 deepseek 平台",
+      "mtime": 1789220970.3562727
+    },
+    {
+      "file": "conv_deepseek_20260912_213101.json",
+      "id": "deepseek_20260912_213101",
+      "issues": [
+        "A 内部提示词被写进历史（18 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 51,
+      "n_user": 25,
+      "n_ai": 25,
+      "platform": "deepseek",
+      "title": "切换到 deepseek 平台",
+      "mtime": 1789219861.44341
+    },
+    {
+      "file": "conv_deepseek_20260912_212938.json",
+      "id": "deepseek_20260912_212938",
+      "issues": [
+        "A 内部提示词被写进历史（13 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 41,
+      "n_user": 20,
+      "n_ai": 20,
+      "platform": "deepseek",
+      "title": "切换到 deepseek 平台",
+      "mtime": 1789219778.122117
+    },
+    {
+      "file": "conv_deepseek_20260912_212840.json",
+      "id": "deepseek_20260912_212840",
+      "issues": [
+        "A 内部提示词被写进历史（8 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 31,
+      "n_user": 15,
+      "n_ai": 15,
+      "platform": "deepseek",
+      "title": "切换到 deepseek 平台",
+      "mtime": 1789219720.119911
+    },
+    {
+      "file": "conv_deepseek_20260912_210922.json",
+      "id": "deepseek_20260912_210922",
+      "issues": [
+        "A 内部提示词被写进历史（4 条，例：[系统] 工具 browser_search 执行结果:\n[搜索完成] 抓取 5）"
+      ],
+      "n": 11,
+      "n_user": 5,
+      "n_ai": 5,
+      "platform": "deepseek",
+      "title": "=== 子代理任务（类型：research） ===  任务描述：深度研究: Python asyncio 基本用法，一",
+      "mtime": 1789218562.3031163
+    },
+    {
+      "file": "conv_deepseek_20260912_210815.json",
+      "id": "deepseek_20260912_210815",
+      "issues": [
+        "A 内部提示词被写进历史（2 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 11,
+      "n_user": 5,
+      "n_ai": 5,
+      "platform": "deepseek",
+      "title": "切换到 deepseek 平台",
+      "mtime": 1789218495.0949702
+    },
+    {
+      "file": "conv_deepseek_20260912_210512.json",
+      "id": "deepseek_20260912_210512",
+      "issues": [
+        "A 内部提示词被写进历史（9 条，例：[系统] 工具 browser_search 执行结果:\n[搜索完成] 抓取 3）"
+      ],
+      "n": 21,
+      "n_user": 10,
+      "n_ai": 10,
+      "platform": "deepseek",
+      "title": "=== 子代理任务（类型：research） ===  任务描述：深度研究: Python asyncio 基本用法 总",
+      "mtime": 1789218312.5337918
+    },
+    {
+      "file": "conv_deepseek_20260912_210407.json",
+      "id": "deepseek_20260912_210407",
+      "issues": [
+        "A 内部提示词被写进历史（4 条，例：[系统] 工具 browser_search 执行结果:\n[搜索完成] 抓取 3）"
+      ],
+      "n": 11,
+      "n_user": 5,
+      "n_ai": 5,
+      "platform": "deepseek",
+      "title": "=== 子代理任务（类型：research） ===  任务描述：深度研究: Python asyncio 基本用法 总",
+      "mtime": 1789218247.8341012
+    },
+    {
+      "file": "conv_deepseek_20260912_210334.json",
+      "id": "deepseek_20260912_210334",
+      "issues": [
+        "A 内部提示词被写进历史（2 条，例：[系统] 工具 remember 执行结果:\n[记忆已保存] ID=mem_17）"
+      ],
+      "n": 11,
+      "n_user": 5,
+      "n_ai": 5,
+      "platform": "deepseek",
+      "title": "切换到 deepseek 平台",
+      "mtime": 1789218214.3201308
+    },
+    {
+      "file": "conv_deepseek_20260912_202722.json",
+      "id": "deepseek_20260912_202722",
+      "issues": [
+        "A 内部提示词被写进历史（9 条，例：[系统] 工具 browser_search 执行结果:\n[搜索完成] 抓取 3）"
+      ],
+      "n": 21,
+      "n_user": 10,
+      "n_ai": 10,
+      "platform": "deepseek",
+      "title": "=== 子代理任务（类型：research） ===  任务描述：深度研究: 研究 Python asyncio 基本用",
+      "mtime": 1789216042.3916457
+    },
+    {
+      "file": "conv_deepseek_20260912_202636.json",
+      "id": "deepseek_20260912_202636",
+      "issues": [
+        "A 内部提示词被写进历史（4 条，例：[系统] 工具 browser_search 执行结果:\n[搜索完成] 抓取 3）"
+      ],
+      "n": 11,
+      "n_user": 5,
+      "n_ai": 5,
+      "platform": "deepseek",
+      "title": "=== 子代理任务（类型：research） ===  任务描述：深度研究: 研究 Python asyncio 基本用",
+      "mtime": 1789215996.2376752
+    },
+    {
+      "file": "conv_deepseek_20260912_202623.json",
+      "id": "deepseek_20260912_202623",
+      "issues": [
+        "A 内部提示词被写进历史（56 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "C 失控增长：消息数 196（同一任务被反复重发叠加）"
+      ],
+      "n": 196,
+      "n_user": 100,
+      "n_ai": 95,
+      "platform": "deepseek",
+      "title": "请用一句话解释 Python GIL",
+      "mtime": 1789215983.6493368
+    },
+    {
+      "file": "conv_deepseek_20260912_202613.json",
+      "id": "deepseek_20260912_202613",
+      "issues": [
+        "A 内部提示词被写进历史（53 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "C 失控增长：消息数 186（同一任务被反复重发叠加）"
+      ],
+      "n": 186,
+      "n_user": 95,
+      "n_ai": 90,
+      "platform": "deepseek",
+      "title": "请用一句话解释 Python GIL",
+      "mtime": 1789215973.4524584
+    },
+    {
+      "file": "conv_deepseek_20260912_202530.json",
+      "id": "deepseek_20260912_202530",
+      "issues": [
+        "A 内部提示词被写进历史（52 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "C 失控增长：消息数 179（同一任务被反复重发叠加）"
+      ],
+      "n": 179,
+      "n_user": 90,
+      "n_ai": 88,
+      "platform": "deepseek",
+      "title": "请用一句话解释 Python GIL",
+      "mtime": 1789215930.5470805
+    },
+    {
+      "file": "conv_deepseek_20260912_202501.json",
+      "id": "deepseek_20260912_202501",
+      "issues": [
+        "A 内部提示词被写进历史（52 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "C 失控增长：消息数 168（同一任务被反复重发叠加）"
+      ],
+      "n": 168,
+      "n_user": 85,
+      "n_ai": 82,
+      "platform": "deepseek",
+      "title": "请用一句话解释 Python GIL",
+      "mtime": 1789215901.523481
+    },
+    {
+      "file": "conv_deepseek_20260912_201924.json",
+      "id": "deepseek_20260912_201924",
+      "issues": [
+        "A 内部提示词被写进历史（49 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "C 失控增长：消息数 134（同一任务被反复重发叠加）"
+      ],
+      "n": 134,
+      "n_user": 75,
+      "n_ai": 58,
+      "platform": "deepseek",
+      "title": "请用一句话解释 Python GIL",
+      "mtime": 1789215564.493631
+    },
+    {
+      "file": "conv_deepseek_20260912_201920.json",
+      "id": "deepseek_20260912_201920",
+      "issues": [
+        "A 内部提示词被写进历史（45 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "C 失控增长：消息数 128（同一任务被反复重发叠加）"
+      ],
+      "n": 128,
+      "n_user": 70,
+      "n_ai": 57,
+      "platform": "deepseek",
+      "title": "请用一句话解释 Python GIL",
+      "mtime": 1789215560.1365337
+    },
+    {
+      "file": "conv_deepseek_20260912_201914.json",
+      "id": "deepseek_20260912_201914",
+      "issues": [
+        "A 内部提示词被写进历史（42 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "C 失控增长：消息数 116（同一任务被反复重发叠加）"
+      ],
+      "n": 116,
+      "n_user": 65,
+      "n_ai": 50,
+      "platform": "deepseek",
+      "title": "请用一句话解释 Python GIL",
+      "mtime": 1789215554.5992208
+    },
+    {
+      "file": "conv_deepseek_20260912_201909.json",
+      "id": "deepseek_20260912_201909",
+      "issues": [
+        "A 内部提示词被写进历史（37 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "C 失控增长：消息数 111（同一任务被反复重发叠加）"
+      ],
+      "n": 111,
+      "n_user": 60,
+      "n_ai": 50,
+      "platform": "deepseek",
+      "title": "请用一句话解释 Python GIL",
+      "mtime": 1789215549.5454292
+    },
+    {
+      "file": "conv_deepseek_20260912_201842.json",
+      "id": "deepseek_20260912_201842",
+      "issues": [
+        "A 内部提示词被写进历史（33 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 94,
+      "n_user": 55,
+      "n_ai": 38,
+      "platform": "deepseek",
+      "title": "请用一句话解释 Python GIL",
+      "mtime": 1789215522.7720492
+    },
+    {
+      "file": "conv_deepseek_20260912_201834.json",
+      "id": "deepseek_20260912_201834",
+      "issues": [
+        "A 内部提示词被写进历史（30 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 89,
+      "n_user": 50,
+      "n_ai": 38,
+      "platform": "deepseek",
+      "title": "请用一句话解释 Python GIL",
+      "mtime": 1789215514.9640577
+    },
+    {
+      "file": "conv_deepseek_20260912_201827.json",
+      "id": "deepseek_20260912_201827",
+      "issues": [
+        "A 内部提示词被写进历史（27 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 84,
+      "n_user": 45,
+      "n_ai": 38,
+      "platform": "deepseek",
+      "title": "请用一句话解释 Python GIL",
+      "mtime": 1789215507.4305525
+    },
+    {
+      "file": "conv_deepseek_20260912_201809.json",
+      "id": "deepseek_20260912_201809",
+      "issues": [
+        "A 内部提示词被写进历史（22 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 60,
+      "n_user": 35,
+      "n_ai": 24,
+      "platform": "deepseek",
+      "title": "请用一句话解释 Python GIL",
+      "mtime": 1789215489.292871
+    },
+    {
+      "file": "conv_deepseek_20260912_201801.json",
+      "id": "deepseek_20260912_201801",
+      "issues": [
+        "A 内部提示词被写进历史（17 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 51,
+      "n_user": 30,
+      "n_ai": 20,
+      "platform": "deepseek",
+      "title": "请用一句话解释 Python GIL",
+      "mtime": 1789215481.373318
+    },
+    {
+      "file": "conv_deepseek_20260912_201756.json",
+      "id": "deepseek_20260912_201756",
+      "issues": [
+        "A 内部提示词被写进历史（14 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 46,
+      "n_user": 25,
+      "n_ai": 20,
+      "platform": "deepseek",
+      "title": "请用一句话解释 Python GIL",
+      "mtime": 1789215476.1258726
+    },
+    {
+      "file": "conv_deepseek_20260912_201738.json",
+      "id": "deepseek_20260912_201738",
+      "issues": [
+        "A 内部提示词被写进历史（11 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 35,
+      "n_user": 20,
+      "n_ai": 14,
+      "platform": "deepseek",
+      "title": "请用一句话解释 Python GIL",
+      "mtime": 1789215458.187538
+    },
+    {
+      "file": "conv_deepseek_20260912_201720.json",
+      "id": "deepseek_20260912_201720",
+      "issues": [
+        "A 内部提示词被写进历史（5 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 18,
+      "n_user": 10,
+      "n_ai": 7,
+      "platform": "deepseek",
+      "title": "请用一句话解释 Python GIL",
+      "mtime": 1789215440.1433773
+    },
+    {
+      "file": "conv_deepseek_20260912_201704.json",
+      "id": "deepseek_20260912_201704",
+      "issues": [
+        "A 内部提示词被写进历史（2 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 10,
+      "n_user": 5,
+      "n_ai": 4,
+      "platform": "deepseek",
+      "title": "请用一句话解释 Python GIL",
+      "mtime": 1789215424.102316
+    },
+    {
+      "file": "conv_deepseek_20260912_195651.json",
+      "id": "deepseek_20260912_195651",
+      "issues": [
+        "A 内部提示词被写进历史（43 条，例：[系统] 工具 shell_exec 执行结果:\n[退出码 1]\n\n'' ڲⲿ）",
+        "G 回声污染：44/44 条 assistant 内容其实是 Agent 自己发出去的提示词（100%）"
+      ],
+      "n": 90,
+      "n_user": 45,
+      "n_ai": 44,
+      "platform": "deepseek",
+      "title": "请用一句话解释 Python GIL",
+      "mtime": 1789214211.6418316
+    },
+    {
+      "file": "conv_deepseek_20260912_195604.json",
+      "id": "deepseek_20260912_195604",
+      "issues": [
+        "A 内部提示词被写进历史（33 条，例：[系统] 工具 shell_exec 执行结果:\n[退出码 1]\n\n'' ڲⲿ）",
+        "G 回声污染：35/35 条 assistant 内容其实是 Agent 自己发出去的提示词（100%）"
+      ],
+      "n": 71,
+      "n_user": 35,
+      "n_ai": 35,
+      "platform": "deepseek",
+      "title": "请用一句话解释 Python GIL",
+      "mtime": 1789214164.713799
+    },
+    {
+      "file": "conv_deepseek_20260912_195557.json",
+      "id": "deepseek_20260912_195557",
+      "issues": [
+        "A 内部提示词被写进历史（33 条，例：[系统] 工具 shell_exec 执行结果:\n[退出码 1]\n\n'' ڲⲿ）",
+        "G 回声污染：35/35 条 assistant 内容其实是 Agent 自己发出去的提示词（100%）"
+      ],
+      "n": 71,
+      "n_user": 35,
+      "n_ai": 35,
+      "platform": "deepseek",
+      "title": "请用一句话解释 Python GIL",
+      "mtime": 1789214157.2035782
+    },
+    {
+      "file": "conv_deepseek_20260912_195505.json",
+      "id": "deepseek_20260912_195505",
+      "issues": [
+        "A 内部提示词被写进历史（23 条，例：[系统] 工具 shell_exec 执行结果:\n[退出码 1]\n\n'' ڲⲿ）",
+        "G 回声污染：25/25 条 assistant 内容其实是 Agent 自己发出去的提示词（100%）"
+      ],
+      "n": 51,
+      "n_user": 25,
+      "n_ai": 25,
+      "platform": "deepseek",
+      "title": "请用一句话解释 Python GIL",
+      "mtime": 1789214105.9361298
+    },
+    {
+      "file": "conv_deepseek_20260912_195459.json",
+      "id": "deepseek_20260912_195459",
+      "issues": [
+        "A 内部提示词被写进历史（23 条，例：[系统] 工具 shell_exec 执行结果:\n[退出码 1]\n\n'' ڲⲿ）",
+        "G 回声污染：25/25 条 assistant 内容其实是 Agent 自己发出去的提示词（100%）"
+      ],
+      "n": 51,
+      "n_user": 25,
+      "n_ai": 25,
+      "platform": "deepseek",
+      "title": "请用一句话解释 Python GIL",
+      "mtime": 1789214099.6659746
+    },
+    {
+      "file": "conv_deepseek_20260912_195431.json",
+      "id": "deepseek_20260912_195431",
+      "issues": [
+        "A 内部提示词被写进历史（18 条，例：[系统] 工具 shell_exec 执行结果:\n[退出码 1]\n\n'' ڲⲿ）",
+        "G 回声污染：19/19 条 assistant 内容其实是 Agent 自己发出去的提示词（100%）"
+      ],
+      "n": 40,
+      "n_user": 20,
+      "n_ai": 19,
+      "platform": "deepseek",
+      "title": "请用一句话解释 Python GIL",
+      "mtime": 1789214071.7727525
+    },
+    {
+      "file": "conv_deepseek_20260912_195406.json",
+      "id": "deepseek_20260912_195406",
+      "issues": [
+        "A 内部提示词被写进历史（13 条，例：[系统] 工具 shell_exec 执行结果:\n[退出码 1]\n\n'' ڲⲿ）",
+        "G 回声污染：15/15 条 assistant 内容其实是 Agent 自己发出去的提示词（100%）"
+      ],
+      "n": 31,
+      "n_user": 15,
+      "n_ai": 15,
+      "platform": "deepseek",
+      "title": "请用一句话解释 Python GIL",
+      "mtime": 1789214046.9147625
+    },
+    {
+      "file": "conv_deepseek_20260912_195354.json",
+      "id": "deepseek_20260912_195354",
+      "issues": [
+        "A 内部提示词被写进历史（13 条，例：[系统] 工具 shell_exec 执行结果:\n[退出码 1]\n\n'' ڲⲿ）",
+        "G 回声污染：15/15 条 assistant 内容其实是 Agent 自己发出去的提示词（100%）"
+      ],
+      "n": 31,
+      "n_user": 15,
+      "n_ai": 15,
+      "platform": "deepseek",
+      "title": "请用一句话解释 Python GIL",
+      "mtime": 1789214034.077005
+    },
+    {
+      "file": "conv_deepseek_20260912_195313.json",
+      "id": "deepseek_20260912_195313",
+      "issues": [
+        "A 内部提示词被写进历史（8 条，例：[系统] 工具 shell_exec 执行结果:\n[退出码 1]\n\n'' ڲⲿ）",
+        "G 回声污染：9/9 条 assistant 内容其实是 Agent 自己发出去的提示词（100%）"
+      ],
+      "n": 20,
+      "n_user": 10,
+      "n_ai": 9,
+      "platform": "deepseek",
+      "title": "请用一句话解释 Python GIL",
+      "mtime": 1789213993.9366353
+    },
+    {
+      "file": "conv_deepseek_20260912_195249.json",
+      "id": "deepseek_20260912_195249",
+      "issues": [
+        "A 内部提示词被写进历史（4 条，例：[系统] 工具 shell_exec 执行结果:\n[退出码 1]\n\n'' ڲⲿ）",
+        "G 回声污染：5/5 条 assistant 内容其实是 Agent 自己发出去的提示词（100%）"
+      ],
+      "n": 11,
+      "n_user": 5,
+      "n_ai": 5,
+      "platform": "deepseek",
+      "title": "请用一句话解释 Python GIL",
+      "mtime": 1789213969.3927627
+    },
+    {
+      "file": "conv_deepseek_20260912_194605.json",
+      "id": "deepseek_20260912_194605",
+      "issues": [
+        "A 内部提示词被写进历史（9 条，例：[系统] 工具 shell_exec 执行结果:\n[退出码 1]\n\n'' ڲⲿ）",
+        "G 回声污染：10/10 条 assistant 内容其实是 Agent 自己发出去的提示词（100%）"
+      ],
+      "n": 21,
+      "n_user": 10,
+      "n_ai": 10,
+      "platform": "deepseek",
+      "title": "平台对话：请用一句话解释 Python 中的 GIL",
+      "mtime": 1789213565.167832
+    },
+    {
+      "file": "conv_deepseek_20260912_194505.json",
+      "id": "deepseek_20260912_194505",
+      "issues": [
+        "A 内部提示词被写进历史（4 条，例：[系统] 工具 shell_exec 执行结果:\n[退出码 1]\n\n'' ڲⲿ）",
+        "G 回声污染：5/5 条 assistant 内容其实是 Agent 自己发出去的提示词（100%）"
+      ],
+      "n": 11,
+      "n_user": 5,
+      "n_ai": 5,
+      "platform": "deepseek",
+      "title": "平台对话：请用一句话解释 Python 中的 GIL",
+      "mtime": 1789213506.0469375
+    },
+    {
+      "file": "conv_deepseek_20260912_193658.json",
+      "id": "deepseek_20260912_193658",
+      "issues": [
+        "A 内部提示词被写进历史（4 条，例：[系统] 工具 shell_exec 执行结果:\n[退出码 1]\n\n'' ڲⲿ）",
+        "G 回声污染：5/5 条 assistant 内容其实是 Agent 自己发出去的提示词（100%）"
+      ],
+      "n": 11,
+      "n_user": 5,
+      "n_ai": 5,
+      "platform": "deepseek",
+      "title": "只回复：DeepSeek在线测试成功。不要调用任何工具。",
+      "mtime": 1789213018.9436374
+    },
+    {
+      "file": "conv_deepseek_20260912_192950.json",
+      "id": "deepseek_20260912_192950",
+      "issues": [
+        "A 内部提示词被写进历史（134 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：133/135 条 assistant 内容其实是 Agent 自己发出去的提示词（99%）",
+        "C 失控增长：消息数 276（同一任务被反复重发叠加）"
+      ],
+      "n": 276,
+      "n_user": 140,
+      "n_ai": 135,
+      "platform": "deepseek",
+      "title": "请用一句话解释 Python 中的 GIL",
+      "mtime": 1789212590.7686112
+    },
+    {
+      "file": "conv_deepseek_20260912_192803.json",
+      "id": "deepseek_20260912_192803",
+      "issues": [
+        "A 内部提示词被写进历史（129 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：128/130 条 assistant 内容其实是 Agent 自己发出去的提示词（98%）",
+        "C 失控增长：消息数 266（同一任务被反复重发叠加）"
+      ],
+      "n": 266,
+      "n_user": 135,
+      "n_ai": 130,
+      "platform": "deepseek",
+      "title": "请用一句话解释 Python 中的 GIL",
+      "mtime": 1789212483.524886
+    },
+    {
+      "file": "conv_deepseek_20260912_192619.json",
+      "id": "deepseek_20260912_192619",
+      "issues": [
+        "A 内部提示词被写进历史（124 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：124/126 条 assistant 内容其实是 Agent 自己发出去的提示词（98%）",
+        "C 失控增长：消息数 257（同一任务被反复重发叠加）"
+      ],
+      "n": 257,
+      "n_user": 130,
+      "n_ai": 126,
+      "platform": "deepseek",
+      "title": "请用一句话解释 Python 中的 GIL",
+      "mtime": 1789212379.965441
+    },
+    {
+      "file": "conv_deepseek_20260912_192601.json",
+      "id": "deepseek_20260912_192601",
+      "issues": [
+        "A 内部提示词被写进历史（124 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：124/126 条 assistant 内容其实是 Agent 自己发出去的提示词（98%）",
+        "C 失控增长：消息数 257（同一任务被反复重发叠加）"
+      ],
+      "n": 257,
+      "n_user": 130,
+      "n_ai": 126,
+      "platform": "deepseek",
+      "title": "请用一句话解释 Python 中的 GIL",
+      "mtime": 1789212361.3255394
+    },
+    {
+      "file": "conv_deepseek_20260912_192041.json",
+      "id": "deepseek_20260912_192041",
+      "issues": [
+        "A 内部提示词被写进历史（110 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：109/111 条 assistant 内容其实是 Agent 自己发出去的提示词（98%）",
+        "C 失控增长：消息数 227（同一任务被反复重发叠加）"
+      ],
+      "n": 227,
+      "n_user": 115,
+      "n_ai": 111,
+      "platform": "deepseek",
+      "title": "请用一句话解释 Python 中的 GIL",
+      "mtime": 1789212041.642523
+    },
+    {
+      "file": "conv_deepseek_20260912_191803.json",
+      "id": "deepseek_20260912_191803",
+      "issues": [
+        "A 内部提示词被写进历史（101 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：101/103 条 assistant 内容其实是 Agent 自己发出去的提示词（98%）",
+        "C 失控增长：消息数 209（同一任务被反复重发叠加）"
+      ],
+      "n": 209,
+      "n_user": 105,
+      "n_ai": 103,
+      "platform": "deepseek",
+      "title": "请用一句话解释 Python 中的 GIL",
+      "mtime": 1789211883.7183168
+    },
+    {
+      "file": "conv_deepseek_20260912_191745.json",
+      "id": "deepseek_20260912_191745",
+      "issues": [
+        "A 内部提示词被写进历史（101 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：101/103 条 assistant 内容其实是 Agent 自己发出去的提示词（98%）",
+        "C 失控增长：消息数 209（同一任务被反复重发叠加）"
+      ],
+      "n": 209,
+      "n_user": 105,
+      "n_ai": 103,
+      "platform": "deepseek",
+      "title": "请用一句话解释 Python 中的 GIL",
+      "mtime": 1789211865.464601
+    },
+    {
+      "file": "conv_deepseek_20260912_191547.json",
+      "id": "deepseek_20260912_191547",
+      "issues": [
+        "A 内部提示词被写进历史（91 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：92/94 条 assistant 内容其实是 Agent 自己发出去的提示词（98%）",
+        "C 失控增长：消息数 190（同一任务被反复重发叠加）"
+      ],
+      "n": 190,
+      "n_user": 95,
+      "n_ai": 94,
+      "platform": "deepseek",
+      "title": "请用一句话解释 Python 中的 GIL",
+      "mtime": 1789211747.6111872
+    },
+    {
+      "file": "conv_deepseek_20260912_191527.json",
+      "id": "deepseek_20260912_191527",
+      "issues": [
+        "A 内部提示词被写进历史（91 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：92/94 条 assistant 内容其实是 Agent 自己发出去的提示词（98%）",
+        "C 失控增长：消息数 190（同一任务被反复重发叠加）"
+      ],
+      "n": 190,
+      "n_user": 95,
+      "n_ai": 94,
+      "platform": "deepseek",
+      "title": "请用一句话解释 Python 中的 GIL",
+      "mtime": 1789211727.773541
+    },
+    {
+      "file": "conv_deepseek_20260912_191503.json",
+      "id": "deepseek_20260912_191503",
+      "issues": [
+        "A 内部提示词被写进历史（91 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：91/93 条 assistant 内容其实是 Agent 自己发出去的提示词（98%）",
+        "C 失控增长：消息数 189（同一任务被反复重发叠加）"
+      ],
+      "n": 189,
+      "n_user": 95,
+      "n_ai": 93,
+      "platform": "deepseek",
+      "title": "请用一句话解释 Python 中的 GIL",
+      "mtime": 1789211704.010666
+    },
+    {
+      "file": "conv_deepseek_20260912_191350.json",
+      "id": "deepseek_20260912_191350",
+      "issues": [
+        "A 内部提示词被写进历史（86 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：85/87 条 assistant 内容其实是 Agent 自己发出去的提示词（98%）",
+        "C 失控增长：消息数 178（同一任务被反复重发叠加）"
+      ],
+      "n": 178,
+      "n_user": 90,
+      "n_ai": 87,
+      "platform": "deepseek",
+      "title": "请用一句话解释 Python 中的 GIL",
+      "mtime": 1789211630.9190836
+    },
+    {
+      "file": "conv_deepseek_20260912_191219.json",
+      "id": "deepseek_20260912_191219",
+      "issues": [
+        "A 内部提示词被写进历史（72 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：73/75 条 assistant 内容其实是 Agent 自己发出去的提示词（97%）",
+        "C 失控增长：消息数 151（同一任务被反复重发叠加）"
+      ],
+      "n": 151,
+      "n_user": 75,
+      "n_ai": 75,
+      "platform": "deepseek",
+      "title": "请用一句话解释 Python 中的 GIL",
+      "mtime": 1789211539.5484416
+    },
+    {
+      "file": "conv_deepseek_20260912_191159.json",
+      "id": "deepseek_20260912_191159",
+      "issues": [
+        "A 内部提示词被写进历史（72 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：72/74 条 assistant 内容其实是 Agent 自己发出去的提示词（97%）",
+        "C 失控增长：消息数 150（同一任务被反复重发叠加）"
+      ],
+      "n": 150,
+      "n_user": 75,
+      "n_ai": 74,
+      "platform": "deepseek",
+      "title": "请用一句话解释 Python 中的 GIL",
+      "mtime": 1789211519.5154662
+    },
+    {
+      "file": "conv_deepseek_20260912_190929.json",
+      "id": "deepseek_20260912_190929",
+      "issues": [
+        "A 内部提示词被写进历史（57 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：57/59 条 assistant 内容其实是 Agent 自己发出去的提示词（97%）",
+        "C 失控增长：消息数 120（同一任务被反复重发叠加）"
+      ],
+      "n": 120,
+      "n_user": 60,
+      "n_ai": 59,
+      "platform": "deepseek",
+      "title": "请用一句话解释 Python 中的 GIL",
+      "mtime": 1789211369.8843136
+    },
+    {
+      "file": "conv_deepseek_20260912_190912.json",
+      "id": "deepseek_20260912_190912",
+      "issues": [
+        "A 内部提示词被写进历史（57 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：57/59 条 assistant 内容其实是 Agent 自己发出去的提示词（97%）",
+        "C 失控增长：消息数 120（同一任务被反复重发叠加）"
+      ],
+      "n": 120,
+      "n_user": 60,
+      "n_ai": 59,
+      "platform": "deepseek",
+      "title": "请用一句话解释 Python 中的 GIL",
+      "mtime": 1789211352.7868042
+    },
+    {
+      "file": "conv_deepseek_20260912_190712.json",
+      "id": "deepseek_20260912_190712",
+      "issues": [
+        "A 内部提示词被写进历史（43 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：42/44 条 assistant 内容其实是 Agent 自己发出去的提示词（95%）"
+      ],
+      "n": 90,
+      "n_user": 45,
+      "n_ai": 44,
+      "platform": "deepseek",
+      "title": "请用一句话解释 Python 中的 GIL",
+      "mtime": 1789211233.0110643
+    },
+    {
+      "file": "conv_deepseek_20260912_190551.json",
+      "id": "deepseek_20260912_190551",
+      "issues": [
+        "A 内部提示词被写进历史（33 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：32/34 条 assistant 内容其实是 Agent 自己发出去的提示词（94%）"
+      ],
+      "n": 70,
+      "n_user": 35,
+      "n_ai": 34,
+      "platform": "deepseek",
+      "title": "请用一句话解释 Python 中的 GIL",
+      "mtime": 1789211151.798638
+    },
+    {
+      "file": "conv_deepseek_20260912_190510.json",
+      "id": "deepseek_20260912_190510",
+      "issues": [
+        "A 内部提示词被写进历史（28 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：27/29 条 assistant 内容其实是 Agent 自己发出去的提示词（93%）"
+      ],
+      "n": 60,
+      "n_user": 30,
+      "n_ai": 29,
+      "platform": "deepseek",
+      "title": "请用一句话解释 Python 中的 GIL",
+      "mtime": 1789211110.181651
+    },
+    {
+      "file": "conv_deepseek_20260912_190436.json",
+      "id": "deepseek_20260912_190436",
+      "issues": [
+        "A 内部提示词被写进历史（23 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：22/24 条 assistant 内容其实是 Agent 自己发出去的提示词（92%）"
+      ],
+      "n": 50,
+      "n_user": 25,
+      "n_ai": 24,
+      "platform": "deepseek",
+      "title": "请用一句话解释 Python 中的 GIL",
+      "mtime": 1789211076.2915602
+    },
+    {
+      "file": "conv_deepseek_20260912_190353.json",
+      "id": "deepseek_20260912_190353",
+      "issues": [
+        "A 内部提示词被写进历史（19 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：18/20 条 assistant 内容其实是 Agent 自己发出去的提示词（90%）"
+      ],
+      "n": 41,
+      "n_user": 20,
+      "n_ai": 20,
+      "platform": "deepseek",
+      "title": "请用一句话解释 Python 中的 GIL",
+      "mtime": 1789211033.811795
+    },
+    {
+      "file": "conv_deepseek_20260912_190257.json",
+      "id": "deepseek_20260912_190257",
+      "issues": [
+        "A 内部提示词被写进历史（14 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：13/15 条 assistant 内容其实是 Agent 自己发出去的提示词（87%）"
+      ],
+      "n": 31,
+      "n_user": 15,
+      "n_ai": 15,
+      "platform": "deepseek",
+      "title": "请用一句话解释 Python 中的 GIL",
+      "mtime": 1789210977.862759
+    },
+    {
+      "file": "conv_deepseek_20260912_190200.json",
+      "id": "deepseek_20260912_190200",
+      "issues": [
+        "A 内部提示词被写进历史（9 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：8/10 条 assistant 内容其实是 Agent 自己发出去的提示词（80%）"
+      ],
+      "n": 21,
+      "n_user": 10,
+      "n_ai": 10,
+      "platform": "deepseek",
+      "title": "请用一句话解释 Python 中的 GIL",
+      "mtime": 1789210920.2373269
+    },
+    {
+      "file": "conv_deepseek_20260912_190103.json",
+      "id": "deepseek_20260912_190103",
+      "issues": [
+        "A 内部提示词被写进历史（4 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：3/5 条 assistant 内容其实是 Agent 自己发出去的提示词（60%）"
+      ],
+      "n": 11,
+      "n_user": 5,
+      "n_ai": 5,
+      "platform": "deepseek",
+      "title": "请用一句话解释 Python 中的 GIL",
+      "mtime": 1789210863.1970782
+    },
+    {
+      "file": "conv_deepseek_20260912_182329.json",
+      "id": "deepseek_20260912_182329",
+      "issues": [
+        "A 内部提示词被写进历史（134 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：66/136 条 assistant 内容其实是 Agent 自己发出去的提示词（49%）",
+        "C 失控增长：消息数 277（同一任务被反复重发叠加）"
+      ],
+      "n": 277,
+      "n_user": 140,
+      "n_ai": 136,
+      "platform": "deepseek",
+      "title": "你好，请用一句话回复：测试成功",
+      "mtime": 1789208609.8729749
+    },
+    {
+      "file": "conv_deepseek_20260912_182217.json",
+      "id": "deepseek_20260912_182217",
+      "issues": [
+        "A 内部提示词被写进历史（129 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：61/131 条 assistant 内容其实是 Agent 自己发出去的提示词（47%）",
+        "C 失控增长：消息数 267（同一任务被反复重发叠加）"
+      ],
+      "n": 267,
+      "n_user": 135,
+      "n_ai": 131,
+      "platform": "deepseek",
+      "title": "你好，请用一句话回复：测试成功",
+      "mtime": 1789208537.91273
+    },
+    {
+      "file": "conv_deepseek_20260912_182155.json",
+      "id": "deepseek_20260912_182155",
+      "issues": [
+        "A 内部提示词被写进历史（129 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：61/131 条 assistant 内容其实是 Agent 自己发出去的提示词（47%）",
+        "C 失控增长：消息数 267（同一任务被反复重发叠加）"
+      ],
+      "n": 267,
+      "n_user": 135,
+      "n_ai": 131,
+      "platform": "deepseek",
+      "title": "你好，请用一句话回复：测试成功",
+      "mtime": 1789208515.4922872
+    },
+    {
+      "file": "conv_deepseek_20260912_181758.json",
+      "id": "deepseek_20260912_181758",
+      "issues": [
+        "A 内部提示词被写进历史（106 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：40/110 条 assistant 内容其实是 Agent 自己发出去的提示词（36%）",
+        "C 失控增长：消息数 221（同一任务被反复重发叠加）"
+      ],
+      "n": 221,
+      "n_user": 110,
+      "n_ai": 110,
+      "platform": "deepseek",
+      "title": "你好，请用一句话回复：测试成功",
+      "mtime": 1789208278.8680408
+    },
+    {
+      "file": "conv_deepseek_20260912_181748.json",
+      "id": "deepseek_20260912_181748",
+      "issues": [
+        "A 内部提示词被写进历史（106 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：39/109 条 assistant 内容其实是 Agent 自己发出去的提示词（36%）",
+        "C 失控增长：消息数 220（同一任务被反复重发叠加）"
+      ],
+      "n": 220,
+      "n_user": 110,
+      "n_ai": 109,
+      "platform": "deepseek",
+      "title": "你好，请用一句话回复：测试成功",
+      "mtime": 1789208268.632918
+    },
+    {
+      "file": "conv_deepseek_20260912_181732.json",
+      "id": "deepseek_20260912_181732",
+      "issues": [
+        "A 内部提示词被写进历史（106 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：38/108 条 assistant 内容其实是 Agent 自己发出去的提示词（35%）",
+        "C 失控增长：消息数 219（同一任务被反复重发叠加）"
+      ],
+      "n": 219,
+      "n_user": 110,
+      "n_ai": 108,
+      "platform": "deepseek",
+      "title": "你好，请用一句话回复：测试成功",
+      "mtime": 1789208252.9816363
+    },
+    {
+      "file": "conv_deepseek_20260912_181550.json",
+      "id": "deepseek_20260912_181550",
+      "issues": [
+        "A 内部提示词被写进历史（86 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：17/87 条 assistant 内容其实是 Agent 自己发出去的提示词（20%）",
+        "C 失控增长：消息数 178（同一任务被反复重发叠加）"
+      ],
+      "n": 178,
+      "n_user": 90,
+      "n_ai": 87,
+      "platform": "deepseek",
+      "title": "你好，请用一句话回复：测试成功",
+      "mtime": 1789208150.8533423
+    },
+    {
+      "file": "conv_deepseek_20260912_181412.json",
+      "id": "deepseek_20260912_181412",
+      "issues": [
+        "A 内部提示词被写进历史（66 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "C 失控增长：消息数 139（同一任务被反复重发叠加）"
+      ],
+      "n": 139,
+      "n_user": 70,
+      "n_ai": 68,
+      "platform": "deepseek",
+      "title": "你好，请用一句话回复：测试成功",
+      "mtime": 1789208052.2660215
+    },
+    {
+      "file": "conv_deepseek_20260912_181324.json",
+      "id": "deepseek_20260912_181324",
+      "issues": [
+        "A 内部提示词被写进历史（61 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "C 失控增长：消息数 128（同一任务被反复重发叠加）"
+      ],
+      "n": 128,
+      "n_user": 65,
+      "n_ai": 62,
+      "platform": "deepseek",
+      "title": "你好，请用一句话回复：测试成功",
+      "mtime": 1789208004.1439178
+    },
+    {
+      "file": "conv_deepseek_20260912_181301.json",
+      "id": "deepseek_20260912_181301",
+      "issues": [
+        "A 内部提示词被写进历史（56 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "C 失控增长：消息数 119（同一任务被反复重发叠加）"
+      ],
+      "n": 119,
+      "n_user": 60,
+      "n_ai": 58,
+      "platform": "deepseek",
+      "title": "你好，请用一句话回复：测试成功",
+      "mtime": 1789207981.2809033
+    },
+    {
+      "file": "conv_deepseek_20260912_181241.json",
+      "id": "deepseek_20260912_181241",
+      "issues": [
+        "A 内部提示词被写进历史（51 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "C 失控增长：消息数 110（同一任务被反复重发叠加）"
+      ],
+      "n": 110,
+      "n_user": 55,
+      "n_ai": 54,
+      "platform": "deepseek",
+      "title": "你好，请用一句话回复：测试成功",
+      "mtime": 1789207961.2858236
+    },
+    {
+      "file": "conv_deepseek_20260912_181219.json",
+      "id": "deepseek_20260912_181219",
+      "issues": [
+        "A 内部提示词被写进历史（46 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "C 失控增长：消息数 100（同一任务被反复重发叠加）"
+      ],
+      "n": 100,
+      "n_user": 50,
+      "n_ai": 49,
+      "platform": "deepseek",
+      "title": "你好，请用一句话回复：测试成功",
+      "mtime": 1789207939.3893533
+    },
+    {
+      "file": "conv_deepseek_20260912_181149.json",
+      "id": "deepseek_20260912_181149",
+      "issues": [
+        "A 内部提示词被写进历史（41 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 88,
+      "n_user": 45,
+      "n_ai": 42,
+      "platform": "deepseek",
+      "title": "你好，请用一句话回复：测试成功",
+      "mtime": 1789207909.4123225
+    },
+    {
+      "file": "conv_deepseek_20260912_181105.json",
+      "id": "deepseek_20260912_181105",
+      "issues": [
+        "A 内部提示词被写进历史（36 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 79,
+      "n_user": 40,
+      "n_ai": 38,
+      "platform": "deepseek",
+      "title": "你好，请用一句话回复：测试成功",
+      "mtime": 1789207865.1187308
+    },
+    {
+      "file": "conv_deepseek_20260912_181028.json",
+      "id": "deepseek_20260912_181028",
+      "issues": [
+        "A 内部提示词被写进历史（31 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 70,
+      "n_user": 35,
+      "n_ai": 34,
+      "platform": "deepseek",
+      "title": "你好，请用一句话回复：测试成功",
+      "mtime": 1789207828.5341172
+    },
+    {
+      "file": "conv_deepseek_20260912_180936.json",
+      "id": "deepseek_20260912_180936",
+      "issues": [
+        "A 内部提示词被写进历史（26 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 59,
+      "n_user": 30,
+      "n_ai": 28,
+      "platform": "deepseek",
+      "title": "你好，请用一句话回复：测试成功",
+      "mtime": 1789207776.861804
+    },
+    {
+      "file": "conv_deepseek_20260912_180834.json",
+      "id": "deepseek_20260912_180834",
+      "issues": [
+        "A 内部提示词被写进历史（21 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 48,
+      "n_user": 25,
+      "n_ai": 22,
+      "platform": "deepseek",
+      "title": "你好，请用一句话回复：测试成功",
+      "mtime": 1789207714.0978675
+    },
+    {
+      "file": "conv_deepseek_20260912_180742.json",
+      "id": "deepseek_20260912_180742",
+      "issues": [
+        "A 内部提示词被写进历史（18 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 40,
+      "n_user": 20,
+      "n_ai": 19,
+      "platform": "deepseek",
+      "title": "你好，请用一句话回复：测试成功",
+      "mtime": 1789207662.8204756
+    },
+    {
+      "file": "conv_deepseek_20260912_180556.json",
+      "id": "deepseek_20260912_180556",
+      "issues": [
+        "A 内部提示词被写进历史（13 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 30,
+      "n_user": 15,
+      "n_ai": 14,
+      "platform": "deepseek",
+      "title": "你好，请用一句话回复：测试成功",
+      "mtime": 1789207556.0934863
+    },
+    {
+      "file": "conv_deepseek_20260912_180406.json",
+      "id": "deepseek_20260912_180406",
+      "issues": [
+        "A 内部提示词被写进历史（8 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 20,
+      "n_user": 10,
+      "n_ai": 9,
+      "platform": "deepseek",
+      "title": "你好，请用一句话回复：测试成功",
+      "mtime": 1789207446.8635473
+    },
+    {
+      "file": "conv_deepseek_20260912_180245.json",
+      "id": "deepseek_20260912_180245",
+      "issues": [
+        "A 内部提示词被写进历史（4 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 11,
+      "n_user": 5,
+      "n_ai": 5,
+      "platform": "deepseek",
+      "title": "你好，请用一句话回复：测试成功",
+      "mtime": 1789207365.033532
+    },
+    {
+      "file": "conv_deepseek_20260906_122134.json",
+      "id": "deepseek_20260906_122134",
+      "issues": [
+        "A 内部提示词被写进历史（377 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：160/381 条 assistant 内容其实是 Agent 自己发出去的提示词（42%）",
+        "C 失控增长：消息数 767（同一任务被反复重发叠加）"
+      ],
+      "n": 767,
+      "n_user": 385,
+      "n_ai": 381,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788668495.1292171
+    },
+    {
+      "file": "conv_deepseek_20260906_121955.json",
+      "id": "deepseek_20260906_121955",
+      "issues": [
+        "A 内部提示词被写进历史（372 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：155/376 条 assistant 内容其实是 Agent 自己发出去的提示词（41%）",
+        "C 失控增长：消息数 757（同一任务被反复重发叠加）"
+      ],
+      "n": 757,
+      "n_user": 380,
+      "n_ai": 376,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788668396.0062885
+    },
+    {
+      "file": "conv_deepseek_20260906_121818.json",
+      "id": "deepseek_20260906_121818",
+      "issues": [
+        "A 内部提示词被写进历史（367 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：150/371 条 assistant 内容其实是 Agent 自己发出去的提示词（40%）",
+        "C 失控增长：消息数 747（同一任务被反复重发叠加）"
+      ],
+      "n": 747,
+      "n_user": 375,
+      "n_ai": 371,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788668298.649295
+    },
+    {
+      "file": "conv_deepseek_20260906_121644.json",
+      "id": "deepseek_20260906_121644",
+      "issues": [
+        "A 内部提示词被写进历史（362 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：145/366 条 assistant 内容其实是 Agent 自己发出去的提示词（40%）",
+        "C 失控增长：消息数 737（同一任务被反复重发叠加）"
+      ],
+      "n": 737,
+      "n_user": 370,
+      "n_ai": 366,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788668204.475028
+    },
+    {
+      "file": "conv_deepseek_20260906_121515.json",
+      "id": "deepseek_20260906_121515",
+      "issues": [
+        "A 内部提示词被写进历史（357 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：140/361 条 assistant 内容其实是 Agent 自己发出去的提示词（39%）",
+        "C 失控增长：消息数 727（同一任务被反复重发叠加）"
+      ],
+      "n": 727,
+      "n_user": 365,
+      "n_ai": 361,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788668115.323563
+    },
+    {
+      "file": "conv_deepseek_20260906_121351.json",
+      "id": "deepseek_20260906_121351",
+      "issues": [
+        "A 内部提示词被写进历史（352 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：135/356 条 assistant 内容其实是 Agent 自己发出去的提示词（38%）",
+        "C 失控增长：消息数 717（同一任务被反复重发叠加）"
+      ],
+      "n": 717,
+      "n_user": 360,
+      "n_ai": 356,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788668031.3404863
+    },
+    {
+      "file": "conv_deepseek_20260906_121230.json",
+      "id": "deepseek_20260906_121230",
+      "issues": [
+        "A 内部提示词被写进历史（347 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：130/351 条 assistant 内容其实是 Agent 自己发出去的提示词（37%）",
+        "C 失控增长：消息数 707（同一任务被反复重发叠加）"
+      ],
+      "n": 707,
+      "n_user": 355,
+      "n_ai": 351,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788667950.8699238
+    },
+    {
+      "file": "conv_deepseek_20260906_121116.json",
+      "id": "deepseek_20260906_121116",
+      "issues": [
+        "A 内部提示词被写进历史（342 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：125/346 条 assistant 内容其实是 Agent 自己发出去的提示词（36%）",
+        "C 失控增长：消息数 697（同一任务被反复重发叠加）"
+      ],
+      "n": 697,
+      "n_user": 350,
+      "n_ai": 346,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788667876.9790597
+    },
+    {
+      "file": "conv_deepseek_20260906_121002.json",
+      "id": "deepseek_20260906_121002",
+      "issues": [
+        "A 内部提示词被写进历史（337 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：120/341 条 assistant 内容其实是 Agent 自己发出去的提示词（35%）",
+        "C 失控增长：消息数 687（同一任务被反复重发叠加）"
+      ],
+      "n": 687,
+      "n_user": 345,
+      "n_ai": 341,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788667802.7198792
+    },
+    {
+      "file": "conv_deepseek_20260906_120843.json",
+      "id": "deepseek_20260906_120843",
+      "issues": [
+        "A 内部提示词被写进历史（332 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：116/337 条 assistant 内容其实是 Agent 自己发出去的提示词（34%）",
+        "C 失控增长：消息数 678（同一任务被反复重发叠加）"
+      ],
+      "n": 678,
+      "n_user": 340,
+      "n_ai": 337,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788667723.732016
+    },
+    {
+      "file": "conv_deepseek_20260906_120841.json",
+      "id": "deepseek_20260906_120841",
+      "issues": [
+        "A 内部提示词被写进历史（332 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：116/337 条 assistant 内容其实是 Agent 自己发出去的提示词（34%）",
+        "C 失控增长：消息数 678（同一任务被反复重发叠加）"
+      ],
+      "n": 678,
+      "n_user": 340,
+      "n_ai": 337,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788667721.8107052
+    },
+    {
+      "file": "conv_deepseek_20260906_120639.json",
+      "id": "deepseek_20260906_120639",
+      "issues": [
+        "A 内部提示词被写进历史（322 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：106/327 条 assistant 内容其实是 Agent 自己发出去的提示词（32%）",
+        "C 失控增长：消息数 658（同一任务被反复重发叠加）"
+      ],
+      "n": 658,
+      "n_user": 330,
+      "n_ai": 327,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788667599.6305733
+    },
+    {
+      "file": "conv_deepseek_20260906_120637.json",
+      "id": "deepseek_20260906_120637",
+      "issues": [
+        "A 内部提示词被写进历史（322 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：106/327 条 assistant 内容其实是 Agent 自己发出去的提示词（32%）",
+        "C 失控增长：消息数 658（同一任务被反复重发叠加）"
+      ],
+      "n": 658,
+      "n_user": 330,
+      "n_ai": 327,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788667597.3709211
+    },
+    {
+      "file": "conv_deepseek_20260906_120331.json",
+      "id": "deepseek_20260906_120331",
+      "issues": [
+        "A 内部提示词被写进历史（307 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：92/313 条 assistant 内容其实是 Agent 自己发出去的提示词（29%）",
+        "C 失控增长：消息数 629（同一任务被反复重发叠加）"
+      ],
+      "n": 629,
+      "n_user": 315,
+      "n_ai": 313,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788667411.4472446
+    },
+    {
+      "file": "conv_deepseek_20260906_120329.json",
+      "id": "deepseek_20260906_120329",
+      "issues": [
+        "A 内部提示词被写进历史（307 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：91/312 条 assistant 内容其实是 Agent 自己发出去的提示词（29%）",
+        "C 失控增长：消息数 628（同一任务被反复重发叠加）"
+      ],
+      "n": 628,
+      "n_user": 315,
+      "n_ai": 312,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788667409.9760332
+    },
+    {
+      "file": "conv_deepseek_20260906_115936.json",
+      "id": "deepseek_20260906_115936",
+      "issues": [
+        "A 内部提示词被写进历史（282 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：68/289 条 assistant 内容其实是 Agent 自己发出去的提示词（24%）",
+        "C 失控增长：消息数 580（同一任务被反复重发叠加）"
+      ],
+      "n": 580,
+      "n_user": 290,
+      "n_ai": 289,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788667176.8189194
+    },
+    {
+      "file": "conv_deepseek_20260906_115935.json",
+      "id": "deepseek_20260906_115935",
+      "issues": [
+        "A 内部提示词被写进历史（282 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：68/289 条 assistant 内容其实是 Agent 自己发出去的提示词（24%）",
+        "C 失控增长：消息数 580（同一任务被反复重发叠加）"
+      ],
+      "n": 580,
+      "n_user": 290,
+      "n_ai": 289,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788667175.4973724
+    },
+    {
+      "file": "conv_deepseek_20260906_115934.json",
+      "id": "deepseek_20260906_115934",
+      "issues": [
+        "A 内部提示词被写进历史（282 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：68/289 条 assistant 内容其实是 Agent 自己发出去的提示词（24%）",
+        "C 失控增长：消息数 580（同一任务被反复重发叠加）"
+      ],
+      "n": 580,
+      "n_user": 290,
+      "n_ai": 289,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788667174.574766
+    },
+    {
+      "file": "conv_deepseek_20260906_115933.json",
+      "id": "deepseek_20260906_115933",
+      "issues": [
+        "A 内部提示词被写进历史（282 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：65/286 条 assistant 内容其实是 Agent 自己发出去的提示词（23%）",
+        "C 失控增长：消息数 577（同一任务被反复重发叠加）"
+      ],
+      "n": 577,
+      "n_user": 290,
+      "n_ai": 286,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788667173.6180322
+    },
+    {
+      "file": "conv_deepseek_20260906_115721.json",
+      "id": "deepseek_20260906_115721",
+      "issues": [
+        "A 内部提示词被写进历史（262 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：47/268 条 assistant 内容其实是 Agent 自己发出去的提示词（18%）",
+        "C 失控增长：消息数 539（同一任务被反复重发叠加）"
+      ],
+      "n": 539,
+      "n_user": 270,
+      "n_ai": 268,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788667041.6583135
+    },
+    {
+      "file": "conv_deepseek_20260906_115720.json",
+      "id": "deepseek_20260906_115720",
+      "issues": [
+        "A 内部提示词被写进历史（262 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：47/268 条 assistant 内容其实是 Agent 自己发出去的提示词（18%）",
+        "C 失控增长：消息数 539（同一任务被反复重发叠加）"
+      ],
+      "n": 539,
+      "n_user": 270,
+      "n_ai": 268,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788667041.0075495
+    },
+    {
+      "file": "conv_deepseek_20260906_115541.json",
+      "id": "deepseek_20260906_115541",
+      "issues": [
+        "A 内部提示词被写进历史（242 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：28/249 条 assistant 内容其实是 Agent 自己发出去的提示词（11%）",
+        "C 失控增长：消息数 500（同一任务被反复重发叠加）"
+      ],
+      "n": 500,
+      "n_user": 250,
+      "n_ai": 249,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788666941.071992
+    },
+    {
+      "file": "conv_deepseek_20260906_115540.json",
+      "id": "deepseek_20260906_115540",
+      "issues": [
+        "A 内部提示词被写进历史（242 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：27/248 条 assistant 内容其实是 Agent 自己发出去的提示词（11%）",
+        "C 失控增长：消息数 499（同一任务被反复重发叠加）"
+      ],
+      "n": 499,
+      "n_user": 250,
+      "n_ai": 248,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788666940.4898484
+    },
+    {
+      "file": "conv_deepseek_20260906_115539.json",
+      "id": "deepseek_20260906_115539",
+      "issues": [
+        "A 内部提示词被写进历史（242 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：26/247 条 assistant 内容其实是 Agent 自己发出去的提示词（11%）",
+        "C 失控增长：消息数 498（同一任务被反复重发叠加）"
+      ],
+      "n": 498,
+      "n_user": 250,
+      "n_ai": 247,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788666939.8907564
+    },
+    {
+      "file": "conv_deepseek_20260906_115418.json",
+      "id": "deepseek_20260906_115418",
+      "issues": [
+        "A 内部提示词被写进历史（222 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：8/229 条 assistant 内容其实是 Agent 自己发出去的提示词（3%）",
+        "C 失控增长：消息数 460（同一任务被反复重发叠加）"
+      ],
+      "n": 460,
+      "n_user": 230,
+      "n_ai": 229,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788666858.999151
+    },
+    {
+      "file": "conv_deepseek_20260906_115417.json",
+      "id": "deepseek_20260906_115417",
+      "issues": [
+        "A 内部提示词被写进历史（222 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：5/226 条 assistant 内容其实是 Agent 自己发出去的提示词（2%）",
+        "C 失控增长：消息数 457（同一任务被反复重发叠加）"
+      ],
+      "n": 457,
+      "n_user": 230,
+      "n_ai": 226,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788666857.7873054
+    },
+    {
+      "file": "conv_deepseek_20260906_115353.json",
+      "id": "deepseek_20260906_115353",
+      "issues": [
+        "A 内部提示词被写进历史（217 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：4/221 条 assistant 内容其实是 Agent 自己发出去的提示词（2%）",
+        "C 失控增长：消息数 447（同一任务被反复重发叠加）"
+      ],
+      "n": 447,
+      "n_user": 225,
+      "n_ai": 221,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788666833.9258664
+    },
+    {
+      "file": "conv_deepseek_20260906_115342.json",
+      "id": "deepseek_20260906_115342",
+      "issues": [
+        "A 内部提示词被写进历史（212 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：4/217 条 assistant 内容其实是 Agent 自己发出去的提示词（2%）",
+        "C 失控增长：消息数 438（同一任务被反复重发叠加）"
+      ],
+      "n": 438,
+      "n_user": 220,
+      "n_ai": 217,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788666822.4648976
+    },
+    {
+      "file": "conv_deepseek_20260906_115328.json",
+      "id": "deepseek_20260906_115328",
+      "issues": [
+        "A 内部提示词被写进历史（207 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：4/213 条 assistant 内容其实是 Agent 自己发出去的提示词（2%）",
+        "C 失控增长：消息数 429（同一任务被反复重发叠加）"
+      ],
+      "n": 429,
+      "n_user": 215,
+      "n_ai": 213,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788666808.4661
+    },
+    {
+      "file": "conv_deepseek_20260906_115315.json",
+      "id": "deepseek_20260906_115315",
+      "issues": [
+        "A 内部提示词被写进历史（202 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：4/206 条 assistant 内容其实是 Agent 自己发出去的提示词（2%）",
+        "C 失控增长：消息数 417（同一任务被反复重发叠加）"
+      ],
+      "n": 417,
+      "n_user": 210,
+      "n_ai": 206,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788666795.89977
+    },
+    {
+      "file": "conv_deepseek_20260906_115254.json",
+      "id": "deepseek_20260906_115254",
+      "issues": [
+        "A 内部提示词被写进历史（197 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：4/201 条 assistant 内容其实是 Agent 自己发出去的提示词（2%）",
+        "C 失控增长：消息数 407（同一任务被反复重发叠加）"
+      ],
+      "n": 407,
+      "n_user": 205,
+      "n_ai": 201,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788666774.5343516
+    },
+    {
+      "file": "conv_deepseek_20260906_115244.json",
+      "id": "deepseek_20260906_115244",
+      "issues": [
+        "A 内部提示词被写进历史（192 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：4/197 条 assistant 内容其实是 Agent 自己发出去的提示词（2%）",
+        "C 失控增长：消息数 398（同一任务被反复重发叠加）"
+      ],
+      "n": 398,
+      "n_user": 200,
+      "n_ai": 197,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788666764.2757044
+    },
+    {
+      "file": "conv_deepseek_20260906_115233.json",
+      "id": "deepseek_20260906_115233",
+      "issues": [
+        "A 内部提示词被写进历史（187 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：4/193 条 assistant 内容其实是 Agent 自己发出去的提示词（2%）",
+        "C 失控增长：消息数 389（同一任务被反复重发叠加）"
+      ],
+      "n": 389,
+      "n_user": 195,
+      "n_ai": 193,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788666753.54862
+    },
+    {
+      "file": "conv_deepseek_20260906_115220.json",
+      "id": "deepseek_20260906_115220",
+      "issues": [
+        "A 内部提示词被写进历史（182 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：4/186 条 assistant 内容其实是 Agent 自己发出去的提示词（2%）",
+        "C 失控增长：消息数 377（同一任务被反复重发叠加）"
+      ],
+      "n": 377,
+      "n_user": 190,
+      "n_ai": 186,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788666740.0979812
+    },
+    {
+      "file": "conv_deepseek_20260906_115205.json",
+      "id": "deepseek_20260906_115205",
+      "issues": [
+        "A 内部提示词被写进历史（177 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：4/181 条 assistant 内容其实是 Agent 自己发出去的提示词（2%）",
+        "C 失控增长：消息数 367（同一任务被反复重发叠加）"
+      ],
+      "n": 367,
+      "n_user": 185,
+      "n_ai": 181,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788666725.0119877
+    },
+    {
+      "file": "conv_deepseek_20260906_115153.json",
+      "id": "deepseek_20260906_115153",
+      "issues": [
+        "A 内部提示词被写进历史（172 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：4/176 条 assistant 内容其实是 Agent 自己发出去的提示词（2%）",
+        "C 失控增长：消息数 357（同一任务被反复重发叠加）"
+      ],
+      "n": 357,
+      "n_user": 180,
+      "n_ai": 176,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788666713.7290812
+    },
+    {
+      "file": "conv_deepseek_20260906_115144.json",
+      "id": "deepseek_20260906_115144",
+      "issues": [
+        "A 内部提示词被写进历史（167 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：4/172 条 assistant 内容其实是 Agent 自己发出去的提示词（2%）",
+        "C 失控增长：消息数 348（同一任务被反复重发叠加）"
+      ],
+      "n": 348,
+      "n_user": 175,
+      "n_ai": 172,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788666704.4103887
+    },
+    {
+      "file": "conv_deepseek_20260906_115135.json",
+      "id": "deepseek_20260906_115135",
+      "issues": [
+        "A 内部提示词被写进历史（162 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：4/169 条 assistant 内容其实是 Agent 自己发出去的提示词（2%）",
+        "C 失控增长：消息数 340（同一任务被反复重发叠加）"
+      ],
+      "n": 340,
+      "n_user": 170,
+      "n_ai": 169,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788666695.237052
+    },
+    {
+      "file": "conv_deepseek_20260906_115118.json",
+      "id": "deepseek_20260906_115118",
+      "issues": [
+        "A 内部提示词被写进历史（157 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：4/161 条 assistant 内容其实是 Agent 自己发出去的提示词（2%）",
+        "C 失控增长：消息数 327（同一任务被反复重发叠加）"
+      ],
+      "n": 327,
+      "n_user": 165,
+      "n_ai": 161,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788666678.5479813
+    },
+    {
+      "file": "conv_deepseek_20260906_115103.json",
+      "id": "deepseek_20260906_115103",
+      "issues": [
+        "A 内部提示词被写进历史（152 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：4/156 条 assistant 内容其实是 Agent 自己发出去的提示词（3%）",
+        "C 失控增长：消息数 317（同一任务被反复重发叠加）"
+      ],
+      "n": 317,
+      "n_user": 160,
+      "n_ai": 156,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788666663.8914068
+    },
+    {
+      "file": "conv_deepseek_20260906_115055.json",
+      "id": "deepseek_20260906_115055",
+      "issues": [
+        "A 内部提示词被写进历史（147 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：4/152 条 assistant 内容其实是 Agent 自己发出去的提示词（3%）",
+        "C 失控增长：消息数 308（同一任务被反复重发叠加）"
+      ],
+      "n": 308,
+      "n_user": 155,
+      "n_ai": 152,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788666655.7226849
+    },
+    {
+      "file": "conv_deepseek_20260906_115047.json",
+      "id": "deepseek_20260906_115047",
+      "issues": [
+        "A 内部提示词被写进历史（142 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：4/148 条 assistant 内容其实是 Agent 自己发出去的提示词（3%）",
+        "C 失控增长：消息数 299（同一任务被反复重发叠加）"
+      ],
+      "n": 299,
+      "n_user": 150,
+      "n_ai": 148,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788666647.0622814
+    },
+    {
+      "file": "conv_deepseek_20260906_115029.json",
+      "id": "deepseek_20260906_115029",
+      "issues": [
+        "A 内部提示词被写进历史（137 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：4/141 条 assistant 内容其实是 Agent 自己发出去的提示词（3%）",
+        "C 失控增长：消息数 287（同一任务被反复重发叠加）"
+      ],
+      "n": 287,
+      "n_user": 145,
+      "n_ai": 141,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788666629.9721043
+    },
+    {
+      "file": "conv_deepseek_20260906_115021.json",
+      "id": "deepseek_20260906_115021",
+      "issues": [
+        "A 内部提示词被写进历史（132 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：4/137 条 assistant 内容其实是 Agent 自己发出去的提示词（3%）",
+        "C 失控增长：消息数 278（同一任务被反复重发叠加）"
+      ],
+      "n": 278,
+      "n_user": 140,
+      "n_ai": 137,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788666621.2778425
+    },
+    {
+      "file": "conv_deepseek_20260906_115011.json",
+      "id": "deepseek_20260906_115011",
+      "issues": [
+        "A 内部提示词被写进历史（127 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：4/133 条 assistant 内容其实是 Agent 自己发出去的提示词（3%）",
+        "C 失控增长：消息数 269（同一任务被反复重发叠加）"
+      ],
+      "n": 269,
+      "n_user": 135,
+      "n_ai": 133,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788666611.9739966
+    },
+    {
+      "file": "conv_deepseek_20260906_115010.json",
+      "id": "deepseek_20260906_115010",
+      "issues": [
+        "A 内部提示词被写进历史（127 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：4/133 条 assistant 内容其实是 Agent 自己发出去的提示词（3%）",
+        "C 失控增长：消息数 269（同一任务被反复重发叠加）"
+      ],
+      "n": 269,
+      "n_user": 135,
+      "n_ai": 133,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788666610.7717783
+    },
+    {
+      "file": "conv_deepseek_20260906_114954.json",
+      "id": "deepseek_20260906_114954",
+      "issues": [
+        "A 内部提示词被写进历史（122 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "C 失控增长：消息数 257（同一任务被反复重发叠加）"
+      ],
+      "n": 257,
+      "n_user": 130,
+      "n_ai": 126,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788666594.173713
+    },
+    {
+      "file": "conv_deepseek_20260906_114940.json",
+      "id": "deepseek_20260906_114940",
+      "issues": [
+        "A 内部提示词被写进历史（117 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "C 失控增长：消息数 247（同一任务被反复重发叠加）"
+      ],
+      "n": 247,
+      "n_user": 125,
+      "n_ai": 121,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788666580.5210052
+    },
+    {
+      "file": "conv_deepseek_20260906_114923.json",
+      "id": "deepseek_20260906_114923",
+      "issues": [
+        "A 内部提示词被写进历史（112 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "C 失控增长：消息数 237（同一任务被反复重发叠加）"
+      ],
+      "n": 237,
+      "n_user": 120,
+      "n_ai": 116,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788666563.6586947
+    },
+    {
+      "file": "conv_deepseek_20260906_114848.json",
+      "id": "deepseek_20260906_114848",
+      "issues": [
+        "A 内部提示词被写进历史（103 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "C 失控增长：消息数 218（同一任务被反复重发叠加）"
+      ],
+      "n": 218,
+      "n_user": 110,
+      "n_ai": 107,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788666528.5966952
+    },
+    {
+      "file": "conv_deepseek_20260906_114831.json",
+      "id": "deepseek_20260906_114831",
+      "issues": [
+        "A 内部提示词被写进历史（98 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "C 失控增长：消息数 209（同一任务被反复重发叠加）"
+      ],
+      "n": 209,
+      "n_user": 105,
+      "n_ai": 103,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788666511.777056
+    },
+    {
+      "file": "conv_deepseek_20260906_112423.json",
+      "id": "deepseek_20260906_112423",
+      "issues": [
+        "A 内部提示词被写进历史（89 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "C 失控增长：消息数 189（同一任务被反复重发叠加）"
+      ],
+      "n": 189,
+      "n_user": 95,
+      "n_ai": 93,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788665063.5842867
+    },
+    {
+      "file": "conv_deepseek_20260906_112336.json",
+      "id": "deepseek_20260906_112336",
+      "issues": [
+        "A 内部提示词被写进历史（84 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "C 失控增长：消息数 179（同一任务被反复重发叠加）"
+      ],
+      "n": 179,
+      "n_user": 90,
+      "n_ai": 88,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788665016.2832384
+    },
+    {
+      "file": "conv_deepseek_20260906_111706.json",
+      "id": "deepseek_20260906_111706",
+      "issues": [
+        "A 内部提示词被写进历史（77 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "C 失控增长：消息数 160（同一任务被反复重发叠加）"
+      ],
+      "n": 160,
+      "n_user": 80,
+      "n_ai": 79,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788664626.9649022
+    },
+    {
+      "file": "conv_deepseek_20260906_111703.json",
+      "id": "deepseek_20260906_111703",
+      "issues": [
+        "A 内部提示词被写进历史（77 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "C 失控增长：消息数 159（同一任务被反复重发叠加）"
+      ],
+      "n": 159,
+      "n_user": 80,
+      "n_ai": 78,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788664623.033199
+    },
+    {
+      "file": "conv_deepseek_20260906_111256.json",
+      "id": "deepseek_20260906_111256",
+      "issues": [
+        "A 内部提示词被写进历史（74 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "C 失控增长：消息数 151（同一任务被反复重发叠加）"
+      ],
+      "n": 151,
+      "n_user": 75,
+      "n_ai": 75,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788664376.8937845
+    },
+    {
+      "file": "conv_deepseek_20260906_111208.json",
+      "id": "deepseek_20260906_111208",
+      "issues": [
+        "A 内部提示词被写进历史（69 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "C 失控增长：消息数 141（同一任务被反复重发叠加）"
+      ],
+      "n": 141,
+      "n_user": 70,
+      "n_ai": 70,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788664328.3235223
+    },
+    {
+      "file": "conv_deepseek_20260906_111126.json",
+      "id": "deepseek_20260906_111126",
+      "issues": [
+        "A 内部提示词被写进历史（64 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "C 失控增长：消息数 131（同一任务被反复重发叠加）"
+      ],
+      "n": 131,
+      "n_user": 65,
+      "n_ai": 65,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788664286.8189154
+    },
+    {
+      "file": "conv_deepseek_20260906_111037.json",
+      "id": "deepseek_20260906_111037",
+      "issues": [
+        "A 内部提示词被写进历史（59 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "C 失控增长：消息数 121（同一任务被反复重发叠加）"
+      ],
+      "n": 121,
+      "n_user": 60,
+      "n_ai": 60,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788664237.894221
+    },
+    {
+      "file": "conv_deepseek_20260906_110950.json",
+      "id": "deepseek_20260906_110950",
+      "issues": [
+        "A 内部提示词被写进历史（54 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "C 失控增长：消息数 111（同一任务被反复重发叠加）"
+      ],
+      "n": 111,
+      "n_user": 55,
+      "n_ai": 55,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788664190.366958
+    },
+    {
+      "file": "conv_deepseek_20260906_110904.json",
+      "id": "deepseek_20260906_110904",
+      "issues": [
+        "A 内部提示词被写进历史（49 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "C 失控增长：消息数 101（同一任务被反复重发叠加）"
+      ],
+      "n": 101,
+      "n_user": 50,
+      "n_ai": 50,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788664144.839956
+    },
+    {
+      "file": "conv_deepseek_20260906_110745.json",
+      "id": "deepseek_20260906_110745",
+      "issues": [
+        "A 内部提示词被写进历史（44 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 91,
+      "n_user": 45,
+      "n_ai": 45,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788664065.2639594
+    },
+    {
+      "file": "conv_deepseek_20260906_110701.json",
+      "id": "deepseek_20260906_110701",
+      "issues": [
+        "A 内部提示词被写进历史（39 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 81,
+      "n_user": 40,
+      "n_ai": 40,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788664021.9213712
+    },
+    {
+      "file": "conv_deepseek_20260906_110615.json",
+      "id": "deepseek_20260906_110615",
+      "issues": [
+        "A 内部提示词被写进历史（34 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 71,
+      "n_user": 35,
+      "n_ai": 35,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788663975.3014495
+    },
+    {
+      "file": "conv_deepseek_20260906_110537.json",
+      "id": "deepseek_20260906_110537",
+      "issues": [
+        "A 内部提示词被写进历史（29 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 61,
+      "n_user": 30,
+      "n_ai": 30,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788663937.1445715
+    },
+    {
+      "file": "conv_deepseek_20260906_110456.json",
+      "id": "deepseek_20260906_110456",
+      "issues": [
+        "A 内部提示词被写进历史（24 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 51,
+      "n_user": 25,
+      "n_ai": 25,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788663896.5588756
+    },
+    {
+      "file": "conv_deepseek_20260906_110416.json",
+      "id": "deepseek_20260906_110416",
+      "issues": [
+        "A 内部提示词被写进历史（19 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 41,
+      "n_user": 20,
+      "n_ai": 20,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788663856.5518396
+    },
+    {
+      "file": "conv_deepseek_20260906_110329.json",
+      "id": "deepseek_20260906_110329",
+      "issues": [
+        "A 内部提示词被写进历史（14 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 31,
+      "n_user": 15,
+      "n_ai": 15,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788663809.4012043
+    },
+    {
+      "file": "conv_deepseek_20260906_110242.json",
+      "id": "deepseek_20260906_110242",
+      "issues": [
+        "A 内部提示词被写进历史（9 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 21,
+      "n_user": 10,
+      "n_ai": 10,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788663762.8634233
+    },
+    {
+      "file": "conv_deepseek_20260906_110143.json",
+      "id": "deepseek_20260906_110143",
+      "issues": [
+        "A 内部提示词被写进历史（4 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 11,
+      "n_user": 5,
+      "n_ai": 5,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788663703.0177603
+    },
+    {
+      "file": "conv_deepseek_20260906_101511.json",
+      "id": "deepseek_20260906_101511",
+      "issues": [
+        "A 内部提示词被写进历史（63 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：4/64 条 assistant 内容其实是 Agent 自己发出去的提示词（6%）",
+        "C 失控增长：消息数 135（同一任务被反复重发叠加）"
+      ],
+      "n": 135,
+      "n_user": 70,
+      "n_ai": 64,
+      "platform": "deepseek",
+      "title": "请阅读我上传的文件并用一句话概括它的内容。  [附件说明] 本任务附带了以下文件，它们已同步上传到平台网页，同时在本地磁",
+      "mtime": 1788660911.2793884
+    },
+    {
+      "file": "conv_deepseek_20260906_101329.json",
+      "id": "deepseek_20260906_101329",
+      "issues": [
+        "A 内部提示词被写进历史（61 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：4/62 条 assistant 内容其实是 Agent 自己发出去的提示词（6%）",
+        "C 失控增长：消息数 128（同一任务被反复重发叠加）"
+      ],
+      "n": 128,
+      "n_user": 65,
+      "n_ai": 62,
+      "platform": "deepseek",
+      "title": "请阅读我上传的文件并用一句话概括它的内容。  [附件说明] 本任务附带了以下文件，它们已同步上传到平台网页，同时在本地磁",
+      "mtime": 1788660809.535781
+    },
+    {
+      "file": "conv_deepseek_20260906_101314.json",
+      "id": "deepseek_20260906_101314",
+      "issues": [
+        "A 内部提示词被写进历史（56 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：4/58 条 assistant 内容其实是 Agent 自己发出去的提示词（7%）",
+        "C 失控增长：消息数 119（同一任务被反复重发叠加）"
+      ],
+      "n": 119,
+      "n_user": 60,
+      "n_ai": 58,
+      "platform": "deepseek",
+      "title": "请阅读我上传的文件并用一句话概括它的内容。  [附件说明] 本任务附带了以下文件，它们已同步上传到平台网页，同时在本地磁",
+      "mtime": 1788660794.421849
+    },
+    {
+      "file": "conv_deepseek_20260906_101302.json",
+      "id": "deepseek_20260906_101302",
+      "issues": [
+        "A 内部提示词被写进历史（51 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：4/54 条 assistant 内容其实是 Agent 自己发出去的提示词（7%）",
+        "C 失控增长：消息数 110（同一任务被反复重发叠加）"
+      ],
+      "n": 110,
+      "n_user": 55,
+      "n_ai": 54,
+      "platform": "deepseek",
+      "title": "请阅读我上传的文件并用一句话概括它的内容。  [附件说明] 本任务附带了以下文件，它们已同步上传到平台网页，同时在本地磁",
+      "mtime": 1788660782.2575855
+    },
+    {
+      "file": "conv_deepseek_20260906_101249.json",
+      "id": "deepseek_20260906_101249",
+      "issues": [
+        "A 内部提示词被写进历史（46 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：1/47 条 assistant 内容其实是 Agent 自己发出去的提示词（2%）"
+      ],
+      "n": 98,
+      "n_user": 50,
+      "n_ai": 47,
+      "platform": "deepseek",
+      "title": "请阅读我上传的文件并用一句话概括它的内容。  [附件说明] 本任务附带了以下文件，它们已同步上传到平台网页，同时在本地磁",
+      "mtime": 1788660769.379568
+    },
+    {
+      "file": "conv_deepseek_20260906_101233.json",
+      "id": "deepseek_20260906_101233",
+      "issues": [
+        "A 内部提示词被写进历史（41 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 88,
+      "n_user": 45,
+      "n_ai": 42,
+      "platform": "deepseek",
+      "title": "请阅读我上传的文件并用一句话概括它的内容。  [附件说明] 本任务附带了以下文件，它们已同步上传到平台网页，同时在本地磁",
+      "mtime": 1788660753.0961635
+    },
+    {
+      "file": "conv_deepseek_20260906_101219.json",
+      "id": "deepseek_20260906_101219",
+      "issues": [
+        "A 内部提示词被写进历史（37 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 79,
+      "n_user": 40,
+      "n_ai": 38,
+      "platform": "deepseek",
+      "title": "请阅读我上传的文件并用一句话概括它的内容。  [附件说明] 本任务附带了以下文件，它们已同步上传到平台网页，同时在本地磁",
+      "mtime": 1788660739.2544916
+    },
+    {
+      "file": "conv_deepseek_20260906_101204.json",
+      "id": "deepseek_20260906_101204",
+      "issues": [
+        "A 内部提示词被写进历史（32 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 69,
+      "n_user": 35,
+      "n_ai": 33,
+      "platform": "deepseek",
+      "title": "请阅读我上传的文件并用一句话概括它的内容。  [附件说明] 本任务附带了以下文件，它们已同步上传到平台网页，同时在本地磁",
+      "mtime": 1788660724.2269344
+    },
+    {
+      "file": "conv_deepseek_20260906_101148.json",
+      "id": "deepseek_20260906_101148",
+      "issues": [
+        "A 内部提示词被写进历史（27 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 60,
+      "n_user": 30,
+      "n_ai": 29,
+      "platform": "deepseek",
+      "title": "请阅读我上传的文件并用一句话概括它的内容。  [附件说明] 本任务附带了以下文件，它们已同步上传到平台网页，同时在本地磁",
+      "mtime": 1788660708.1717849
+    },
+    {
+      "file": "conv_deepseek_20260906_101128.json",
+      "id": "deepseek_20260906_101128",
+      "issues": [
+        "A 内部提示词被写进历史（22 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 49,
+      "n_user": 25,
+      "n_ai": 23,
+      "platform": "deepseek",
+      "title": "请阅读我上传的文件并用一句话概括它的内容。  [附件说明] 本任务附带了以下文件，它们已同步上传到平台网页，同时在本地磁",
+      "mtime": 1788660688.4921734
+    },
+    {
+      "file": "conv_deepseek_20260906_101042.json",
+      "id": "deepseek_20260906_101042",
+      "issues": [
+        "A 内部提示词被写进历史（14 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 31,
+      "n_user": 15,
+      "n_ai": 15,
+      "platform": "deepseek",
+      "title": "请阅读我上传的文件并用一句话概括它的内容。  [附件说明] 本任务附带了以下文件，它们已同步上传到平台网页，同时在本地磁",
+      "mtime": 1788660642.6642926
+    },
+    {
+      "file": "conv_deepseek_20260906_100958.json",
+      "id": "deepseek_20260906_100958",
+      "issues": [
+        "A 内部提示词被写进历史（9 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 21,
+      "n_user": 10,
+      "n_ai": 10,
+      "platform": "deepseek",
+      "title": "请阅读我上传的文件并用一句话概括它的内容。  [附件说明] 本任务附带了以下文件，它们已同步上传到平台网页，同时在本地磁",
+      "mtime": 1788660598.8177018
+    },
+    {
+      "file": "conv_deepseek_20260906_100916.json",
+      "id": "deepseek_20260906_100916",
+      "issues": [
+        "A 内部提示词被写进历史（4 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 11,
+      "n_user": 5,
+      "n_ai": 5,
+      "platform": "deepseek",
+      "title": "请阅读我上传的文件并用一句话概括它的内容。  [附件说明] 本任务附带了以下文件，它们已同步上传到平台网页，同时在本地磁",
+      "mtime": 1788660556.7187107
+    },
+    {
+      "file": "conv_deepseek_20260906_094704.json",
+      "id": "deepseek_20260906_094704",
+      "issues": [
+        "A 内部提示词被写进历史（3 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 11,
+      "n_user": 5,
+      "n_ai": 5,
+      "platform": "deepseek",
+      "title": "你好",
+      "mtime": 1788659224.8857956
+    },
+    {
+      "file": "conv_deepseek_20260906_094648.json",
+      "id": "deepseek_20260906_094648",
+      "issues": [
+        "A 内部提示词被写进历史（3 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 11,
+      "n_user": 5,
+      "n_ai": 5,
+      "platform": "deepseek",
+      "title": "你好",
+      "mtime": 1788659208.6929083
+    },
+    {
+      "file": "conv_yuanbao_20260906_091824.json",
+      "id": "yuanbao_20260906_091824",
+      "issues": [
+        "A 内部提示词被写进历史（55 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：48/48 条 assistant 内容其实是 Agent 自己发出去的提示词（100%）",
+        "B 空回复/未收到回复 ×12",
+        "C 失控增长：消息数 108（同一任务被反复重发叠加）"
+      ],
+      "n": 108,
+      "n_user": 60,
+      "n_ai": 48,
+      "platform": "yuanbao",
+      "title": "[SYSTEM] NO @@@@ PROTOCOL. Your text was: 已经完成思考 OK. All res",
+      "mtime": 1788657504.632654
+    },
+    {
+      "file": "conv_yuanbao_20260906_090604.json",
+      "id": "yuanbao_20260906_090604",
+      "issues": [
+        "A 内部提示词被写进历史（31 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：29/29 条 assistant 内容其实是 Agent 自己发出去的提示词（100%）",
+        "B 空回复/未收到回复 ×12"
+      ],
+      "n": 64,
+      "n_user": 35,
+      "n_ai": 29,
+      "platform": "yuanbao",
+      "title": "[SYSTEM] NO @@@@ PROTOCOL. Your text was: 已经完成思考 OK. All res",
+      "mtime": 1788656764.7177126
+    },
+    {
+      "file": "conv_yuanbao_20260906_090603.json",
+      "id": "yuanbao_20260906_090603",
+      "issues": [
+        "A 内部提示词被写进历史（31 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：27/27 条 assistant 内容其实是 Agent 自己发出去的提示词（100%）",
+        "B 空回复/未收到回复 ×12"
+      ],
+      "n": 62,
+      "n_user": 35,
+      "n_ai": 27,
+      "platform": "yuanbao",
+      "title": "[SYSTEM] NO @@@@ PROTOCOL. Your text was: 已经完成思考 OK. All res",
+      "mtime": 1788656763.0961306
+    },
+    {
+      "file": "conv_yuanbao_20260906_090602.json",
+      "id": "yuanbao_20260906_090602",
+      "issues": [
+        "A 内部提示词被写进历史（31 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：26/26 条 assistant 内容其实是 Agent 自己发出去的提示词（100%）",
+        "B 空回复/未收到回复 ×12"
+      ],
+      "n": 61,
+      "n_user": 35,
+      "n_ai": 26,
+      "platform": "yuanbao",
+      "title": "[SYSTEM] NO @@@@ PROTOCOL. Your text was: 已经完成思考 OK. All res",
+      "mtime": 1788656762.5752676
+    },
+    {
+      "file": "conv_yuanbao_20260906_090601.json",
+      "id": "yuanbao_20260906_090601",
+      "issues": [
+        "A 内部提示词被写进历史（31 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：24/24 条 assistant 内容其实是 Agent 自己发出去的提示词（100%）",
+        "B 空回复/未收到回复 ×12"
+      ],
+      "n": 59,
+      "n_user": 35,
+      "n_ai": 24,
+      "platform": "yuanbao",
+      "title": "[SYSTEM] NO @@@@ PROTOCOL. Your text was: 已经完成思考 OK. All res",
+      "mtime": 1788656761.3987815
+    },
+    {
+      "file": "conv_yuanbao_20260906_084238.json",
+      "id": "yuanbao_20260906_084238",
+      "issues": [
+        "A 内部提示词被写进历史（4 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：3/3 条 assistant 内容其实是 Agent 自己发出去的提示词（100%）"
+      ],
+      "n": 8,
+      "n_user": 5,
+      "n_ai": 3,
+      "platform": "yuanbao",
+      "title": "[SYSTEM] NO @@@@ PROTOCOL. Your text was: 已经完成思考 OK. All res",
+      "mtime": 1788655358.6901371
+    },
+    {
+      "file": "conv_deepseek_20260906_083648.json",
+      "id": "deepseek_20260906_083648",
+      "issues": [
+        "A 内部提示词被写进历史（3 条，例：[系统] 工具 file_read 执行结果:\n[文件 D:\\软件\\XianRe）"
+      ],
+      "n": 11,
+      "n_user": 5,
+      "n_ai": 5,
+      "platform": "deepseek",
+      "title": "请阅读我上传的文件并用一句话概括它的内容。  [附件说明] 本任务附带了以下文件，它们已同步上传到平台网页，同时在本地磁",
+      "mtime": 1788655008.1138608
+    },
+    {
+      "file": "conv_deepseek_20260906_083039.json",
+      "id": "deepseek_20260906_083039",
+      "issues": [
+        "A 内部提示词被写进历史（9 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 21,
+      "n_user": 10,
+      "n_ai": 10,
+      "platform": "deepseek",
+      "title": "请只回复两个字：OK",
+      "mtime": 1788654639.3860776
+    },
+    {
+      "file": "conv_deepseek_20260906_083008.json",
+      "id": "deepseek_20260906_083008",
+      "issues": [
+        "A 内部提示词被写进历史（4 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 11,
+      "n_user": 5,
+      "n_ai": 5,
+      "platform": "deepseek",
+      "title": "请只回复两个字：OK",
+      "mtime": 1788654608.06626
+    },
+    {
+      "file": "conv_deepseek_20260905_221004.json",
+      "id": "deepseek_20260905_221004",
+      "issues": [
+        "A 内部提示词被写进历史（19 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 41,
+      "n_user": 20,
+      "n_ai": 20,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788617404.08131
+    },
+    {
+      "file": "conv_deepseek_20260905_220911.json",
+      "id": "deepseek_20260905_220911",
+      "issues": [
+        "A 内部提示词被写进历史（14 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 31,
+      "n_user": 15,
+      "n_ai": 15,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788617351.3663423
+    },
+    {
+      "file": "conv_deepseek_20260905_220756.json",
+      "id": "deepseek_20260905_220756",
+      "issues": [
+        "A 内部提示词被写进历史（9 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 21,
+      "n_user": 10,
+      "n_ai": 10,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788617276.6878636
+    },
+    {
+      "file": "conv_deepseek_20260905_220712.json",
+      "id": "deepseek_20260905_220712",
+      "issues": [
+        "A 内部提示词被写进历史（4 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 11,
+      "n_user": 5,
+      "n_ai": 5,
+      "platform": "deepseek",
+      "title": "测试连接",
+      "mtime": 1788617232.2392156
+    },
+    {
+      "file": "conv_deepseek_20260829_131809.json",
+      "id": "deepseek_20260829_131809",
+      "issues": [
+        "A 内部提示词被写进历史（9 条，例：[系统] 工具 file_read 执行结果:\n'Commander' obje）"
+      ],
+      "n": 21,
+      "n_user": 10,
+      "n_ai": 10,
+      "platform": "deepseek",
+      "title": "把这个PDF做成PPT，在桌面开一个文件夹存储  [附件说明] 本任务附带了以下文件，它们已同步上传到平台网页，同时在本",
+      "mtime": 1787980689.202546
+    },
+    {
+      "file": "conv_deepseek_20260829_131703.json",
+      "id": "deepseek_20260829_131703",
+      "issues": [
+        "A 内部提示词被写进历史（4 条，例：[系统] 工具 file_read 执行结果:\n'Commander' obje）"
+      ],
+      "n": 11,
+      "n_user": 5,
+      "n_ai": 5,
+      "platform": "deepseek",
+      "title": "把这个PDF做成PPT，在桌面开一个文件夹存储  [附件说明] 本任务附带了以下文件，它们已同步上传到平台网页，同时在本",
+      "mtime": 1787980623.8204236
+    },
+    {
+      "file": "conv_tongyi_20260829_131500.json",
+      "id": "tongyi_20260829_131500",
+      "issues": [
+        "A 内部提示词被写进历史（14 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "B 空回复/未收到回复 ×1",
+        "D 状态行被当成 AI 回复 ×14（例：已经完成思考\nI will execut）"
+      ],
+      "n": 35,
+      "n_user": 20,
+      "n_ai": 15,
+      "platform": "tongyi",
+      "title": "@@@@{\"tool\":\"session_manager\",\"action\":\"create\"}@@@@",
+      "mtime": 1787980500.4484444
+    },
+    {
+      "file": "conv_tongyi_20260829_131045.json",
+      "id": "tongyi_20260829_131045",
+      "issues": [
+        "A 内部提示词被写进历史（11 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "B 空回复/未收到回复 ×1",
+        "D 状态行被当成 AI 回复 ×11（例：已经完成思考\nI will execut）"
+      ],
+      "n": 27,
+      "n_user": 15,
+      "n_ai": 12,
+      "platform": "tongyi",
+      "title": "@@@@{\"tool\":\"session_manager\",\"action\":\"create\"}@@@@",
+      "mtime": 1787980245.752605
+    },
+    {
+      "file": "conv_tongyi_20260829_130750.json",
+      "id": "tongyi_20260829_130750",
+      "issues": [
+        "A 内部提示词被写进历史（6 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "B 空回复/未收到回复 ×1",
+        "D 状态行被当成 AI 回复 ×6（例：已经完成思考\nI will execut）"
+      ],
+      "n": 17,
+      "n_user": 10,
+      "n_ai": 7,
+      "platform": "tongyi",
+      "title": "@@@@{\"tool\":\"session_manager\",\"action\":\"create\"}@@@@",
+      "mtime": 1787980070.033836
+    },
+    {
+      "file": "conv_TEST_DELETE_20260829.json",
+      "id": "TEST_DELETE_20260829",
+      "issues": [
+        "F 空会话：没有任何消息"
+      ],
+      "n": 0,
+      "n_user": 0,
+      "n_ai": 0,
+      "platform": "deepseek",
+      "title": "",
+      "mtime": 1787961535.7866764
+    },
+    {
+      "file": "conv_deepseek_20260828_121254.json",
+      "id": "deepseek_20260828_121254",
+      "issues": [
+        "A 内部提示词被写进历史（19 条，例：[系统] 工具 session_manager 执行结果:\n错误: 未知 act）"
+      ],
+      "n": 41,
+      "n_user": 20,
+      "n_ai": 20,
+      "platform": "deepseek",
+      "title": "clear",
+      "mtime": 1787890374.2370093
+    },
+    {
+      "file": "conv_deepseek_20260828_121108.json",
+      "id": "deepseek_20260828_121108",
+      "issues": [
+        "A 内部提示词被写进历史（4 条，例：[系统] 工具 session_manager 执行结果:\n错误: 未知 act）"
+      ],
+      "n": 11,
+      "n_user": 5,
+      "n_ai": 5,
+      "platform": "deepseek",
+      "title": "clear",
+      "mtime": 1787890268.0495412
+    },
+    {
+      "file": "conv_deepseek_20260827_200235.json",
+      "id": "deepseek_20260827_200235",
+      "issues": [
+        "A 内部提示词被写进历史（4 条，例：[系统] 工具 file_read 执行结果:\n[PDF 文件 4c9374b3）"
+      ],
+      "n": 11,
+      "n_user": 5,
+      "n_ai": 5,
+      "platform": "deepseek",
+      "title": "使用file_read读取这个PDF文件的内容：D:/software/XianRenZhangAgent/xrz_da",
+      "mtime": 1787832155.8277576
+    },
+    {
+      "file": "conv_deepseek_20260827_195058.json",
+      "id": "deepseek_20260827_195058",
+      "issues": [
+        "A 内部提示词被写进历史（17 条，例：[系统] 工具 file_read 执行结果:\n[PDF 文件 4c9374b3）"
+      ],
+      "n": 41,
+      "n_user": 20,
+      "n_ai": 20,
+      "platform": "deepseek",
+      "title": "读取文件 D:/software/XianRenZhangAgent/xrz_data/gui_attachments/",
+      "mtime": 1787831458.304721
+    },
+    {
+      "file": "conv_deepseek_20260827_195057.json",
+      "id": "deepseek_20260827_195057",
+      "issues": [
+        "A 内部提示词被写进历史（17 条，例：[系统] 工具 file_read 执行结果:\n[PDF 文件 4c9374b3）"
+      ],
+      "n": 41,
+      "n_user": 20,
+      "n_ai": 20,
+      "platform": "deepseek",
+      "title": "读取文件 D:/software/XianRenZhangAgent/xrz_data/gui_attachments/",
+      "mtime": 1787831457.8237383
+    },
+    {
+      "file": "conv_deepseek_20260827_195024.json",
+      "id": "deepseek_20260827_195024",
+      "issues": [
+        "A 内部提示词被写进历史（7 条，例：[系统] 工具 file_read 执行结果:\n[PDF 文件 4c9374b3）"
+      ],
+      "n": 19,
+      "n_user": 10,
+      "n_ai": 8,
+      "platform": "deepseek",
+      "title": "读取文件 D:/software/XianRenZhangAgent/xrz_data/gui_attachments/",
+      "mtime": 1787831424.71835
+    },
+    {
+      "file": "conv_deepseek_20260827_195017.json",
+      "id": "deepseek_20260827_195017",
+      "issues": [
+        "A 内部提示词被写进历史（2 条，例：[系统] 工具 file_read 执行结果:\n[PDF 文件 4c9374b3）"
+      ],
+      "n": 11,
+      "n_user": 5,
+      "n_ai": 5,
+      "platform": "deepseek",
+      "title": "读取文件 D:/software/XianRenZhangAgent/xrz_data/gui_attachments/",
+      "mtime": 1787831417.0952663
+    },
+    {
+      "file": "conv_deepseek_20260827_173718.json",
+      "id": "deepseek_20260827_173718",
+      "issues": [
+        "A 内部提示词被写进历史（9 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 21,
+      "n_user": 10,
+      "n_ai": 10,
+      "platform": "deepseek",
+      "title": "解析这个文件，然后在桌面创建一个文件夹，生成word报告介绍  [附件说明] 本任务附带了以下文件，它们已同步上传到平台",
+      "mtime": 1787823438.9196749
+    },
+    {
+      "file": "conv_deepseek_20260827_173547.json",
+      "id": "deepseek_20260827_173547",
+      "issues": [
+        "A 内部提示词被写进历史（4 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 11,
+      "n_user": 5,
+      "n_ai": 5,
+      "platform": "deepseek",
+      "title": "解析这个文件，然后在桌面创建一个文件夹，生成word报告介绍  [附件说明] 本任务附带了以下文件，它们已同步上传到平台",
+      "mtime": 1787823347.3995082
+    },
+    {
+      "file": "conv_deepseek_20260827_092028.json",
+      "id": "deepseek_20260827_092028",
+      "issues": [
+        "A 内部提示词被写进历史（8 条，例：[系统] 工具 browser_research 执行结果:\n[子代理已启动] ）"
+      ],
+      "n": 21,
+      "n_user": 10,
+      "n_ai": 10,
+      "platform": "deepseek",
+      "title": "使用 browser_research 搜索 'Python asyncio 最佳实践'，总结要点",
+      "mtime": 1787793628.3157363
+    },
+    {
+      "file": "conv_deepseek_20260827_091635.json",
+      "id": "deepseek_20260827_091635",
+      "issues": [
+        "A 内部提示词被写进历史（4 条，例：[系统] 工具 browser_search 执行结果:\n[搜索完成] 抓取 3）"
+      ],
+      "n": 11,
+      "n_user": 5,
+      "n_ai": 5,
+      "platform": "deepseek",
+      "title": "=== 子代理任务（类型：research） ===  任务描述：深度研究: Python asyncio 最佳实践 (",
+      "mtime": 1787793395.7303455
+    },
+    {
+      "file": "conv_deepseek_20260827_091605.json",
+      "id": "deepseek_20260827_091605",
+      "issues": [
+        "A 内部提示词被写进历史（4 条，例：[系统] 工具 browser_research 执行结果:\n[子代理已启动] ）"
+      ],
+      "n": 11,
+      "n_user": 5,
+      "n_ai": 5,
+      "platform": "deepseek",
+      "title": "使用 browser_research 搜索 'Python asyncio 最佳实践'，总结要点",
+      "mtime": 1787793365.3390455
+    },
+    {
+      "file": "conv_deepseek_20260827_090044.json",
+      "id": "deepseek_20260827_090044",
+      "issues": [
+        "A 内部提示词被写进历史（36 条，例：[系统] 工具 browser_research 执行结果:\n[子代理已启动] ）",
+        "G 回声污染：2/45 条 assistant 内容其实是 Agent 自己发出去的提示词（4%）"
+      ],
+      "n": 91,
+      "n_user": 45,
+      "n_ai": 45,
+      "platform": "deepseek",
+      "title": "使用 browser_research 工具搜索 'Python asyncio 最佳实践'，总结要点",
+      "mtime": 1787792444.8268118
+    },
+    {
+      "file": "conv_deepseek_20260827_085946.json",
+      "id": "deepseek_20260827_085946",
+      "issues": [
+        "A 内部提示词被写进历史（9 条，例：[系统] 工具 browser_search 执行结果:\n[搜索完成] 抓取 1）"
+      ],
+      "n": 21,
+      "n_user": 10,
+      "n_ai": 10,
+      "platform": "deepseek",
+      "title": "=== 子代理任务（类型：research） ===  任务描述：深度研究: AI Agent 框架最新进展 (最多访问",
+      "mtime": 1787792386.3732016
+    },
+    {
+      "file": "conv_deepseek_20260827_085823.json",
+      "id": "deepseek_20260827_085823",
+      "issues": [
+        "A 内部提示词被写进历史（4 条，例：[系统] 工具 browser_search 执行结果:\n[搜索完成] 抓取 1）"
+      ],
+      "n": 11,
+      "n_user": 5,
+      "n_ai": 5,
+      "platform": "deepseek",
+      "title": "=== 子代理任务（类型：research） ===  任务描述：深度研究: AI Agent 框架最新进展 (最多访问",
+      "mtime": 1787792303.568707
+    },
+    {
+      "file": "conv_deepseek_20260827_085746.json",
+      "id": "deepseek_20260827_085746",
+      "issues": [
+        "A 内部提示词被写进历史（32 条，例：[系统] 工具 browser_research 执行结果:\n[子代理已启动] ）",
+        "G 回声污染：2/39 条 assistant 内容其实是 Agent 自己发出去的提示词（5%）"
+      ],
+      "n": 80,
+      "n_user": 40,
+      "n_ai": 39,
+      "platform": "deepseek",
+      "title": "使用 browser_research 工具搜索 'Python asyncio 最佳实践'，总结要点",
+      "mtime": 1787792266.7558799
+    },
+    {
+      "file": "conv_deepseek_20260827_085326.json",
+      "id": "deepseek_20260827_085326",
+      "issues": [
+        "A 内部提示词被写进历史（30 条，例：[系统] 工具 browser_research 执行结果:\n[子代理已启动] ）",
+        "G 回声污染：2/35 条 assistant 内容其实是 Agent 自己发出去的提示词（6%）"
+      ],
+      "n": 71,
+      "n_user": 35,
+      "n_ai": 35,
+      "platform": "deepseek",
+      "title": "使用 browser_research 工具搜索 'Python asyncio 最佳实践'，总结要点",
+      "mtime": 1787792006.7833989
+    },
+    {
+      "file": "conv_deepseek_20260827_085314.json",
+      "id": "deepseek_20260827_085314",
+      "issues": [
+        "A 内部提示词被写进历史（30 条，例：[系统] 工具 browser_research 执行结果:\n[子代理已启动] ）",
+        "G 回声污染：2/33 条 assistant 内容其实是 Agent 自己发出去的提示词（6%）"
+      ],
+      "n": 69,
+      "n_user": 35,
+      "n_ai": 33,
+      "platform": "deepseek",
+      "title": "使用 browser_research 工具搜索 'Python asyncio 最佳实践'，总结要点",
+      "mtime": 1787791994.370317
+    },
+    {
+      "file": "conv_deepseek_20260827_085247.json",
+      "id": "deepseek_20260827_085247",
+      "issues": [
+        "A 内部提示词被写进历史（25 条，例：[系统] 工具 browser_research 执行结果:\n[子代理已启动] ）",
+        "G 回声污染：2/29 条 assistant 内容其实是 Agent 自己发出去的提示词（7%）"
+      ],
+      "n": 60,
+      "n_user": 30,
+      "n_ai": 29,
+      "platform": "deepseek",
+      "title": "使用 browser_research 工具搜索 'Python asyncio 最佳实践'，总结要点",
+      "mtime": 1787791967.3589325
+    },
+    {
+      "file": "conv_deepseek_20260827_085230.json",
+      "id": "deepseek_20260827_085230",
+      "issues": [
+        "A 内部提示词被写进历史（21 条，例：[系统] 工具 browser_research 执行结果:\n[子代理已启动] ）",
+        "G 回声污染：2/24 条 assistant 内容其实是 Agent 自己发出去的提示词（8%）"
+      ],
+      "n": 50,
+      "n_user": 25,
+      "n_ai": 24,
+      "platform": "deepseek",
+      "title": "使用 browser_research 工具搜索 'Python asyncio 最佳实践'，总结要点",
+      "mtime": 1787791950.762767
+    },
+    {
+      "file": "conv_deepseek_20260827_085133.json",
+      "id": "deepseek_20260827_085133",
+      "issues": [
+        "A 内部提示词被写进历史（12 条，例：[系统] 工具 browser_research 执行结果:\n[子代理已启动] ）",
+        "G 回声污染：2/15 条 assistant 内容其实是 Agent 自己发出去的提示词（13%）"
+      ],
+      "n": 31,
+      "n_user": 15,
+      "n_ai": 15,
+      "platform": "deepseek",
+      "title": "使用 browser_research 工具搜索 'Python asyncio 最佳实践'，总结要点",
+      "mtime": 1787791893.4324265
+    },
+    {
+      "file": "conv_deepseek_20260827_084905.json",
+      "id": "deepseek_20260827_084905",
+      "issues": [
+        "A 内部提示词被写进历史（4 条，例：[系统] 工具 shell_exec 执行结果:\n[退出码 1]\n\n'' ڲⲿ）",
+        "G 回声污染：1/5 条 assistant 内容其实是 Agent 自己发出去的提示词（20%）"
+      ],
+      "n": 11,
+      "n_user": 5,
+      "n_ai": 5,
+      "platform": "deepseek",
+      "title": "=== 子代理任务（类型：research） ===  任务描述：深度研究:  (最多访问 5 个页面)  === 协议",
+      "mtime": 1787791745.3450224
+    },
+    {
+      "file": "conv_deepseek_20260827_084857.json",
+      "id": "deepseek_20260827_084857",
+      "issues": [
+        "A 内部提示词被写进历史（8 条，例：[系统] 工具 browser_research 执行结果:\n[子代理已启动] ）",
+        "G 回声污染：2/10 条 assistant 内容其实是 Agent 自己发出去的提示词（20%）"
+      ],
+      "n": 21,
+      "n_user": 10,
+      "n_ai": 10,
+      "platform": "deepseek",
+      "title": "使用 browser_research 工具搜索 'Python asyncio 最佳实践'，总结要点",
+      "mtime": 1787791737.4995477
+    },
+    {
+      "file": "conv_deepseek_20260827_084856.json",
+      "id": "deepseek_20260827_084856",
+      "issues": [
+        "A 内部提示词被写进历史（8 条，例：[系统] 工具 browser_research 执行结果:\n[子代理已启动] ）",
+        "G 回声污染：2/10 条 assistant 内容其实是 Agent 自己发出去的提示词（20%）"
+      ],
+      "n": 21,
+      "n_user": 10,
+      "n_ai": 10,
+      "platform": "deepseek",
+      "title": "使用 browser_research 工具搜索 'Python asyncio 最佳实践'，总结要点",
+      "mtime": 1787791736.9758606
+    },
+    {
+      "file": "conv_deepseek_20260827_084810.json",
+      "id": "deepseek_20260827_084810",
+      "issues": [
+        "A 内部提示词被写进历史（3 条，例：[系统] 工具 browser_research 执行结果:\n[子代理已启动] ）"
+      ],
+      "n": 10,
+      "n_user": 5,
+      "n_ai": 4,
+      "platform": "deepseek",
+      "title": "使用 browser_research 工具搜索 'Python asyncio 最佳实践'，总结要点",
+      "mtime": 1787791690.3609202
+    },
+    {
+      "file": "conv_deepseek_20260827_084322.json",
+      "id": "deepseek_20260827_084322",
+      "issues": [
+        "A 内部提示词被写进历史（4 条，例：[系统] 工具 browser_search 执行结果:\n[搜索完成] 抓取 2）"
+      ],
+      "n": 11,
+      "n_user": 5,
+      "n_ai": 5,
+      "platform": "deepseek",
+      "title": "=== 子代理任务（类型：research） ===  任务描述：深度研究: AI新闻 2026年8月 最新人工智能动态",
+      "mtime": 1787791402.643967
+    },
+    {
+      "file": "conv_deepseek_20260827_084207.json",
+      "id": "deepseek_20260827_084207",
+      "issues": [
+        "A 内部提示词被写进历史（22 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 55,
+      "n_user": 25,
+      "n_ai": 29,
+      "platform": "deepseek",
+      "title": "[SYSTEM] NO @@@@ PROTOCOL. Your text was: 我注意到您发送了一条看起来像是包含工",
+      "mtime": 1787791327.1437562
+    },
+    {
+      "file": "conv_deepseek_20260827_084025.json",
+      "id": "deepseek_20260827_084025",
+      "issues": [
+        "A 内部提示词被写进历史（17 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 42,
+      "n_user": 20,
+      "n_ai": 21,
+      "platform": "deepseek",
+      "title": "[SYSTEM] NO @@@@ PROTOCOL. Your text was: 我注意到您发送了一条看起来像是包含工",
+      "mtime": 1787791225.400668
+    },
+    {
+      "file": "conv_deepseek_20260827_084022.json",
+      "id": "deepseek_20260827_084022",
+      "issues": [
+        "A 内部提示词被写进历史（9 条，例：[系统] 工具 browser_search 执行结果:\n[搜索完成] 抓取 3）"
+      ],
+      "n": 21,
+      "n_user": 10,
+      "n_ai": 10,
+      "platform": "deepseek",
+      "title": "=== 子代理任务（类型：research） ===  任务描述：深度研究: AI 最新进展 2026年8月 (最多访问",
+      "mtime": 1787791222.0754378
+    },
+    {
+      "file": "conv_deepseek_20260827_084006.json",
+      "id": "deepseek_20260827_084006",
+      "issues": [
+        "A 内部提示词被写进历史（12 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 33,
+      "n_user": 15,
+      "n_ai": 17,
+      "platform": "deepseek",
+      "title": "[SYSTEM] NO @@@@ PROTOCOL. Your text was: 我注意到您发送了一条看起来像是包含工",
+      "mtime": 1787791206.0040052
+    },
+    {
+      "file": "conv_deepseek_20260827_083926.json",
+      "id": "deepseek_20260827_083926",
+      "issues": [
+        "A 内部提示词被写进历史（4 条，例：[系统] 工具 browser_search 执行结果:\n[搜索完成] 抓取 3）"
+      ],
+      "n": 11,
+      "n_user": 5,
+      "n_ai": 5,
+      "platform": "deepseek",
+      "title": "=== 子代理任务（类型：research） ===  任务描述：深度研究: AI 最新进展 2026年8月 (最多访问",
+      "mtime": 1787791166.1510427
+    },
+    {
+      "file": "conv_deepseek_20260827_083607.json",
+      "id": "deepseek_20260827_083607",
+      "issues": [
+        "A 内部提示词被写进历史（9 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 23,
+      "n_user": 10,
+      "n_ai": 12,
+      "platform": "deepseek",
+      "title": "[SYSTEM] NO @@@@ PROTOCOL. Your text was: 我注意到您发送了一条看起来像是包含工",
+      "mtime": 1787790967.8605766
+    },
+    {
+      "file": "conv_deepseek_20260827_083606.json",
+      "id": "deepseek_20260827_083606",
+      "issues": [
+        "A 内部提示词被写进历史（9 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 22,
+      "n_user": 10,
+      "n_ai": 11,
+      "platform": "deepseek",
+      "title": "[SYSTEM] NO @@@@ PROTOCOL. Your text was: 我注意到您发送了一条看起来像是包含工",
+      "mtime": 1787790966.9753673
+    },
+    {
+      "file": "conv_deepseek_20260827_083520.json",
+      "id": "deepseek_20260827_083520",
+      "issues": [
+        "A 内部提示词被写进历史（4 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 11,
+      "n_user": 5,
+      "n_ai": 5,
+      "platform": "deepseek",
+      "title": "=== 子代理任务（类型：research） ===  任务描述：深度研究: 测试子代理功能 (最多访问 2 个页面) ",
+      "mtime": 1787790920.776131
+    },
+    {
+      "file": "conv_deepseek_20260827_075334.json",
+      "id": "deepseek_20260827_075334",
+      "issues": [
+        "A 内部提示词被写进历史（4 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 11,
+      "n_user": 5,
+      "n_ai": 5,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 D:/软件/XianRenZhangAgent/test_output/report",
+      "mtime": 1787788414.4208589
+    },
+    {
+      "file": "conv_deepseek_20260827_072830.json",
+      "id": "deepseek_20260827_072830",
+      "issues": [
+        "A 内部提示词被写进历史（4 条，例：[系统] 工具 docx_create 执行结果:\n✅ Word 文档已生成: ）"
+      ],
+      "n": 11,
+      "n_user": 5,
+      "n_ai": 5,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 D:/软件/XianRenZhangAgent/test_output/report",
+      "mtime": 1787786910.2399032
+    },
+    {
+      "file": "conv_tongyi_20260826_221619.json",
+      "id": "tongyi_20260826_221619",
+      "issues": [
+        "A 内部提示词被写进历史（221 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：3/224 条 assistant 内容其实是 Agent 自己发出去的提示词（1%）",
+        "B 空回复/未收到回复 ×197",
+        "C 失控增长：消息数 459（同一任务被反复重发叠加）",
+        "D 状态行被当成 AI 回复 ×16（例：自动\n\n自动\n\n自动\n\n自动）"
+      ],
+      "n": 459,
+      "n_user": 235,
+      "n_ai": 224,
+      "platform": "tongyi",
+      "title": "请用通俗的话解释一下 TCP 三次握手是什么。",
+      "mtime": 1787753779.7958717
+    },
+    {
+      "file": "conv_deepseek_20260826_202509.json",
+      "id": "deepseek_20260826_202509",
+      "issues": [
+        "A 内部提示词被写进历史（8 条，例：[系统] 工具 dir_create 执行结果:\n目录已创建: D:\\softw）"
+      ],
+      "n": 21,
+      "n_user": 10,
+      "n_ai": 10,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 D:/software_temp/test_output/report.docx,标",
+      "mtime": 1787747109.9169862
+    },
+    {
+      "file": "conv_deepseek_20260826_202429.json",
+      "id": "deepseek_20260826_202429",
+      "issues": [
+        "A 内部提示词被写进历史（4 条，例：[系统] 工具 dir_create 执行结果:\n目录已创建: D:\\softw）"
+      ],
+      "n": 11,
+      "n_user": 5,
+      "n_ai": 5,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 D:/software_temp/test_output/report.docx,标",
+      "mtime": 1787747069.8576186
+    },
+    {
+      "file": "conv_deepseek_20260826_201603.json",
+      "id": "deepseek_20260826_201603",
+      "issues": [
+        "A 内部提示词被写进历史（8 条，例：[系统] 工具 dir_create 执行结果:\n目录已创建: D:\\softw）"
+      ],
+      "n": 21,
+      "n_user": 10,
+      "n_ai": 10,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 D:/software_temp/test_output/report.docx,标",
+      "mtime": 1787746563.3954308
+    },
+    {
+      "file": "conv_deepseek_20260826_201523.json",
+      "id": "deepseek_20260826_201523",
+      "issues": [
+        "A 内部提示词被写进历史（4 条，例：[系统] 工具 dir_create 执行结果:\n目录已创建: D:\\softw）"
+      ],
+      "n": 11,
+      "n_user": 5,
+      "n_ai": 5,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 D:/software_temp/test_output/report.docx,标",
+      "mtime": 1787746523.6495442
+    },
+    {
+      "file": "conv_deepseek_20260826_200013.json",
+      "id": "deepseek_20260826_200013",
+      "issues": [
+        "A 内部提示词被写进历史（13 条，例：[系统] 工具 docx_create 执行结果:\n❌ Word 文档生成失败 ）"
+      ],
+      "n": 31,
+      "n_user": 15,
+      "n_ai": 15,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 D:\\software_temp\\test_output\\report.docx，标",
+      "mtime": 1787745613.9617324
+    },
+    {
+      "file": "conv_deepseek_20260826_195928.json",
+      "id": "deepseek_20260826_195928",
+      "issues": [
+        "A 内部提示词被写进历史（8 条，例：[系统] 工具 docx_create 执行结果:\n❌ Word 文档生成失败 ）"
+      ],
+      "n": 21,
+      "n_user": 10,
+      "n_ai": 10,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 D:\\software_temp\\test_output\\report.docx，标",
+      "mtime": 1787745568.9609385
+    },
+    {
+      "file": "conv_deepseek_20260826_195842.json",
+      "id": "deepseek_20260826_195842",
+      "issues": [
+        "A 内部提示词被写进历史（4 条，例：[系统] 工具 docx_create 执行结果:\n❌ Word 文档生成失败 ）"
+      ],
+      "n": 11,
+      "n_user": 5,
+      "n_ai": 5,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 D:\\software_temp\\test_output\\report.docx，标",
+      "mtime": 1787745522.2408335
+    },
+    {
+      "file": "conv_deepseek_20260826_181056.json",
+      "id": "deepseek_20260826_181056",
+      "issues": [
+        "A 内部提示词被写进历史（8 条，例：[系统] 工具 dir_create 执行结果:\n[WinError 123] ）"
+      ],
+      "n": 21,
+      "n_user": 10,
+      "n_ai": 10,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 D:\\软件\\XianRenZhangAgent\\test_output\\report",
+      "mtime": 1787739056.1722345
+    },
+    {
+      "file": "conv_deepseek_20260826_181015.json",
+      "id": "deepseek_20260826_181015",
+      "issues": [
+        "A 内部提示词被写进历史（4 条，例：[系统] 工具 dir_create 执行结果:\n[WinError 123] ）"
+      ],
+      "n": 11,
+      "n_user": 5,
+      "n_ai": 5,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 D:\\软件\\XianRenZhangAgent\\test_output\\report",
+      "mtime": 1787739015.5637145
+    },
+    {
+      "file": "conv_deepseek_20260826_180151.json",
+      "id": "deepseek_20260826_180151",
+      "issues": [
+        "A 内部提示词被写进历史（13 条，例：[系统] 工具 dir_create 执行结果:\n[WinError 123] ）"
+      ],
+      "n": 31,
+      "n_user": 15,
+      "n_ai": 15,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 D:\\软件\\XianRenZhangAgent\\test_output\\report",
+      "mtime": 1787738511.2689762
+    },
+    {
+      "file": "conv_deepseek_20260826_180118.json",
+      "id": "deepseek_20260826_180118",
+      "issues": [
+        "A 内部提示词被写进历史（8 条，例：[系统] 工具 dir_create 执行结果:\n[WinError 123] ）"
+      ],
+      "n": 21,
+      "n_user": 10,
+      "n_ai": 10,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 D:\\软件\\XianRenZhangAgent\\test_output\\report",
+      "mtime": 1787738478.2178898
+    },
+    {
+      "file": "conv_deepseek_20260826_180040.json",
+      "id": "deepseek_20260826_180040",
+      "issues": [
+        "A 内部提示词被写进历史（4 条，例：[系统] 工具 dir_create 执行结果:\n[WinError 123] ）"
+      ],
+      "n": 11,
+      "n_user": 5,
+      "n_ai": 5,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 D:\\软件\\XianRenZhangAgent\\test_output\\report",
+      "mtime": 1787738440.9677646
+    },
+    {
+      "file": "conv_deepseek_20260826_175537.json",
+      "id": "deepseek_20260826_175537",
+      "issues": [
+        "A 内部提示词被写进历史（13 条，例：[系统] 工具 dir_create 执行结果:\n[WinError 123] ）"
+      ],
+      "n": 31,
+      "n_user": 15,
+      "n_ai": 15,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 D:\\软件\\XianRenZhangAgent\\test_output\\report",
+      "mtime": 1787738137.7087502
+    },
+    {
+      "file": "conv_deepseek_20260826_175502.json",
+      "id": "deepseek_20260826_175502",
+      "issues": [
+        "A 内部提示词被写进历史（9 条，例：[系统] 工具 dir_create 执行结果:\n[WinError 123] ）"
+      ],
+      "n": 21,
+      "n_user": 10,
+      "n_ai": 10,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 D:\\软件\\XianRenZhangAgent\\test_output\\report",
+      "mtime": 1787738102.8144128
+    },
+    {
+      "file": "conv_deepseek_20260826_175412.json",
+      "id": "deepseek_20260826_175412",
+      "issues": [
+        "A 内部提示词被写进历史（4 条，例：[系统] 工具 dir_create 执行结果:\n[WinError 123] ）"
+      ],
+      "n": 11,
+      "n_user": 5,
+      "n_ai": 5,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 D:\\软件\\XianRenZhangAgent\\test_output\\report",
+      "mtime": 1787738052.0523617
+    },
+    {
+      "file": "conv_deepseek_20260826_174140.json",
+      "id": "deepseek_20260826_174140",
+      "issues": [
+        "A 内部提示词被写进历史（4 条，例：[系统] 工具 shell_exec 执行结果:\n[退出码 1]\n\nĿ¼ļ D:）"
+      ],
+      "n": 11,
+      "n_user": 5,
+      "n_ai": 5,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 D:\\软件\\XianRenZhangAgent\\test_output\\report",
+      "mtime": 1787737300.8334355
+    },
+    {
+      "file": "conv_deepseek_20260826_172134.json",
+      "id": "deepseek_20260826_172134",
+      "issues": [
+        "A 内部提示词被写进历史（8 条，例：[系统] 工具 docx_create 执行结果:\n❌ Word 文档生成失败 ）"
+      ],
+      "n": 21,
+      "n_user": 10,
+      "n_ai": 10,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 D:\\软件\\XianRenZhangAgent\\test_output\\report",
+      "mtime": 1787736094.5142546
+    },
+    {
+      "file": "conv_deepseek_20260826_172057.json",
+      "id": "deepseek_20260826_172057",
+      "issues": [
+        "A 内部提示词被写进历史（4 条，例：[系统] 工具 docx_create 执行结果:\n❌ Word 文档生成失败 ）"
+      ],
+      "n": 11,
+      "n_user": 5,
+      "n_ai": 5,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 D:\\软件\\XianRenZhangAgent\\test_output\\report",
+      "mtime": 1787736057.2576642
+    },
+    {
+      "file": "conv_tongyi_20260823_171637.json",
+      "id": "tongyi_20260823_171637",
+      "issues": [
+        "A 内部提示词被写进历史（218 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：3/219 条 assistant 内容其实是 Agent 自己发出去的提示词（1%）",
+        "B 空回复/未收到回复 ×196",
+        "C 失控增长：消息数 449（同一任务被反复重发叠加）",
+        "D 状态行被当成 AI 回复 ×12（例：自动\n\n自动\n\n自动\n\n自动）"
+      ],
+      "n": 449,
+      "n_user": 230,
+      "n_ai": 219,
+      "platform": "tongyi",
+      "title": "请用通俗的话解释一下 TCP 三次握手是什么。",
+      "mtime": 1787476597.5149796
+    },
+    {
+      "file": "conv_tongyi_20260823_170952.json",
+      "id": "tongyi_20260823_170952",
+      "issues": [
+        "A 内部提示词被写进历史（213 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：3/214 条 assistant 内容其实是 Agent 自己发出去的提示词（1%）",
+        "B 空回复/未收到回复 ×191",
+        "C 失控增长：消息数 439（同一任务被反复重发叠加）",
+        "D 状态行被当成 AI 回复 ×12（例：自动\n\n自动\n\n自动\n\n自动）"
+      ],
+      "n": 439,
+      "n_user": 225,
+      "n_ai": 214,
+      "platform": "tongyi",
+      "title": "请用通俗的话解释一下 TCP 三次握手是什么。",
+      "mtime": 1787476192.4684012
+    },
+    {
+      "file": "conv_tongyi_20260823_170133.json",
+      "id": "tongyi_20260823_170133",
+      "issues": [
+        "A 内部提示词被写进历史（208 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：3/209 条 assistant 内容其实是 Agent 自己发出去的提示词（1%）",
+        "B 空回复/未收到回复 ×186",
+        "C 失控增长：消息数 429（同一任务被反复重发叠加）",
+        "D 状态行被当成 AI 回复 ×12（例：自动\n\n自动\n\n自动\n\n自动）"
+      ],
+      "n": 429,
+      "n_user": 220,
+      "n_ai": 209,
+      "platform": "tongyi",
+      "title": "请用通俗的话解释一下 TCP 三次握手是什么。",
+      "mtime": 1787475693.0884242
+    },
+    {
+      "file": "conv_tongyi_20260823_165454.json",
+      "id": "tongyi_20260823_165454",
+      "issues": [
+        "A 内部提示词被写进历史（203 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：3/204 条 assistant 内容其实是 Agent 自己发出去的提示词（1%）",
+        "B 空回复/未收到回复 ×181",
+        "C 失控增长：消息数 419（同一任务被反复重发叠加）",
+        "D 状态行被当成 AI 回复 ×12（例：自动\n\n自动\n\n自动\n\n自动）"
+      ],
+      "n": 419,
+      "n_user": 215,
+      "n_ai": 204,
+      "platform": "tongyi",
+      "title": "请用通俗的话解释一下 TCP 三次握手是什么。",
+      "mtime": 1787475294.1434307
+    },
+    {
+      "file": "conv_tongyi_20260823_164621.json",
+      "id": "tongyi_20260823_164621",
+      "issues": [
+        "A 内部提示词被写进历史（198 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：3/199 条 assistant 内容其实是 Agent 自己发出去的提示词（2%）",
+        "B 空回复/未收到回复 ×177",
+        "C 失控增长：消息数 409（同一任务被反复重发叠加）",
+        "D 状态行被当成 AI 回复 ×12（例：自动\n\n自动\n\n自动\n\n自动）"
+      ],
+      "n": 409,
+      "n_user": 210,
+      "n_ai": 199,
+      "platform": "tongyi",
+      "title": "请用通俗的话解释一下 TCP 三次握手是什么。",
+      "mtime": 1787474781.8964307
+    },
+    {
+      "file": "conv_tongyi_20260823_163937.json",
+      "id": "tongyi_20260823_163937",
+      "issues": [
+        "A 内部提示词被写进历史（193 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：3/194 条 assistant 内容其实是 Agent 自己发出去的提示词（2%）",
+        "B 空回复/未收到回复 ×172",
+        "C 失控增长：消息数 399（同一任务被反复重发叠加）",
+        "D 状态行被当成 AI 回复 ×12（例：自动\n\n自动\n\n自动\n\n自动）"
+      ],
+      "n": 399,
+      "n_user": 205,
+      "n_ai": 194,
+      "platform": "tongyi",
+      "title": "请用通俗的话解释一下 TCP 三次握手是什么。",
+      "mtime": 1787474377.5911126
+    },
+    {
+      "file": "conv_tongyi_20260823_163120.json",
+      "id": "tongyi_20260823_163120",
+      "issues": [
+        "A 内部提示词被写进历史（188 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：3/189 条 assistant 内容其实是 Agent 自己发出去的提示词（2%）",
+        "B 空回复/未收到回复 ×167",
+        "C 失控增长：消息数 389（同一任务被反复重发叠加）",
+        "D 状态行被当成 AI 回复 ×12（例：自动\n\n自动\n\n自动\n\n自动）"
+      ],
+      "n": 389,
+      "n_user": 200,
+      "n_ai": 189,
+      "platform": "tongyi",
+      "title": "请用通俗的话解释一下 TCP 三次握手是什么。",
+      "mtime": 1787473880.4171338
+    },
+    {
+      "file": "conv_tongyi_20260823_162448.json",
+      "id": "tongyi_20260823_162448",
+      "issues": [
+        "A 内部提示词被写进历史（183 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：3/184 条 assistant 内容其实是 Agent 自己发出去的提示词（2%）",
+        "B 空回复/未收到回复 ×162",
+        "C 失控增长：消息数 379（同一任务被反复重发叠加）",
+        "D 状态行被当成 AI 回复 ×12（例：自动\n\n自动\n\n自动\n\n自动）"
+      ],
+      "n": 379,
+      "n_user": 195,
+      "n_ai": 184,
+      "platform": "tongyi",
+      "title": "请用通俗的话解释一下 TCP 三次握手是什么。",
+      "mtime": 1787473488.3926146
+    },
+    {
+      "file": "conv_tongyi_20260823_161624.json",
+      "id": "tongyi_20260823_161624",
+      "issues": [
+        "A 内部提示词被写进历史（178 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：3/179 条 assistant 内容其实是 Agent 自己发出去的提示词（2%）",
+        "B 空回复/未收到回复 ×158",
+        "C 失控增长：消息数 369（同一任务被反复重发叠加）",
+        "D 状态行被当成 AI 回复 ×12（例：自动\n\n自动\n\n自动\n\n自动）"
+      ],
+      "n": 369,
+      "n_user": 190,
+      "n_ai": 179,
+      "platform": "tongyi",
+      "title": "请用通俗的话解释一下 TCP 三次握手是什么。",
+      "mtime": 1787472984.8102944
+    },
+    {
+      "file": "conv_tongyi_20260823_160954.json",
+      "id": "tongyi_20260823_160954",
+      "issues": [
+        "A 内部提示词被写进历史（173 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：3/174 条 assistant 内容其实是 Agent 自己发出去的提示词（2%）",
+        "B 空回复/未收到回复 ×153",
+        "C 失控增长：消息数 359（同一任务被反复重发叠加）",
+        "D 状态行被当成 AI 回复 ×12（例：自动\n\n自动\n\n自动\n\n自动）"
+      ],
+      "n": 359,
+      "n_user": 185,
+      "n_ai": 174,
+      "platform": "tongyi",
+      "title": "请用通俗的话解释一下 TCP 三次握手是什么。",
+      "mtime": 1787472594.8529925
+    },
+    {
+      "file": "conv_tongyi_20260823_160158.json",
+      "id": "tongyi_20260823_160158",
+      "issues": [
+        "A 内部提示词被写进历史（168 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：3/169 条 assistant 内容其实是 Agent 自己发出去的提示词（2%）",
+        "B 空回复/未收到回复 ×152",
+        "C 失控增长：消息数 349（同一任务被反复重发叠加）",
+        "D 状态行被当成 AI 回复 ×12（例：自动\n\n自动\n\n自动\n\n自动）"
+      ],
+      "n": 349,
+      "n_user": 180,
+      "n_ai": 169,
+      "platform": "tongyi",
+      "title": "请用通俗的话解释一下 TCP 三次握手是什么。",
+      "mtime": 1787472118.3164048
+    },
+    {
+      "file": "conv_tongyi_20260823_155559.json",
+      "id": "tongyi_20260823_155559",
+      "issues": [
+        "A 内部提示词被写进历史（163 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：3/164 条 assistant 内容其实是 Agent 自己发出去的提示词（2%）",
+        "B 空回复/未收到回复 ×147",
+        "C 失控增长：消息数 339（同一任务被反复重发叠加）",
+        "D 状态行被当成 AI 回复 ×12（例：自动\n\n自动\n\n自动\n\n自动）"
+      ],
+      "n": 339,
+      "n_user": 175,
+      "n_ai": 164,
+      "platform": "tongyi",
+      "title": "请用通俗的话解释一下 TCP 三次握手是什么。",
+      "mtime": 1787471759.7189867
+    },
+    {
+      "file": "conv_tongyi_20260823_154804.json",
+      "id": "tongyi_20260823_154804",
+      "issues": [
+        "A 内部提示词被写进历史（158 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：3/159 条 assistant 内容其实是 Agent 自己发出去的提示词（2%）",
+        "B 空回复/未收到回复 ×142",
+        "C 失控增长：消息数 329（同一任务被反复重发叠加）",
+        "D 状态行被当成 AI 回复 ×12（例：自动\n\n自动\n\n自动\n\n自动）"
+      ],
+      "n": 329,
+      "n_user": 170,
+      "n_ai": 159,
+      "platform": "tongyi",
+      "title": "请用通俗的话解释一下 TCP 三次握手是什么。",
+      "mtime": 1787471284.891902
+    },
+    {
+      "file": "conv_tongyi_20260823_154154.json",
+      "id": "tongyi_20260823_154154",
+      "issues": [
+        "A 内部提示词被写进历史（153 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：3/154 条 assistant 内容其实是 Agent 自己发出去的提示词（2%）",
+        "B 空回复/未收到回复 ×137",
+        "C 失控增长：消息数 319（同一任务被反复重发叠加）",
+        "D 状态行被当成 AI 回复 ×12（例：自动\n\n自动\n\n自动\n\n自动）"
+      ],
+      "n": 319,
+      "n_user": 165,
+      "n_ai": 154,
+      "platform": "tongyi",
+      "title": "请用通俗的话解释一下 TCP 三次握手是什么。",
+      "mtime": 1787470914.5663335
+    },
+    {
+      "file": "conv_tongyi_20260823_153353.json",
+      "id": "tongyi_20260823_153353",
+      "issues": [
+        "A 内部提示词被写进历史（148 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：3/149 条 assistant 内容其实是 Agent 自己发出去的提示词（2%）",
+        "B 空回复/未收到回复 ×132",
+        "C 失控增长：消息数 309（同一任务被反复重发叠加）",
+        "D 状态行被当成 AI 回复 ×12（例：自动\n\n自动\n\n自动\n\n自动）"
+      ],
+      "n": 309,
+      "n_user": 160,
+      "n_ai": 149,
+      "platform": "tongyi",
+      "title": "请用通俗的话解释一下 TCP 三次握手是什么。",
+      "mtime": 1787470433.1752305
+    },
+    {
+      "file": "conv_tongyi_20260823_152748.json",
+      "id": "tongyi_20260823_152748",
+      "issues": [
+        "A 内部提示词被写进历史（143 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：3/144 条 assistant 内容其实是 Agent 自己发出去的提示词（2%）",
+        "B 空回复/未收到回复 ×128",
+        "C 失控增长：消息数 299（同一任务被反复重发叠加）",
+        "D 状态行被当成 AI 回复 ×12（例：自动\n\n自动\n\n自动\n\n自动）"
+      ],
+      "n": 299,
+      "n_user": 155,
+      "n_ai": 144,
+      "platform": "tongyi",
+      "title": "请用通俗的话解释一下 TCP 三次握手是什么。",
+      "mtime": 1787470068.2877126
+    },
+    {
+      "file": "conv_tongyi_20260823_151958.json",
+      "id": "tongyi_20260823_151958",
+      "issues": [
+        "A 内部提示词被写进历史（138 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：3/139 条 assistant 内容其实是 Agent 自己发出去的提示词（2%）",
+        "B 空回复/未收到回复 ×123",
+        "C 失控增长：消息数 289（同一任务被反复重发叠加）",
+        "D 状态行被当成 AI 回复 ×12（例：自动\n\n自动\n\n自动\n\n自动）"
+      ],
+      "n": 289,
+      "n_user": 150,
+      "n_ai": 139,
+      "platform": "tongyi",
+      "title": "请用通俗的话解释一下 TCP 三次握手是什么。",
+      "mtime": 1787469598.3769484
+    },
+    {
+      "file": "conv_tongyi_20260823_151359.json",
+      "id": "tongyi_20260823_151359",
+      "issues": [
+        "A 内部提示词被写进历史（133 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：3/134 条 assistant 内容其实是 Agent 自己发出去的提示词（2%）",
+        "B 空回复/未收到回复 ×118",
+        "C 失控增长：消息数 279（同一任务被反复重发叠加）",
+        "D 状态行被当成 AI 回复 ×12（例：自动\n\n自动\n\n自动\n\n自动）"
+      ],
+      "n": 279,
+      "n_user": 145,
+      "n_ai": 134,
+      "platform": "tongyi",
+      "title": "请用通俗的话解释一下 TCP 三次握手是什么。",
+      "mtime": 1787469239.5960643
+    },
+    {
+      "file": "conv_tongyi_20260823_150611.json",
+      "id": "tongyi_20260823_150611",
+      "issues": [
+        "A 内部提示词被写进历史（128 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：3/129 条 assistant 内容其实是 Agent 自己发出去的提示词（2%）",
+        "B 空回复/未收到回复 ×113",
+        "C 失控增长：消息数 269（同一任务被反复重发叠加）",
+        "D 状态行被当成 AI 回复 ×12（例：自动\n\n自动\n\n自动\n\n自动）"
+      ],
+      "n": 269,
+      "n_user": 140,
+      "n_ai": 129,
+      "platform": "tongyi",
+      "title": "请用通俗的话解释一下 TCP 三次握手是什么。",
+      "mtime": 1787468771.9791794
+    },
+    {
+      "file": "conv_tongyi_20260823_150014.json",
+      "id": "tongyi_20260823_150014",
+      "issues": [
+        "A 内部提示词被写进历史（123 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：3/124 条 assistant 内容其实是 Agent 自己发出去的提示词（2%）",
+        "B 空回复/未收到回复 ×109",
+        "C 失控增长：消息数 259（同一任务被反复重发叠加）",
+        "D 状态行被当成 AI 回复 ×12（例：自动\n\n自动\n\n自动\n\n自动）"
+      ],
+      "n": 259,
+      "n_user": 135,
+      "n_ai": 124,
+      "platform": "tongyi",
+      "title": "请用通俗的话解释一下 TCP 三次握手是什么。",
+      "mtime": 1787468414.2048328
+    },
+    {
+      "file": "conv_tongyi_20260823_145227.json",
+      "id": "tongyi_20260823_145227",
+      "issues": [
+        "A 内部提示词被写进历史（118 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：3/119 条 assistant 内容其实是 Agent 自己发出去的提示词（3%）",
+        "B 空回复/未收到回复 ×104",
+        "C 失控增长：消息数 249（同一任务被反复重发叠加）",
+        "D 状态行被当成 AI 回复 ×12（例：自动\n\n自动\n\n自动\n\n自动）"
+      ],
+      "n": 249,
+      "n_user": 130,
+      "n_ai": 119,
+      "platform": "tongyi",
+      "title": "请用通俗的话解释一下 TCP 三次握手是什么。",
+      "mtime": 1787467947.052307
+    },
+    {
+      "file": "conv_tongyi_20260823_144638.json",
+      "id": "tongyi_20260823_144638",
+      "issues": [
+        "A 内部提示词被写进历史（113 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：3/114 条 assistant 内容其实是 Agent 自己发出去的提示词（3%）",
+        "B 空回复/未收到回复 ×99",
+        "C 失控增长：消息数 239（同一任务被反复重发叠加）",
+        "D 状态行被当成 AI 回复 ×12（例：自动\n\n自动\n\n自动\n\n自动）"
+      ],
+      "n": 239,
+      "n_user": 125,
+      "n_ai": 114,
+      "platform": "tongyi",
+      "title": "请用通俗的话解释一下 TCP 三次握手是什么。",
+      "mtime": 1787467598.6084273
+    },
+    {
+      "file": "conv_tongyi_20260823_143859.json",
+      "id": "tongyi_20260823_143859",
+      "issues": [
+        "A 内部提示词被写进历史（108 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：3/109 条 assistant 内容其实是 Agent 自己发出去的提示词（3%）",
+        "B 空回复/未收到回复 ×94",
+        "C 失控增长：消息数 229（同一任务被反复重发叠加）",
+        "D 状态行被当成 AI 回复 ×12（例：自动\n\n自动\n\n自动\n\n自动）"
+      ],
+      "n": 229,
+      "n_user": 120,
+      "n_ai": 109,
+      "platform": "tongyi",
+      "title": "请用通俗的话解释一下 TCP 三次握手是什么。",
+      "mtime": 1787467139.3013973
+    },
+    {
+      "file": "conv_tongyi_20260823_143314.json",
+      "id": "tongyi_20260823_143314",
+      "issues": [
+        "A 内部提示词被写进历史（103 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：3/104 条 assistant 内容其实是 Agent 自己发出去的提示词（3%）",
+        "B 空回复/未收到回复 ×89",
+        "C 失控增长：消息数 219（同一任务被反复重发叠加）",
+        "D 状态行被当成 AI 回复 ×12（例：自动\n\n自动\n\n自动\n\n自动）"
+      ],
+      "n": 219,
+      "n_user": 115,
+      "n_ai": 104,
+      "platform": "tongyi",
+      "title": "请用通俗的话解释一下 TCP 三次握手是什么。",
+      "mtime": 1787466794.595865
+    },
+    {
+      "file": "conv_tongyi_20260823_142537.json",
+      "id": "tongyi_20260823_142537",
+      "issues": [
+        "A 内部提示词被写进历史（98 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：3/99 条 assistant 内容其实是 Agent 自己发出去的提示词（3%）",
+        "B 空回复/未收到回复 ×85",
+        "C 失控增长：消息数 209（同一任务被反复重发叠加）",
+        "D 状态行被当成 AI 回复 ×12（例：自动\n\n自动\n\n自动\n\n自动）"
+      ],
+      "n": 209,
+      "n_user": 110,
+      "n_ai": 99,
+      "platform": "tongyi",
+      "title": "请用通俗的话解释一下 TCP 三次握手是什么。",
+      "mtime": 1787466337.287578
+    },
+    {
+      "file": "conv_tongyi_20260823_141957.json",
+      "id": "tongyi_20260823_141957",
+      "issues": [
+        "A 内部提示词被写进历史（93 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：3/94 条 assistant 内容其实是 Agent 自己发出去的提示词（3%）",
+        "B 空回复/未收到回复 ×80",
+        "C 失控增长：消息数 199（同一任务被反复重发叠加）",
+        "D 状态行被当成 AI 回复 ×12（例：自动\n\n自动\n\n自动\n\n自动）"
+      ],
+      "n": 199,
+      "n_user": 105,
+      "n_ai": 94,
+      "platform": "tongyi",
+      "title": "请用通俗的话解释一下 TCP 三次握手是什么。",
+      "mtime": 1787465997.0743942
+    },
+    {
+      "file": "conv_tongyi_20260823_141223.json",
+      "id": "tongyi_20260823_141223",
+      "issues": [
+        "A 内部提示词被写进历史（88 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：3/89 条 assistant 内容其实是 Agent 自己发出去的提示词（3%）",
+        "B 空回复/未收到回复 ×75",
+        "C 失控增长：消息数 189（同一任务被反复重发叠加）",
+        "D 状态行被当成 AI 回复 ×12（例：自动\n\n自动\n\n自动\n\n自动）"
+      ],
+      "n": 189,
+      "n_user": 100,
+      "n_ai": 89,
+      "platform": "tongyi",
+      "title": "请用通俗的话解释一下 TCP 三次握手是什么。",
+      "mtime": 1787465545.7063138
+    },
+    {
+      "file": "conv_tongyi_20260823_140648.json",
+      "id": "tongyi_20260823_140648",
+      "issues": [
+        "A 内部提示词被写进历史（83 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：3/84 条 assistant 内容其实是 Agent 自己发出去的提示词（4%）",
+        "B 空回复/未收到回复 ×70",
+        "C 失控增长：消息数 179（同一任务被反复重发叠加）",
+        "D 状态行被当成 AI 回复 ×12（例：自动\n\n自动\n\n自动\n\n自动）"
+      ],
+      "n": 179,
+      "n_user": 95,
+      "n_ai": 84,
+      "platform": "tongyi",
+      "title": "请用通俗的话解释一下 TCP 三次握手是什么。",
+      "mtime": 1787465210.0673969
+    },
+    {
+      "file": "conv_tongyi_20260823_135919.json",
+      "id": "tongyi_20260823_135919",
+      "issues": [
+        "A 内部提示词被写进历史（78 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：3/79 条 assistant 内容其实是 Agent 自己发出去的提示词（4%）",
+        "B 空回复/未收到回复 ×65",
+        "C 失控增长：消息数 169（同一任务被反复重发叠加）",
+        "D 状态行被当成 AI 回复 ×12（例：自动\n\n自动\n\n自动\n\n自动）"
+      ],
+      "n": 169,
+      "n_user": 90,
+      "n_ai": 79,
+      "platform": "tongyi",
+      "title": "请用通俗的话解释一下 TCP 三次握手是什么。",
+      "mtime": 1787464761.43902
+    },
+    {
+      "file": "conv_tongyi_20260823_135343.json",
+      "id": "tongyi_20260823_135343",
+      "issues": [
+        "A 内部提示词被写进历史（73 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：3/74 条 assistant 内容其实是 Agent 自己发出去的提示词（4%）",
+        "B 空回复/未收到回复 ×61",
+        "C 失控增长：消息数 159（同一任务被反复重发叠加）",
+        "D 状态行被当成 AI 回复 ×12（例：自动\n\n自动\n\n自动\n\n自动）"
+      ],
+      "n": 159,
+      "n_user": 85,
+      "n_ai": 74,
+      "platform": "tongyi",
+      "title": "请用通俗的话解释一下 TCP 三次握手是什么。",
+      "mtime": 1787464425.7000842
+    },
+    {
+      "file": "conv_tongyi_20260823_134614.json",
+      "id": "tongyi_20260823_134614",
+      "issues": [
+        "A 内部提示词被写进历史（68 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：3/69 条 assistant 内容其实是 Agent 自己发出去的提示词（4%）",
+        "B 空回复/未收到回复 ×56",
+        "C 失控增长：消息数 149（同一任务被反复重发叠加）",
+        "D 状态行被当成 AI 回复 ×12（例：自动\n\n自动\n\n自动\n\n自动）"
+      ],
+      "n": 149,
+      "n_user": 80,
+      "n_ai": 69,
+      "platform": "tongyi",
+      "title": "请用通俗的话解释一下 TCP 三次握手是什么。",
+      "mtime": 1787463976.7389708
+    },
+    {
+      "file": "conv_tongyi_20260823_134045.json",
+      "id": "tongyi_20260823_134045",
+      "issues": [
+        "A 内部提示词被写进历史（63 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：3/64 条 assistant 内容其实是 Agent 自己发出去的提示词（5%）",
+        "B 空回复/未收到回复 ×51",
+        "C 失控增长：消息数 139（同一任务被反复重发叠加）",
+        "D 状态行被当成 AI 回复 ×12（例：自动\n\n自动\n\n自动\n\n自动）"
+      ],
+      "n": 139,
+      "n_user": 75,
+      "n_ai": 64,
+      "platform": "tongyi",
+      "title": "请用通俗的话解释一下 TCP 三次握手是什么。",
+      "mtime": 1787463647.195261
+    },
+    {
+      "file": "conv_tongyi_20260823_133325.json",
+      "id": "tongyi_20260823_133325",
+      "issues": [
+        "A 内部提示词被写进历史（58 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：3/59 条 assistant 内容其实是 Agent 自己发出去的提示词（5%）",
+        "B 空回复/未收到回复 ×46",
+        "C 失控增长：消息数 129（同一任务被反复重发叠加）",
+        "D 状态行被当成 AI 回复 ×12（例：自动\n\n自动\n\n自动\n\n自动）"
+      ],
+      "n": 129,
+      "n_user": 70,
+      "n_ai": 59,
+      "platform": "tongyi",
+      "title": "请用通俗的话解释一下 TCP 三次握手是什么。",
+      "mtime": 1787463207.8197374
+    },
+    {
+      "file": "conv_tongyi_20260823_132804.json",
+      "id": "tongyi_20260823_132804",
+      "issues": [
+        "A 内部提示词被写进历史（53 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：3/54 条 assistant 内容其实是 Agent 自己发出去的提示词（6%）",
+        "B 空回复/未收到回复 ×42",
+        "C 失控增长：消息数 119（同一任务被反复重发叠加）",
+        "D 状态行被当成 AI 回复 ×12（例：自动\n\n自动\n\n自动\n\n自动）"
+      ],
+      "n": 119,
+      "n_user": 65,
+      "n_ai": 54,
+      "platform": "tongyi",
+      "title": "请用通俗的话解释一下 TCP 三次握手是什么。",
+      "mtime": 1787462886.795534
+    },
+    {
+      "file": "conv_tongyi_20260823_132049.json",
+      "id": "tongyi_20260823_132049",
+      "issues": [
+        "A 内部提示词被写进历史（48 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：3/49 条 assistant 内容其实是 Agent 自己发出去的提示词（6%）",
+        "B 空回复/未收到回复 ×37",
+        "C 失控增长：消息数 109（同一任务被反复重发叠加）",
+        "D 状态行被当成 AI 回复 ×12（例：自动\n\n自动\n\n自动\n\n自动）"
+      ],
+      "n": 109,
+      "n_user": 60,
+      "n_ai": 49,
+      "platform": "tongyi",
+      "title": "请用通俗的话解释一下 TCP 三次握手是什么。",
+      "mtime": 1787462451.721401
+    },
+    {
+      "file": "conv_tongyi_20260823_131534.json",
+      "id": "tongyi_20260823_131534",
+      "issues": [
+        "A 内部提示词被写进历史（43 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：3/44 条 assistant 内容其实是 Agent 自己发出去的提示词（7%）",
+        "B 空回复/未收到回复 ×32",
+        "D 状态行被当成 AI 回复 ×12（例：自动\n\n自动\n\n自动\n\n自动）"
+      ],
+      "n": 99,
+      "n_user": 55,
+      "n_ai": 44,
+      "platform": "tongyi",
+      "title": "请用通俗的话解释一下 TCP 三次握手是什么。",
+      "mtime": 1787462136.864316
+    },
+    {
+      "file": "conv_tongyi_20260823_130801.json",
+      "id": "tongyi_20260823_130801",
+      "issues": [
+        "A 内部提示词被写进历史（38 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：3/39 条 assistant 内容其实是 Agent 自己发出去的提示词（8%）",
+        "B 空回复/未收到回复 ×27",
+        "D 状态行被当成 AI 回复 ×12（例：自动\n\n自动\n\n自动\n\n自动）"
+      ],
+      "n": 89,
+      "n_user": 50,
+      "n_ai": 39,
+      "platform": "tongyi",
+      "title": "请用通俗的话解释一下 TCP 三次握手是什么。",
+      "mtime": 1787461683.098661
+    },
+    {
+      "file": "conv_deepseek_20260823_130504.json",
+      "id": "deepseek_20260823_130504",
+      "issues": [
+        "A 内部提示词被写进历史（51 条，例：[系统] 工具 dir_create 执行结果:\n[WinError 123] ）",
+        "C 失控增长：消息数 131（同一任务被反复重发叠加）"
+      ],
+      "n": 131,
+      "n_user": 65,
+      "n_ai": 65,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 D:\\软件\\XianRenZhangAgent\\test_output\\report",
+      "mtime": 1787461504.5098207
+    },
+    {
+      "file": "conv_deepseek_20260823_130308.json",
+      "id": "deepseek_20260823_130308",
+      "issues": [
+        "A 内部提示词被写进历史（48 条，例：[系统] 工具 dir_create 执行结果:\n[WinError 123] ）",
+        "C 失控增长：消息数 120（同一任务被反复重发叠加）"
+      ],
+      "n": 120,
+      "n_user": 60,
+      "n_ai": 59,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 D:\\软件\\XianRenZhangAgent\\test_output\\report",
+      "mtime": 1787461388.1717567
+    },
+    {
+      "file": "conv_deepseek_20260823_130246.json",
+      "id": "deepseek_20260823_130246",
+      "issues": [
+        "A 内部提示词被写进历史（44 条，例：[系统] 工具 dir_create 执行结果:\n[WinError 123] ）",
+        "C 失控增长：消息数 110（同一任务被反复重发叠加）"
+      ],
+      "n": 110,
+      "n_user": 55,
+      "n_ai": 54,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 D:\\软件\\XianRenZhangAgent\\test_output\\report",
+      "mtime": 1787461366.987541
+    },
+    {
+      "file": "conv_deepseek_20260823_130214.json",
+      "id": "deepseek_20260823_130214",
+      "issues": [
+        "A 内部提示词被写进历史（40 条，例：[系统] 工具 dir_create 执行结果:\n[WinError 123] ）",
+        "C 失控增长：消息数 100（同一任务被反复重发叠加）"
+      ],
+      "n": 100,
+      "n_user": 50,
+      "n_ai": 49,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 D:\\软件\\XianRenZhangAgent\\test_output\\report",
+      "mtime": 1787461334.4704905
+    },
+    {
+      "file": "conv_deepseek_20260823_125807.json",
+      "id": "deepseek_20260823_125807",
+      "issues": [
+        "A 内部提示词被写进历史（37 条，例：[系统] 工具 dir_create 执行结果:\n[WinError 123] ）"
+      ],
+      "n": 91,
+      "n_user": 45,
+      "n_ai": 45,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 D:\\软件\\XianRenZhangAgent\\test_output\\report",
+      "mtime": 1787461087.981728
+    },
+    {
+      "file": "conv_deepseek_20260823_124948.json",
+      "id": "deepseek_20260823_124948",
+      "issues": [
+        "A 内部提示词被写进历史（34 条，例：[系统] 工具 dir_create 执行结果:\n[WinError 123] ）"
+      ],
+      "n": 79,
+      "n_user": 40,
+      "n_ai": 38,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 D:\\软件\\XianRenZhangAgent\\test_output\\report",
+      "mtime": 1787460588.2736826
+    },
+    {
+      "file": "conv_deepseek_20260823_124929.json",
+      "id": "deepseek_20260823_124929",
+      "issues": [
+        "A 内部提示词被写进历史（29 条，例：[系统] 工具 dir_create 执行结果:\n[WinError 123] ）"
+      ],
+      "n": 69,
+      "n_user": 35,
+      "n_ai": 33,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 D:\\软件\\XianRenZhangAgent\\test_output\\report",
+      "mtime": 1787460569.032665
+    },
+    {
+      "file": "conv_deepseek_20260823_124918.json",
+      "id": "deepseek_20260823_124918",
+      "issues": [
+        "A 内部提示词被写进历史（24 条，例：[系统] 工具 dir_create 执行结果:\n[WinError 123] ）"
+      ],
+      "n": 60,
+      "n_user": 30,
+      "n_ai": 29,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 D:\\软件\\XianRenZhangAgent\\test_output\\report",
+      "mtime": 1787460558.4141512
+    },
+    {
+      "file": "conv_deepseek_20260823_124900.json",
+      "id": "deepseek_20260823_124900",
+      "issues": [
+        "A 内部提示词被写进历史（19 条，例：[系统] 工具 dir_create 执行结果:\n[WinError 123] ）"
+      ],
+      "n": 50,
+      "n_user": 25,
+      "n_ai": 24,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 D:\\软件\\XianRenZhangAgent\\test_output\\report",
+      "mtime": 1787460540.4319754
+    },
+    {
+      "file": "conv_deepseek_20260823_124841.json",
+      "id": "deepseek_20260823_124841",
+      "issues": [
+        "A 内部提示词被写进历史（14 条，例：[系统] 工具 dir_create 执行结果:\n[WinError 123] ）"
+      ],
+      "n": 41,
+      "n_user": 20,
+      "n_ai": 20,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 D:\\软件\\XianRenZhangAgent\\test_output\\report",
+      "mtime": 1787460521.2195523
+    },
+    {
+      "file": "conv_deepseek_20260823_124757.json",
+      "id": "deepseek_20260823_124757",
+      "issues": [
+        "A 内部提示词被写进历史（10 条，例：[系统] 工具 dir_create 执行结果:\n[WinError 123] ）"
+      ],
+      "n": 31,
+      "n_user": 15,
+      "n_ai": 15,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 D:\\软件\\XianRenZhangAgent\\test_output\\report",
+      "mtime": 1787460477.3907344
+    },
+    {
+      "file": "conv_tongyi_20260823_124623.json",
+      "id": "tongyi_20260823_124623",
+      "issues": [
+        "A 内部提示词被写进历史（31 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：2/33 条 assistant 内容其实是 Agent 自己发出去的提示词（6%）",
+        "B 空回复/未收到回复 ×23",
+        "D 状态行被当成 AI 回复 ×10（例：自动\n\n自动\n\n自动\n\n自动）"
+      ],
+      "n": 73,
+      "n_user": 40,
+      "n_ai": 33,
+      "platform": "tongyi",
+      "title": "请用通俗的话解释一下 TCP 三次握手是什么。",
+      "mtime": 1787460383.0069757
+    },
+    {
+      "file": "conv_tongyi_20260823_124056.json",
+      "id": "tongyi_20260823_124056",
+      "issues": [
+        "A 内部提示词被写进历史（28 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "G 回声污染：2/30 条 assistant 内容其实是 Agent 自己发出去的提示词（7%）",
+        "B 空回复/未收到回复 ×21",
+        "D 状态行被当成 AI 回复 ×10（例：自动\n\n自动\n\n自动\n\n自动）"
+      ],
+      "n": 65,
+      "n_user": 35,
+      "n_ai": 30,
+      "platform": "tongyi",
+      "title": "请用通俗的话解释一下 TCP 三次握手是什么。",
+      "mtime": 1787460056.3464048
+    },
+    {
+      "file": "conv_deepseek_20260823_123710.json",
+      "id": "deepseek_20260823_123710",
+      "issues": [
+        "A 内部提示词被写进历史（7 条，例：[系统] 工具 dir_create 执行结果:\n[WinError 123] ）"
+      ],
+      "n": 21,
+      "n_user": 10,
+      "n_ai": 10,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 D:\\软件\\XianRenZhangAgent\\test_output\\report",
+      "mtime": 1787459830.9210036
+    },
+    {
+      "file": "conv_deepseek_20260823_123503.json",
+      "id": "deepseek_20260823_123503",
+      "issues": [
+        "A 内部提示词被写进历史（4 条，例：[系统] 工具 dir_create 执行结果:\n[WinError 123] ）"
+      ],
+      "n": 11,
+      "n_user": 5,
+      "n_ai": 5,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 D:\\软件\\XianRenZhangAgent\\test_output\\report",
+      "mtime": 1787459703.5812109
+    },
+    {
+      "file": "conv_tongyi_20260823_112813.json",
+      "id": "tongyi_20260823_112813",
+      "issues": [
+        "A 内部提示词被写进历史（25 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "B 空回复/未收到回复 ×18",
+        "D 状态行被当成 AI 回复 ×9（例：自动\n\n自动\n\n自动\n\n自动）"
+      ],
+      "n": 57,
+      "n_user": 30,
+      "n_ai": 27,
+      "platform": "tongyi",
+      "title": "请用通俗的话解释一下 TCP 三次握手是什么。",
+      "mtime": 1787455693.4148047
+    },
+    {
+      "file": "conv_tongyi_20260823_112450.json",
+      "id": "tongyi_20260823_112450",
+      "issues": [
+        "A 内部提示词被写进历史（20 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "B 空回复/未收到回复 ×14",
+        "D 状态行被当成 AI 回复 ×8（例：自动\n\n自动\n\n自动\n\n自动）"
+      ],
+      "n": 47,
+      "n_user": 25,
+      "n_ai": 22,
+      "platform": "tongyi",
+      "title": "请用通俗的话解释一下 TCP 三次握手是什么。",
+      "mtime": 1787455490.2498815
+    },
+    {
+      "file": "conv_deepseek_20260823_111953.json",
+      "id": "deepseek_20260823_111953",
+      "issues": [
+        "A 内部提示词被写进历史（33 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 71,
+      "n_user": 35,
+      "n_ai": 35,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 D:\\软件\\XianRenZhangAgent\\test_output\\report",
+      "mtime": 1787455193.2977636
+    },
+    {
+      "file": "conv_deepseek_20260823_111919.json",
+      "id": "deepseek_20260823_111919",
+      "issues": [
+        "A 内部提示词被写进历史（28 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 61,
+      "n_user": 30,
+      "n_ai": 30,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 D:\\软件\\XianRenZhangAgent\\test_output\\report",
+      "mtime": 1787455159.0414925
+    },
+    {
+      "file": "conv_deepseek_20260823_111846.json",
+      "id": "deepseek_20260823_111846",
+      "issues": [
+        "A 内部提示词被写进历史（23 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 51,
+      "n_user": 25,
+      "n_ai": 25,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 D:\\软件\\XianRenZhangAgent\\test_output\\report",
+      "mtime": 1787455126.938793
+    },
+    {
+      "file": "conv_deepseek_20260823_111812.json",
+      "id": "deepseek_20260823_111812",
+      "issues": [
+        "A 内部提示词被写进历史（18 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 41,
+      "n_user": 20,
+      "n_ai": 20,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 D:\\软件\\XianRenZhangAgent\\test_output\\report",
+      "mtime": 1787455092.544001
+    },
+    {
+      "file": "conv_deepseek_20260823_111734.json",
+      "id": "deepseek_20260823_111734",
+      "issues": [
+        "A 内部提示词被写进历史（13 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 31,
+      "n_user": 15,
+      "n_ai": 15,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 D:\\软件\\XianRenZhangAgent\\test_output\\report",
+      "mtime": 1787455054.995397
+    },
+    {
+      "file": "conv_deepseek_20260823_111701.json",
+      "id": "deepseek_20260823_111701",
+      "issues": [
+        "A 内部提示词被写进历史（8 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 21,
+      "n_user": 10,
+      "n_ai": 10,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 D:\\软件\\XianRenZhangAgent\\test_output\\report",
+      "mtime": 1787455021.865802
+    },
+    {
+      "file": "conv_deepseek_20260823_111620.json",
+      "id": "deepseek_20260823_111620",
+      "issues": [
+        "A 内部提示词被写进历史（4 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 11,
+      "n_user": 5,
+      "n_ai": 5,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 D:\\软件\\XianRenZhangAgent\\test_output\\report",
+      "mtime": 1787454980.8070285
+    },
+    {
+      "file": "conv_deepseek_20260816_081948.json",
+      "id": "deepseek_20260816_081948",
+      "issues": [
+        "A 内部提示词被写进历史（4 条，例：[系统] 工具 dir_create 执行结果:\n目录已创建: C:\\Users）"
+      ],
+      "n": 11,
+      "n_user": 5,
+      "n_ai": 5,
+      "platform": "deepseek",
+      "title": "理解这个PDF的内容，在桌面创建一个文件夹，生成一个word报告",
+      "mtime": 1786839588.7835846
+    },
+    {
+      "file": "conv_tongyi_20260815_180222.json",
+      "id": "tongyi_20260815_180222",
+      "issues": [
+        "A 内部提示词被写进历史（17 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "B 空回复/未收到回复 ×12",
+        "D 状态行被当成 AI 回复 ×7（例：自动\n\n自动\n\n自动\n\n自动）"
+      ],
+      "n": 39,
+      "n_user": 20,
+      "n_ai": 19,
+      "platform": "tongyi",
+      "title": "请用通俗的话解释一下 TCP 三次握手是什么。",
+      "mtime": 1786788142.8252492
+    },
+    {
+      "file": "conv_tongyi_20260815_180218.json",
+      "id": "tongyi_20260815_180218",
+      "issues": [
+        "A 内部提示词被写进历史（17 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "B 空回复/未收到回复 ×10",
+        "D 状态行被当成 AI 回复 ×7（例：自动\n\n自动\n\n自动\n\n自动）"
+      ],
+      "n": 37,
+      "n_user": 20,
+      "n_ai": 17,
+      "platform": "tongyi",
+      "title": "请用通俗的话解释一下 TCP 三次握手是什么。",
+      "mtime": 1786788138.158631
+    },
+    {
+      "file": "conv_deepseek_20260815_180001.json",
+      "id": "deepseek_20260815_180001",
+      "issues": [
+        "A 内部提示词被写进历史（23 条，例：[系统] 工具 docx_create 执行结果:\n✅ Word 文档已生成: ）"
+      ],
+      "n": 61,
+      "n_user": 30,
+      "n_ai": 30,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 C:\\Users\\X.LAPTOP-CA1GJQE3\\Desktop\\test\\re",
+      "mtime": 1786788001.4724016
+    },
+    {
+      "file": "conv_deepseek_20260815_180000.json",
+      "id": "deepseek_20260815_180000",
+      "issues": [
+        "A 内部提示词被写进历史（23 条，例：[系统] 工具 docx_create 执行结果:\n✅ Word 文档已生成: ）"
+      ],
+      "n": 61,
+      "n_user": 30,
+      "n_ai": 30,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 C:\\Users\\X.LAPTOP-CA1GJQE3\\Desktop\\test\\re",
+      "mtime": 1786788000.2124186
+    },
+    {
+      "file": "conv_deepseek_20260815_175851.json",
+      "id": "deepseek_20260815_175851",
+      "issues": [
+        "A 内部提示词被写进历史（19 条，例：[系统] 工具 docx_create 执行结果:\n✅ Word 文档已生成: ）"
+      ],
+      "n": 50,
+      "n_user": 25,
+      "n_ai": 24,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 C:\\Users\\X.LAPTOP-CA1GJQE3\\Desktop\\test\\re",
+      "mtime": 1786787931.9746838
+    },
+    {
+      "file": "conv_deepseek_20260815_175811.json",
+      "id": "deepseek_20260815_175811",
+      "issues": [
+        "A 内部提示词被写进历史（14 条，例：[系统] 工具 docx_create 执行结果:\n✅ Word 文档已生成: ）"
+      ],
+      "n": 41,
+      "n_user": 20,
+      "n_ai": 20,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 C:\\Users\\X.LAPTOP-CA1GJQE3\\Desktop\\test\\re",
+      "mtime": 1786787891.7279568
+    },
+    {
+      "file": "conv_deepseek_20260815_175649.json",
+      "id": "deepseek_20260815_175649",
+      "issues": [
+        "A 内部提示词被写进历史（11 条，例：[系统] 工具 docx_create 执行结果:\n✅ Word 文档已生成: ）"
+      ],
+      "n": 31,
+      "n_user": 15,
+      "n_ai": 15,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 C:\\Users\\X.LAPTOP-CA1GJQE3\\Desktop\\test\\re",
+      "mtime": 1786787809.748057
+    },
+    {
+      "file": "conv_deepseek_20260815_175522.json",
+      "id": "deepseek_20260815_175522",
+      "issues": [
+        "A 内部提示词被写进历史（6 条，例：[系统] 工具 docx_create 执行结果:\n✅ Word 文档已生成: ）"
+      ],
+      "n": 21,
+      "n_user": 10,
+      "n_ai": 10,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 C:\\Users\\X.LAPTOP-CA1GJQE3\\Desktop\\test\\re",
+      "mtime": 1786787722.7758036
+    },
+    {
+      "file": "conv_deepseek_20260815_174158.json",
+      "id": "deepseek_20260815_174158",
+      "issues": [
+        "A 内部提示词被写进历史（3 条，例：[系统] 工具 docx_create 执行结果:\n✅ Word 文档已生成: ）"
+      ],
+      "n": 11,
+      "n_user": 5,
+      "n_ai": 5,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 C:\\Users\\X.LAPTOP-CA1GJQE3\\Desktop\\test\\re",
+      "mtime": 1786786918.9337149
+    },
+    {
+      "file": "conv_tongyi_20260815_173156.json",
+      "id": "tongyi_20260815_173156",
+      "issues": [
+        "A 内部提示词被写进历史（13 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "B 空回复/未收到回复 ×7",
+        "D 状态行被当成 AI 回复 ×7（例：自动\n\n自动\n\n自动\n\n自动）"
+      ],
+      "n": 29,
+      "n_user": 15,
+      "n_ai": 14,
+      "platform": "tongyi",
+      "title": "请用通俗的话解释一下 TCP 三次握手是什么。",
+      "mtime": 1786786316.2341719
+    },
+    {
+      "file": "conv_tongyi_20260815_172534.json",
+      "id": "tongyi_20260815_172534",
+      "issues": [
+        "A 内部提示词被写进历史（8 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "B 空回复/未收到回复 ×4",
+        "D 状态行被当成 AI 回复 ×5（例：自动\n\n自动\n\n自动\n\n自动）"
+      ],
+      "n": 19,
+      "n_user": 10,
+      "n_ai": 9,
+      "platform": "tongyi",
+      "title": "请用通俗的话解释一下 TCP 三次握手是什么。",
+      "mtime": 1786785934.981558
+    },
+    {
+      "file": "conv_tongyi_20260815_172306.json",
+      "id": "tongyi_20260815_172306",
+      "issues": [
+        "A 内部提示词被写进历史（8 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "B 空回复/未收到回复 ×3",
+        "D 状态行被当成 AI 回复 ×5（例：自动\n\n自动\n\n自动\n\n自动）"
+      ],
+      "n": 18,
+      "n_user": 10,
+      "n_ai": 8,
+      "platform": "tongyi",
+      "title": "请用通俗的话解释一下 TCP 三次握手是什么。",
+      "mtime": 1786785786.486745
+    },
+    {
+      "file": "conv_deepseek_20260815_171628.json",
+      "id": "deepseek_20260815_171628",
+      "issues": [
+        "A 内部提示词被写进历史（13 条，例：[系统] 工具 file_read 执行结果:\n错误: 文件不存在 D:\\软件\\）"
+      ],
+      "n": 30,
+      "n_user": 15,
+      "n_ai": 14,
+      "platform": "deepseek",
+      "title": "请阅读我附加的 PDF 文件，并用 200 字左右写出它的内容摘要。",
+      "mtime": 1786785388.008179
+    },
+    {
+      "file": "conv_deepseek_20260815_171436.json",
+      "id": "deepseek_20260815_171436",
+      "issues": [
+        "A 内部提示词被写进历史（9 条，例：[系统] 工具 file_read 执行结果:\n错误: 文件不存在 D:\\软件\\）"
+      ],
+      "n": 21,
+      "n_user": 10,
+      "n_ai": 10,
+      "platform": "deepseek",
+      "title": "请阅读我附加的 PDF 文件，并用 200 字左右写出它的内容摘要。",
+      "mtime": 1786785276.3286417
+    },
+    {
+      "file": "conv_deepseek_20260815_171331.json",
+      "id": "deepseek_20260815_171331",
+      "issues": [
+        "A 内部提示词被写进历史（4 条，例：[系统] 工具 file_read 执行结果:\n错误: 文件不存在 D:\\软件\\）"
+      ],
+      "n": 11,
+      "n_user": 5,
+      "n_ai": 5,
+      "platform": "deepseek",
+      "title": "请阅读我附加的 PDF 文件，并用 200 字左右写出它的内容摘要。",
+      "mtime": 1786785211.4440744
+    },
+    {
+      "file": "conv_deepseek_20260812_121906.json",
+      "id": "deepseek_20260812_121906",
+      "issues": [
+        "A 内部提示词被写进历史（13 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 31,
+      "n_user": 15,
+      "n_ai": 15,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 C:\\Users\\X.LAPTOP-CA1GJQE3\\Desktop\\test\\re",
+      "mtime": 1786508346.5999708
+    },
+    {
+      "file": "conv_deepseek_20260812_121825.json",
+      "id": "deepseek_20260812_121825",
+      "issues": [
+        "A 内部提示词被写进历史（8 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 21,
+      "n_user": 10,
+      "n_ai": 10,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 C:\\Users\\X.LAPTOP-CA1GJQE3\\Desktop\\test\\re",
+      "mtime": 1786508305.2573068
+    },
+    {
+      "file": "conv_deepseek_20260812_121745.json",
+      "id": "deepseek_20260812_121745",
+      "issues": [
+        "A 内部提示词被写进历史（4 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 11,
+      "n_user": 5,
+      "n_ai": 5,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 C:\\Users\\X.LAPTOP-CA1GJQE3\\Desktop\\test\\re",
+      "mtime": 1786508265.2761593
+    },
+    {
+      "file": "conv_deepseek_20260812_121226.json",
+      "id": "deepseek_20260812_121226",
+      "issues": [
+        "A 内部提示词被写进历史（34 条，例：[系统] 工具 file_read 执行结果:\n错误: 文件不存在 C:\\Use）"
+      ],
+      "n": 72,
+      "n_user": 35,
+      "n_ai": 36,
+      "platform": "deepseek",
+      "title": "请阅读我附加的 PDF 文件，并用 200 字左右写出它的内容摘要。",
+      "mtime": 1786507946.2515008
+    },
+    {
+      "file": "conv_deepseek_20260812_121131.json",
+      "id": "deepseek_20260812_121131",
+      "issues": [
+        "A 内部提示词被写进历史（29 条，例：[系统] 工具 file_read 执行结果:\n错误: 文件不存在 C:\\Use）"
+      ],
+      "n": 61,
+      "n_user": 30,
+      "n_ai": 30,
+      "platform": "deepseek",
+      "title": "请阅读我附加的 PDF 文件，并用 200 字左右写出它的内容摘要。",
+      "mtime": 1786507891.1578321
+    },
+    {
+      "file": "conv_deepseek_20260812_121105.json",
+      "id": "deepseek_20260812_121105",
+      "issues": [
+        "A 内部提示词被写进历史（24 条，例：[系统] 工具 file_read 执行结果:\n错误: 文件不存在 C:\\Use）"
+      ],
+      "n": 51,
+      "n_user": 25,
+      "n_ai": 25,
+      "platform": "deepseek",
+      "title": "请阅读我附加的 PDF 文件，并用 200 字左右写出它的内容摘要。",
+      "mtime": 1786507865.702558
+    },
+    {
+      "file": "conv_deepseek_20260812_121026.json",
+      "id": "deepseek_20260812_121026",
+      "issues": [
+        "A 内部提示词被写进历史（19 条，例：[系统] 工具 file_read 执行结果:\n错误: 文件不存在 C:\\Use）"
+      ],
+      "n": 41,
+      "n_user": 20,
+      "n_ai": 20,
+      "platform": "deepseek",
+      "title": "请阅读我附加的 PDF 文件，并用 200 字左右写出它的内容摘要。",
+      "mtime": 1786507826.6764998
+    },
+    {
+      "file": "conv_deepseek_20260812_121000.json",
+      "id": "deepseek_20260812_121000",
+      "issues": [
+        "A 内部提示词被写进历史（14 条，例：[系统] 工具 file_read 执行结果:\n错误: 文件不存在 C:\\Use）"
+      ],
+      "n": 31,
+      "n_user": 15,
+      "n_ai": 15,
+      "platform": "deepseek",
+      "title": "请阅读我附加的 PDF 文件，并用 200 字左右写出它的内容摘要。",
+      "mtime": 1786507800.9849312
+    },
+    {
+      "file": "conv_deepseek_20260812_120922.json",
+      "id": "deepseek_20260812_120922",
+      "issues": [
+        "A 内部提示词被写进历史（9 条，例：[系统] 工具 file_read 执行结果:\n错误: 文件不存在 C:\\Use）"
+      ],
+      "n": 21,
+      "n_user": 10,
+      "n_ai": 10,
+      "platform": "deepseek",
+      "title": "请阅读我附加的 PDF 文件，并用 200 字左右写出它的内容摘要。",
+      "mtime": 1786507762.7696154
+    },
+    {
+      "file": "conv_deepseek_20260812_120859.json",
+      "id": "deepseek_20260812_120859",
+      "issues": [
+        "A 内部提示词被写进历史（4 条，例：[系统] 工具 file_read 执行结果:\n错误: 文件不存在 C:\\Use）"
+      ],
+      "n": 11,
+      "n_user": 5,
+      "n_ai": 5,
+      "platform": "deepseek",
+      "title": "请阅读我附加的 PDF 文件，并用 200 字左右写出它的内容摘要。",
+      "mtime": 1786507739.650696
+    },
+    {
+      "file": "conv_deepseek_20260812_120825.json",
+      "id": "deepseek_20260812_120825",
+      "issues": [
+        "A 内部提示词被写进历史（14 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 31,
+      "n_user": 15,
+      "n_ai": 15,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 C:\\Users\\X.LAPTOP-CA1GJQE3\\Desktop\\test\\re",
+      "mtime": 1786507705.1814625
+    },
+    {
+      "file": "conv_deepseek_20260812_120722.json",
+      "id": "deepseek_20260812_120722",
+      "issues": [
+        "A 内部提示词被写进历史（9 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 21,
+      "n_user": 10,
+      "n_ai": 10,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 C:\\Users\\X.LAPTOP-CA1GJQE3\\Desktop\\test\\re",
+      "mtime": 1786507642.1324492
+    },
+    {
+      "file": "conv_deepseek_20260812_120609.json",
+      "id": "deepseek_20260812_120609",
+      "issues": [
+        "A 内部提示词被写进历史（4 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 11,
+      "n_user": 5,
+      "n_ai": 5,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 C:\\Users\\X.LAPTOP-CA1GJQE3\\Desktop\\test\\re",
+      "mtime": 1786507569.8098867
+    },
+    {
+      "file": "conv_tongyi_20260812_120124.json",
+      "id": "tongyi_20260812_120124",
+      "issues": [
+        "A 内部提示词被写进历史（4 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "B 空回复/未收到回复 ×3",
+        "D 状态行被当成 AI 回复 ×2（例：自动\n\n自动\n\n自动\n\n自动）"
+      ],
+      "n": 10,
+      "n_user": 5,
+      "n_ai": 5,
+      "platform": "tongyi",
+      "title": "请用通俗的话解释一下 TCP 三次握手是什么。",
+      "mtime": 1786507284.1636758
+    },
+    {
+      "file": "conv_deepseek_20260812_115242.json",
+      "id": "deepseek_20260812_115242",
+      "issues": [
+        "A 内部提示词被写进历史（4 条，例：[系统] 工具 file_read 执行结果:\n错误: 文件不存在 D:\\软件\\）"
+      ],
+      "n": 11,
+      "n_user": 5,
+      "n_ai": 5,
+      "platform": "deepseek",
+      "title": "请阅读我附加的 PDF 文件，并用 200 字左右写出它的内容摘要。",
+      "mtime": 1786506762.6106005
+    },
+    {
+      "file": "conv_deepseek_20260812_115159.json",
+      "id": "deepseek_20260812_115159",
+      "issues": [
+        "A 内部提示词被写进历史（4 条，例：[系统] 工具 docx_create 执行结果:\n❌ Word 文档生成失败 ）"
+      ],
+      "n": 11,
+      "n_user": 5,
+      "n_ai": 5,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 C:\\Users\\X.LAPTOP-CA1GJQE3\\Desktop\\test\\re",
+      "mtime": 1786506719.965234
+    },
+    {
+      "file": "conv_deepseek_20260812_115018.json",
+      "id": "deepseek_20260812_115018",
+      "issues": [
+        "A 内部提示词被写进历史（19 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 41,
+      "n_user": 20,
+      "n_ai": 20,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 C:\\Users\\X.LAPTOP-CA1GJQE3\\Desktop\\test\\re",
+      "mtime": 1786506618.7803721
+    },
+    {
+      "file": "conv_deepseek_20260812_114946.json",
+      "id": "deepseek_20260812_114946",
+      "issues": [
+        "A 内部提示词被写进历史（14 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 31,
+      "n_user": 15,
+      "n_ai": 15,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 C:\\Users\\X.LAPTOP-CA1GJQE3\\Desktop\\test\\re",
+      "mtime": 1786506586.4791386
+    },
+    {
+      "file": "conv_deepseek_20260812_114907.json",
+      "id": "deepseek_20260812_114907",
+      "issues": [
+        "A 内部提示词被写进历史（9 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 21,
+      "n_user": 10,
+      "n_ai": 10,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 C:\\Users\\X.LAPTOP-CA1GJQE3\\Desktop\\test\\re",
+      "mtime": 1786506547.4600673
+    },
+    {
+      "file": "conv_deepseek_20260812_114826.json",
+      "id": "deepseek_20260812_114826",
+      "issues": [
+        "A 内部提示词被写进历史（4 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 11,
+      "n_user": 5,
+      "n_ai": 5,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 C:\\Users\\X.LAPTOP-CA1GJQE3\\Desktop\\test\\re",
+      "mtime": 1786506506.750578
+    },
+    {
+      "file": "conv_deepseek_20260812_114520.json",
+      "id": "deepseek_20260812_114520",
+      "issues": [
+        "A 内部提示词被写进历史（79 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "C 失控增长：消息数 160（同一任务被反复重发叠加）"
+      ],
+      "n": 160,
+      "n_user": 80,
+      "n_ai": 80,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 C:\\Users\\X.LAPTOP-CA1GJQE3\\Desktop\\test\\re",
+      "mtime": 1786506320.9363549
+    },
+    {
+      "file": "conv_deepseek_20260812_114309.json",
+      "id": "deepseek_20260812_114309",
+      "issues": [
+        "A 内部提示词被写进历史（74 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "C 失控增长：消息数 150（同一任务被反复重发叠加）"
+      ],
+      "n": 150,
+      "n_user": 75,
+      "n_ai": 75,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 C:\\Users\\X.LAPTOP-CA1GJQE3\\Desktop\\test\\re",
+      "mtime": 1786506189.4543087
+    },
+    {
+      "file": "conv_deepseek_20260812_114127.json",
+      "id": "deepseek_20260812_114127",
+      "issues": [
+        "A 内部提示词被写进历史（69 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "C 失控增长：消息数 140（同一任务被反复重发叠加）"
+      ],
+      "n": 140,
+      "n_user": 70,
+      "n_ai": 70,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 C:\\Users\\X.LAPTOP-CA1GJQE3\\Desktop\\test\\re",
+      "mtime": 1786506087.5201461
+    },
+    {
+      "file": "conv_deepseek_20260812_113935.json",
+      "id": "deepseek_20260812_113935",
+      "issues": [
+        "A 内部提示词被写进历史（64 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "C 失控增长：消息数 130（同一任务被反复重发叠加）"
+      ],
+      "n": 130,
+      "n_user": 65,
+      "n_ai": 65,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 C:\\Users\\X.LAPTOP-CA1GJQE3\\Desktop\\test\\re",
+      "mtime": 1786505975.7441263
+    },
+    {
+      "file": "conv_deepseek_20260812_113804.json",
+      "id": "deepseek_20260812_113804",
+      "issues": [
+        "A 内部提示词被写进历史（59 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "C 失控增长：消息数 120（同一任务被反复重发叠加）"
+      ],
+      "n": 120,
+      "n_user": 60,
+      "n_ai": 60,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 C:\\Users\\X.LAPTOP-CA1GJQE3\\Desktop\\test\\re",
+      "mtime": 1786505884.7236128
+    },
+    {
+      "file": "conv_deepseek_20260812_113614.json",
+      "id": "deepseek_20260812_113614",
+      "issues": [
+        "A 内部提示词被写进历史（54 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "C 失控增长：消息数 110（同一任务被反复重发叠加）"
+      ],
+      "n": 110,
+      "n_user": 55,
+      "n_ai": 55,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 C:\\Users\\X.LAPTOP-CA1GJQE3\\Desktop\\test\\re",
+      "mtime": 1786505774.027944
+    },
+    {
+      "file": "conv_deepseek_20260812_113400.json",
+      "id": "deepseek_20260812_113400",
+      "issues": [
+        "A 内部提示词被写进历史（49 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）",
+        "C 失控增长：消息数 100（同一任务被反复重发叠加）"
+      ],
+      "n": 100,
+      "n_user": 50,
+      "n_ai": 50,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 C:\\Users\\X.LAPTOP-CA1GJQE3\\Desktop\\test\\re",
+      "mtime": 1786505640.6156335
+    },
+    {
+      "file": "conv_deepseek_20260812_113221.json",
+      "id": "deepseek_20260812_113221",
+      "issues": [
+        "A 内部提示词被写进历史（44 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 90,
+      "n_user": 45,
+      "n_ai": 45,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 C:\\Users\\X.LAPTOP-CA1GJQE3\\Desktop\\test\\re",
+      "mtime": 1786505541.9781594
+    },
+    {
+      "file": "conv_deepseek_20260812_113028.json",
+      "id": "deepseek_20260812_113028",
+      "issues": [
+        "A 内部提示词被写进历史（39 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 80,
+      "n_user": 40,
+      "n_ai": 40,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 C:\\Users\\X.LAPTOP-CA1GJQE3\\Desktop\\test\\re",
+      "mtime": 1786505428.7758052
+    },
+    {
+      "file": "conv_deepseek_20260812_112834.json",
+      "id": "deepseek_20260812_112834",
+      "issues": [
+        "A 内部提示词被写进历史（34 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 70,
+      "n_user": 35,
+      "n_ai": 35,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 C:\\Users\\X.LAPTOP-CA1GJQE3\\Desktop\\test\\re",
+      "mtime": 1786505314.3894918
+    },
+    {
+      "file": "conv_deepseek_20260812_112659.json",
+      "id": "deepseek_20260812_112659",
+      "issues": [
+        "A 内部提示词被写进历史（29 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 60,
+      "n_user": 30,
+      "n_ai": 30,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 C:\\Users\\X.LAPTOP-CA1GJQE3\\Desktop\\test\\re",
+      "mtime": 1786505219.2203498
+    },
+    {
+      "file": "conv_deepseek_20260812_112526.json",
+      "id": "deepseek_20260812_112526",
+      "issues": [
+        "A 内部提示词被写进历史（24 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 50,
+      "n_user": 25,
+      "n_ai": 25,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 C:\\Users\\X.LAPTOP-CA1GJQE3\\Desktop\\test\\re",
+      "mtime": 1786505126.0561967
+    },
+    {
+      "file": "conv_deepseek_20260812_112356.json",
+      "id": "deepseek_20260812_112356",
+      "issues": [
+        "A 内部提示词被写进历史（19 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 40,
+      "n_user": 20,
+      "n_ai": 20,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 C:\\Users\\X.LAPTOP-CA1GJQE3\\Desktop\\test\\re",
+      "mtime": 1786505036.396519
+    },
+    {
+      "file": "conv_deepseek_20260812_112234.json",
+      "id": "deepseek_20260812_112234",
+      "issues": [
+        "A 内部提示词被写进历史（14 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 30,
+      "n_user": 15,
+      "n_ai": 15,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 C:\\Users\\X.LAPTOP-CA1GJQE3\\Desktop\\test\\re",
+      "mtime": 1786504954.5271204
+    },
+    {
+      "file": "conv_deepseek_20260812_112120.json",
+      "id": "deepseek_20260812_112120",
+      "issues": [
+        "A 内部提示词被写进历史（9 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 20,
+      "n_user": 10,
+      "n_ai": 10,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 C:\\Users\\X.LAPTOP-CA1GJQE3\\Desktop\\test\\re",
+      "mtime": 1786504880.2319899
+    },
+    {
+      "file": "conv_deepseek_20260812_111940.json",
+      "id": "deepseek_20260812_111940",
+      "issues": [
+        "A 内部提示词被写进历史（4 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 10,
+      "n_user": 5,
+      "n_ai": 5,
+      "platform": "deepseek",
+      "title": "请生成一份 Word 报告，保存到 C:\\Users\\X.LAPTOP-CA1GJQE3\\Desktop\\test\\re",
+      "mtime": 1786504780.4360154
+    },
+    {
+      "file": "conv_deepseek_20260812_092121.json",
+      "id": "deepseek_20260812_092121",
+      "issues": [
+        "A 内部提示词被写进历史（16 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 38,
+      "n_user": 20,
+      "n_ai": 17,
+      "platform": "deepseek",
+      "title": "你好，请只回复两个字：收到",
+      "mtime": 1786497681.7835329
+    },
+    {
+      "file": "conv_deepseek_20260812_092042.json",
+      "id": "deepseek_20260812_092042",
+      "issues": [
+        "A 内部提示词被写进历史（6 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 21,
+      "n_user": 10,
+      "n_ai": 10,
+      "platform": "deepseek",
+      "title": "你好，请只回复两个字：收到",
+      "mtime": 1786497642.9207697
+    },
+    {
+      "file": "conv_deepseek_20260812_091838.json",
+      "id": "deepseek_20260812_091838",
+      "issues": [
+        "A 内部提示词被写进历史（2 条，例：[SYSTEM] NO @@@@ PROTOCOL. Your text was）"
+      ],
+      "n": 11,
+      "n_user": 5,
+      "n_ai": 5,
+      "platform": "deepseek",
+      "title": "你好，请只回复两个字：收到",
+      "mtime": 1786497518.161021
+    }
+  ]
+}

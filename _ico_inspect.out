@@ -1,0 +1,12 @@
+Traceback (most recent call last):
+  File "<string>", line 23, in <module>
+    w,h,bc,planes,bpp,size,offset=struct.unpack('<BBBBHHII',d[off:off+16])
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: too many values to unpack (expected 7)
+__xianrenzhang_icon.png (256, 256) RGBA 1386
+__browser_cactus_preview.png (256, 256) RGBA 10178
+__icon_preview.png (528, 288) RGB 51802
+_ico_px_256.png (256, 128) RGBA 1105
+cactus_active.png (3000, 2000) RGB 4924976
+==== ICO dir of __xianrenzhang_icon.ico ====
+reserved 0 type 1 count 7

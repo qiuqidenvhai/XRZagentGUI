@@ -1,0 +1,80 @@
+{
+  "ts": "2026-09-12 22:14:55",
+  "results": [
+    {
+      "tag": "backend_health",
+      "ok": true,
+      "detail": "{'status': 'ok', 'agent_ready': True, 'browser': 'connected', 'commander': 'ready', 'platform': 'deepseek', 'port': 8888}"
+    },
+    {
+      "tag": "deepseek_count_baseline",
+      "ok": true,
+      "detail": "基线 DeepSeek 实例数=1（必须为1）"
+    },
+    {
+      "tag": "deepseek__switch",
+      "ok": true,
+      "detail": "resp=已切换到 DeepSeek health.platform=deepseek"
+    },
+    {
+      "tag": "deepseek__switch_no_double",
+      "ok": true,
+      "detail": "切换后 DeepSeek 实例数=1（基线1）"
+    },
+    {
+      "tag": "deepseek__chat",
+      "ok": true,
+      "detail": "task=task_1789222056801 final='[完成]' errs=[]"
+    },
+    {
+      "tag": "deepseek__file_write",
+      "ok": true,
+      "detail": "tools=['done', 'file_write'] final='文件已成功创建，任务完成。'"
+    },
+    {
+      "tag": "deepseek__docx",
+      "ok": true,
+      "detail": "tools=['docx_create', 'done'] new=['mp_deepseek.docx'] final='Word 文档已按指定路径成功生成，任务完成。'"
+    },
+    {
+      "tag": "deepseek__docx_file",
+      "ok": true,
+      "detail": "path_exists=True new_docx=['mp_deepseek.docx']"
+    },
+    {
+      "tag": "deepseek__pptx",
+      "ok": true,
+      "detail": "tools=['done', 'pptx_create'] new=['mp_deepseek.pptx'] final='PPT 已成功生成，任务完成。'"
+    },
+    {
+      "tag": "deepseek__pptx_file",
+      "ok": true,
+      "detail": "path_exists=True new_pptx=['mp_deepseek.pptx']"
+    },
+    {
+      "tag": "deepseek__browser_search",
+      "ok": true,
+      "detail": "tools=['browser_search', 'done'] final='搜索结果中最相关的是 Python 官方文档。\\n\\n最相关链接标题：Python 教程 — Python 3.14.7 文档\\n\\n链接：https://docs.p'"
+    },
+    {
+      "tag": "deepseek__no_double_browser",
+      "ok": true,
+      "detail": "平台 deepseek 全部测试后 DeepSeek 实例数=1（基线1）"
+    },
+    {
+      "tag": "tongyi__switch",
+      "ok": true,
+      "detail": "resp=已切换到 通义千问，已携带切换前的对话背景 health.platform=tongyi"
+    },
+    {
+      "tag": "tongyi__switch_no_double",
+      "ok": true,
+      "detail": "切换后 DeepSeek 实例数=1（基线1）"
+    },
+    {
+      "tag": "tongyi__chat",
+      "ok": false,
+      "detail": "task=task_1789222295500 final='' errs=[]"
+    }
+  ]
+}

@@ -1,0 +1,52 @@
+[
+  {
+    "tag": "gui_load",
+    "ok": true,
+    "detail": "gui.html 加载成功"
+  },
+  {
+    "tag": "gui_status_dot",
+    "ok": true,
+    "detail": "statusDot class=status-dot online"
+  },
+  {
+    "tag": "gui_platforms",
+    "ok": true,
+    "detail": "平台按钮数=4"
+  },
+  {
+    "tag": "gui_send",
+    "ok": true,
+    "detail": "消息已发送，等待响应..."
+  },
+  {
+    "tag": "gui_task_done",
+    "ok": true,
+    "detail": "任务完成: 🔄\n你好，请用一句话回复：测试成功\n运行中\ndeepseek"
+  },
+  {
+    "tag": "gui_no_error",
+    "ok": true,
+    "detail": "错误消息数=0"
+  },
+  {
+    "tag": "cmd_accepted",
+    "ok": true,
+    "detail": "{\"type\": \"accepted\", \"text\": \"命令已接收，正在处理...\", \"async_task\": true}"
+  },
+  {
+    "tag": "sse_ai_reply",
+    "ok": true,
+    "detail": "AI 回复: Agent: 就绪 | 浏览器: 已连接 | 平台: deepseek | Commander: 就绪"
+  },
+  {
+    "tag": "sse_thinking",
+    "ok": true,
+    "detail": "思考事件数=16, 首条=好的，测试连接已完成，系统返回了当前日期时间，确认通信正常。现在请告诉我您需要我执行什么具体任务。"
+  },
+  {
+    "tag": "cmd_status",
+    "ok": true,
+    "detail": "{\"type\": \"accepted\", \"text\": \"命令已接收，正在处理...\", \"async_task\": true}"
+  }
+]

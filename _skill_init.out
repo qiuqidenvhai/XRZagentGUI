@@ -1,0 +1,12 @@
+Usage: init_skill.py <skill-name> --path <path>
+
+Skill name requirements:
+  - Hyphen-case identifier (e.g., 'data-analyzer')
+  - Lowercase letters, digits, and hyphens only
+  - Max 40 characters
+  - Must match directory name exactly
+
+Examples:
+  init_skill.py my-new-skill --path skills/public
+  init_skill.py my-api-helper --path skills/private
+  init_skill.py custom-skill --path /custom/location

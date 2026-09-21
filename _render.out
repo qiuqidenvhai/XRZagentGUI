@@ -1,0 +1,8 @@
+D:\软件\Python\Lib\site-packages\PIL\IcoImagePlugin.py:357: UserWarning: Image was not the expected size
+  warnings.warn("Image was not the expected size")
+ICO frames: 1 mode RGBA
+saved 256 render
+seek err no more images in file
+__xianrenzhang_icon.ico c2a17e41066c7ba6cea07701a4a04362
+__browser_cactus_icon.ico c2a17e41066c7ba6cea07701a4a04362
+xianrenzhang_cactus.ico c2a17e41066c7ba6cea07701a4a04362

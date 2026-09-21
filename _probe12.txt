@@ -1,0 +1,9 @@
+scanned 621 json files since 22:00
+### xrz_data\XianRenZhang_tasks\gui_session\memory\entries.json (23:29) kw=['限', '异常']
+{   "mem_1786497443_1922": {     "id": "mem_1786497443_1922",     "title": "调用 done → success: 任务完成",     "content": "调用 done → success: 任务完成",     "tags": [       "agent_action",       "turn_3"     ],     "saved_at": "2026-08-12 09:17:23"   },   "mem_1786497518_1181": {     "id": "mem_1786497518_1181",     "title": "调用 file_read → success: 错误: 文件不
+### _multiturn_doubao_run3.log (23:22) kw=['限']
+══ 切换到平台 doubao（按钮存在=True），同一 GUI 会话连发 3 轮 ══    后端当前=deepseek，点击 #pl-doubao 切换    /health platform=doubao 就绪（切换耗时 18s） ── T1 已发送（89 字），等母代理 done（上限 540s）──    T1 完成=False 耗时=540s 母代理工具序列=[] !! T1 未完成，后续轮次失去依赖前提，提前停止  ===== 判定（平台=doubao）=====   T1 done=False seq=[] checks={}   ① 三轮全部母代理 done: False   ② T2 跨轮追加(通风+土壤且原要点保留): None   ③ T3 PPT 页数: None
+### _multiturn_doubao_run2.log (22:45) kw=['限']
+══ 切换到平台 doubao（按钮存在=True），同一 GUI 会话连发 3 轮 ══    后端已在 doubao（登录态保留），跳过切换点击，直接开测 ── T1 已发送（89 字），等母代理 done（上限 540s）──    T1 完成=True 耗时=30s 母代理工具序列=['docx_create', 'done'] ── T2 已发送（121 字），等母代理 done（上限 540s）──    T2 完成=True 耗时=24s 母代理工具序列=['docx_create', 'done'] ── T3 已发送（88 字），等母代理 done（上限 540s）──    T3 完成=False 耗时=540s 母代理工具序列=['file_read', 'docx_c
+### _multiturn_doubao_run.log (22:17) kw=['限']
+══ 切换到平台 doubao（按钮存在=True），同一 GUI 会话连发 3 轮 ══ ── T1 已发送（89 字），等母代理 done（上限 540s）──    T1 完成=False 耗时=540s 母代理工具序列=[] !! T1 未完成，后续轮次失去依赖前提，提前停止  ===== 判定（平台=doubao）=====   T1 done=False seq=[] checks={}   ① 三轮全部母代理 done: False   ② T2 跨轮追加(通风+土壤且原要点保留): None   ③ T3 PPT 页数: None   ④ 同一 GUI 会话 DOM 用户消息数: 1 完成。报告: _multiturn_report.json 

@@ -1,0 +1,2 @@
+﻿PID 2460  [python.exe]  |  D:\软件\Python\python.exe -u terminal.py
+---- 总数: 1

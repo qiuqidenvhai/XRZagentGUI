@@ -36,7 +36,30 @@ APP_DIR = dirname(abspath(__file__))
 TERMINAL_PY = "terminal.py"           # CORS 增强包装，内部再 exec terminal.pyc（源码已丢失）
 ICON_PNG = os.path.join(APP_DIR, "__xianrenzhang_icon.png")
 ICON_ICO = os.path.join(APP_DIR, "__xianrenzhang_icon.ico")
-ICON_PATH = ICON_ICO if os.path.exists(ICON_ICO) else ICON_PNG
+
+
+def _pick_icon_ico():
+    """Prefer a content-hashed icon (__xianrenzhang_icon_<md5>.ico) when present.
+
+    Windows caches Qt/window icons per path; a rebuilt .ico at the same path can
+    keep showing the stale image. Picking the newest hashed file forces a reload.
+    """
+    try:
+        import glob as _glob
+        cands = sorted(
+            _glob.glob(os.path.join(APP_DIR, "__xianrenzhang_icon_*.ico")),
+            key=os.path.getmtime,
+            reverse=True,
+        )
+        for c in cands:
+            if os.path.exists(c):
+                return c
+    except Exception:
+        pass
+    return ICON_ICO
+
+
+ICON_PATH = _pick_icon_ico() if os.path.exists(_pick_icon_ico()) else ICON_PNG
 PORT = 8888
 BACKEND_URL = f"http://127.0.0.1:{PORT}"
 
@@ -54,6 +77,68 @@ def _set_appusermodel_id():
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(appid)
     except Exception as e:
         log("设置 AppUserModelID 失败（不影响功能）:", e)
+
+
+def _apply_win_class_icon(win):
+    """【真机修复 2026-09-21】把仙人掌图标同时装到【窗口类】上。
+
+    问题现象：任务栏 / Alt+Tab 里本程序的按钮是一个系统默认的「空白窗口」图标，
+    用户原话「是空的程序的图标」。
+
+    根因（实测取值验证过）：
+      · 只调用 Qt 的 setWindowIcon() → 等价于 WM_SETICON，
+        实测 WM_GETICON 的 ICON_SMALL / ICON_BIG 确实是仙人掌 ✓
+      · 但窗口【类】图标 GCLP_HICON / GCLP_HICONSM 仍是系统给的通用
+        「空白窗口」图标（句柄 65579，系统共享图标）。
+        Windows 的任务栏按钮取的是【类图标】，所以显示为空白图标 ✗
+
+    修复：用 SetClassLongPtrW 把 GCLP_HICON / GCLP_HICONSM 也换成仙人掌。
+    必须在窗口创建（拿到原生 HWND）之后调用。
+    """
+    try:
+        import ctypes
+        user32 = ctypes.windll.user32
+        hwnd = int(win.winId())
+        path = ICON_PATH if os.path.exists(ICON_PATH) else ICON_PNG
+        if not os.path.exists(path):
+            return False
+
+        IMAGE_ICON = 1
+        LR_LOADFROMFILE = 0x10
+        GCLP_HICON = -14
+        GCLP_HICONSM = -34
+
+        user32.LoadImageW.restype = ctypes.c_void_p
+        user32.LoadImageW.argtypes = [
+            ctypes.c_void_p, ctypes.c_wchar_p, ctypes.c_uint,
+            ctypes.c_int, ctypes.c_int, ctypes.c_uint,
+        ]
+        user32.SetClassLongPtrW.restype = ctypes.c_void_p
+        user32.SetClassLongPtrW.argtypes = [
+            ctypes.c_void_p, ctypes.c_int, ctypes.c_void_p,
+        ]
+
+        big = user32.LoadImageW(None, path, IMAGE_ICON, 32, 32, LR_LOADFROMFILE)
+        sm = user32.LoadImageW(None, path, IMAGE_ICON, 16, 16, LR_LOADFROMFILE)
+        ok = False
+        if big:
+            user32.SetClassLongPtrW(hwnd, GCLP_HICON, big)
+            ok = True
+        if sm:
+            user32.SetClassLongPtrW(hwnd, GCLP_HICONSM, sm)
+            ok = True
+        # 顺带把窗口图标再刷一遍（部分 Windows 版本要 WM_SETICON + 类图标一起才生效）
+        WM_SETICON = 0x0080
+        ICON_BIG, ICON_SMALL = 1, 0
+        if big:
+            user32.SendMessageW(hwnd, WM_SETICON, ICON_BIG, big)
+        if sm:
+            user32.SendMessageW(hwnd, WM_SETICON, ICON_SMALL, sm)
+        log("已设置窗口类图标:", ("big" if big else "") + ("+small" if sm else ""))
+        return ok
+    except Exception as e:
+        log("设置窗口类图标失败（不影响功能）:", e)
+        return False
 
 
 def _detect_pythonw():
@@ -186,8 +271,8 @@ class XianRenZhangWindow(QMainWindow):
         self.setMinimumSize(900, 620)
         self.resize(1180, 800)
 
-        if os.path.exists(ICON_ICO):
-            self.setWindowIcon(QIcon(ICON_ICO))
+        if os.path.exists(ICON_PATH):
+            self.setWindowIcon(QIcon(ICON_PATH))
         elif os.path.exists(ICON_PNG):
             self.setWindowIcon(QIcon(ICON_PNG))
 
@@ -418,13 +503,60 @@ class XianRenZhangWindow(QMainWindow):
                         except Exception as e:
                             box["value"] = f"ERR {e}"; ev.set()
                     elif kind == "shot":
-                        def _shot(ev=ev, box=box):
+                        # 【2026-09-21 修复】旧实现用 self.view.grab() 直接截 QtWebEngine，
+                        # 在这个（软件渲染/no-sandbox）环境里拿到的永远是**全黑图** ——
+                        # grab() 读不到 WebEngine 的合成层。改为「先 printToPdf 再光栅化」：
+                        # printToPdf 走的是页面自己的打印布局，能真实拿到渲染结果，
+                        # 再用 PyMuPDF 把第 1 页转成 PNG。fitz 不可用时退回 grab()。
+                        _target = body.get("path") or ""
+
+                        def _shot(ev=ev, box=box, target=_target):
+                            import os as _os
+                            tmp = _os.path.join(
+                                _os.path.dirname(target) or ".", "_bridge_shot_tmp.pdf")
                             try:
-                                ok = self.view.grab().save(body.get("path") or "")
-                                box["value"] = bool(ok)
+                                self.view.page().printToPdf(tmp)
                             except Exception as e:
-                                box["value"] = f"ERR {e}"
-                            ev.set()
+                                try:
+                                    box["value"] = bool(self.view.grab().save(target))
+                                except Exception as e2:
+                                    box["value"] = f"ERR {e2}"
+                                ev.set()
+                                return
+
+                            def _raster(n=0, tmp=tmp, target=target, ev=ev, box=box):
+                                import os as _os
+                                if _os.path.exists(tmp) and _os.path.getsize(tmp) > 0:
+                                    try:
+                                        import fitz  # PyMuPDF
+                                        doc = fitz.open(tmp)
+                                        pix = doc.load_page(0).get_pixmap(
+                                            matrix=fitz.Matrix(1.5, 1.5))
+                                        pix.save(target)
+                                        doc.close()
+                                        box["value"] = True
+                                    except Exception as e:
+                                        try:
+                                            box["value"] = bool(self.view.grab().save(target))
+                                        except Exception:
+                                            box["value"] = f"ERR {e}"
+                                    try:
+                                        _os.remove(tmp)
+                                    except Exception:
+                                        pass
+                                    ev.set()
+                                    return
+                                if n > 80:
+                                    try:
+                                        box["value"] = bool(self.view.grab().save(target))
+                                    except Exception:
+                                        box["value"] = False
+                                    ev.set()
+                                    return
+                                _QTimer.singleShot(250, lambda: _raster(n + 1))
+
+                            _raster()
+
                         _QTimer.singleShot(0, _shot)
                     else:
                         def _cb(v, ev=ev, box=box):
@@ -477,11 +609,11 @@ def main():
     app.setApplicationName("仙人掌 Agent")
     # 加载仙人掌图标
     try:
-        if os.path.exists(ICON_ICO):
-            icon = QIcon(ICON_ICO)
+        if os.path.exists(ICON_PATH):
+            icon = QIcon(ICON_PATH)
             if not icon.isNull():
                 app.setWindowIcon(icon)
-                log("已加载图标:", ICON_ICO)
+                log("已加载图标:", ICON_PATH)
         elif os.path.exists(ICON_PNG):
             icon = QIcon(ICON_PNG)
             if not icon.isNull():
@@ -491,6 +623,9 @@ def main():
         log("[WARN] 图标加载失败:", e)
     win = XianRenZhangWindow()
     win.show()
+    # 【真机修复】窗口已经拿到原生 HWND，把图标补到「窗口类」上，
+    # 否则任务栏 / Alt+Tab 显示的是系统默认的空白窗口图标。
+    _apply_win_class_icon(win)
     sys.exit(app.exec())
 
 

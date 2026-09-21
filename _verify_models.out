@@ -1,0 +1,19 @@
+=== A) DeepSeek：模型下拉应隐藏，搜索控件应显示 ===
+   PLATFORMS: {'n': 4, 'cur': 'deepseek'}
+   parsed: {'models': 0, 'has_search': True, 'modelGroupDisplay': 'none', 'searchGroupDisplay': 'visible'}
+  PASS  DeepSeek models 为空  | 0
+  PASS  DeepSeek 模型控件已隐藏  | none
+  PASS  DeepSeek 搜索控件可见  | visible
+
+=== B) 豆包：模型下拉应显示且选项来自配置 ===
+   parsed: {'models': 7, 'has_search': False, 'modelGroupDisplay': 'visible', 'searchGroupDisplay': 'none', 'options': ['对话', '深入研究', '帮我写作', '图像生成']}
+  PASS  豆包模型控件可见  | visible
+  PASS  豆包模型选项非空  | ['对话', '深入研究', '帮我写作', '图像生成']
+  PASS  豆包无搜索控件（已隐藏）  | none
+
+=== C) 页面里不再有硬编码的假模式名 ===
+   parsed: {'hasFake': False, 'text': '对话深入研究帮我写作图像生成翻译音乐生成视频生成'}
+  PASS  已无假模式名残留  | 对话深入研究帮我写作图像生成翻译音乐生成视频生成
+
+==============================================================
+RESULT: 7/7 PASS

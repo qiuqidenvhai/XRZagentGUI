@@ -1,0 +1,6 @@
+resume post -> {'type': 'accepted', 'text': '命令已接收，正在处理...', 'async_task': True}
+resume saw=[]
+resume FINAL=NONE
+followup post -> {'type': 'accepted', 'text': '命令已接收，正在处理...', 'async_task': True}
+followup saw=['thinking', 'command_detected', 'tool_start', 'tool_end', 'command_success', 'ai_final_reply']
+followup FINAL={"type": "ai", "text": "已思考（用时 1 秒）\n\n用户问的是刚才那个任务要做什么。刚才最近的任务是\"生成一个关于AI的PPT，7页\"。用一句话回答。直接回答并 done。不需要工具。\n\n它当时要生成一个关于 AI 的 PPT，共 7 页。", "task_id": "task_1789906475492"}

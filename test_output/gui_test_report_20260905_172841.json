@@ -1,0 +1,722 @@
+{
+  "tests": [
+    {
+      "name": "文件上传控件",
+      "status": "PASS",
+      "detail": "存在",
+      "timestamp": "2026-09-05T17:28:13.737468"
+    },
+    {
+      "name": "附件显示区域",
+      "status": "PASS",
+      "detail": "存在",
+      "timestamp": "2026-09-05T17:28:13.756255"
+    },
+    {
+      "name": "pendingAttachments变量",
+      "status": "PASS",
+      "detail": "已定义",
+      "timestamp": "2026-09-05T17:28:13.773180"
+    },
+    {
+      "name": "文件上传操作",
+      "status": "WARN",
+      "detail": "测试文件不存在",
+      "timestamp": "2026-09-05T17:28:13.785577"
+    },
+    {
+      "name": "前端附件列表",
+      "status": "INFO",
+      "detail": "显示0个附件",
+      "timestamp": "2026-09-05T17:28:13.802064"
+    },
+    {
+      "name": "后端附件API",
+      "status": "FAIL",
+      "detail": "<urlopen error [WinError 10061] 由于目标计算机积极拒绝，无法连接。>",
+      "timestamp": "2026-09-05T17:28:16.774954"
+    },
+    {
+      "name": "AI感知附件标记",
+      "status": "WARN",
+      "detail": "未检测到（可能需发送后验证）",
+      "timestamp": "2026-09-05T17:28:17.347729"
+    },
+    {
+      "name": "思考控制按钮",
+      "status": "WARN",
+      "detail": "未找到",
+      "timestamp": "2026-09-05T17:28:17.362749"
+    },
+    {
+      "name": "showThinking函数",
+      "status": "PASS",
+      "detail": "存在",
+      "timestamp": "2026-09-05T17:28:17.383820"
+    },
+    {
+      "name": "appendThinking函数",
+      "status": "PASS",
+      "detail": "存在",
+      "timestamp": "2026-09-05T17:28:17.401374"
+    },
+    {
+      "name": "endThinking函数",
+      "status": "PASS",
+      "detail": "存在",
+      "timestamp": "2026-09-05T17:28:17.417122"
+    },
+    {
+      "name": "思考模式状态",
+      "status": "INFO",
+      "detail": "当前: 未知",
+      "timestamp": "2026-09-05T17:28:17.432444"
+    },
+    {
+      "name": "SSE思考事件处理",
+      "status": "WARN",
+      "detail": "未找到",
+      "timestamp": "2026-09-05T17:28:17.450827"
+    },
+    {
+      "name": "历史任务面板",
+      "status": "PASS",
+      "detail": "存在",
+      "timestamp": "2026-09-05T17:28:17.462959"
+    },
+    {
+      "name": "loadHistory函数",
+      "status": "PASS",
+      "detail": "存在",
+      "timestamp": "2026-09-05T17:28:17.475716"
+    },
+    {
+      "name": "任务列表显示",
+      "status": "PASS",
+      "detail": "显示3个任务",
+      "timestamp": "2026-09-05T17:28:18.731087"
+    },
+    {
+      "name": "任务列表API",
+      "status": "FAIL",
+      "detail": "<urlopen error [WinError 10061] 由于目标计算机积极拒绝，无法连接。>",
+      "timestamp": "2026-09-05T17:28:20.791926"
+    },
+    {
+      "name": "独立对话文件",
+      "status": "PASS",
+      "detail": "共177个独立文件",
+      "timestamp": "2026-09-05T17:28:20.802703"
+    },
+    {
+      "name": "对话独立性验证",
+      "status": "WARN",
+      "detail": "发现1个重复",
+      "timestamp": "2026-09-05T17:28:20.958987"
+    },
+    {
+      "name": "历史任务加载",
+      "status": "PASS",
+      "detail": "显示2条消息",
+      "timestamp": "2026-09-05T17:28:22.340556"
+    },
+    {
+      "name": "恢复功能:restoreTask",
+      "status": "WARN",
+      "detail": "未找到",
+      "timestamp": "2026-09-05T17:28:22.357828"
+    },
+    {
+      "name": "恢复功能:恢复对话",
+      "status": "WARN",
+      "detail": "未找到",
+      "timestamp": "2026-09-05T17:28:22.372762"
+    },
+    {
+      "name": "session.restore_conversation",
+      "status": "PASS",
+      "detail": "存在",
+      "timestamp": "2026-09-05T17:28:22.375313"
+    },
+    {
+      "name": "URL追溯恢复",
+      "status": "PASS",
+      "detail": "存在",
+      "timestamp": "2026-09-05T17:28:22.375388"
+    },
+    {
+      "name": "JSON文件回退",
+      "status": "PASS",
+      "detail": "存在",
+      "timestamp": "2026-09-05T17:28:22.375413"
+    },
+    {
+      "name": "恢复命令发送",
+      "status": "FAIL",
+      "detail": "<urlopen error [WinError 10061] 由于目标计算机积极拒绝，无法连接。>",
+      "timestamp": "2026-09-05T17:28:24.422797"
+    },
+    {
+      "name": "deleteTask函数",
+      "status": "PASS",
+      "detail": "存在",
+      "timestamp": "2026-09-05T17:28:24.440964"
+    },
+    {
+      "name": "删除按钮",
+      "status": "INFO",
+      "detail": "找到0个删除按钮",
+      "timestamp": "2026-09-05T17:28:24.464408"
+    },
+    {
+      "name": "tasks.json权限",
+      "status": "PASS",
+      "detail": "666 (期望666)",
+      "timestamp": "2026-09-05T17:28:24.465702"
+    },
+    {
+      "name": "创建测试任务",
+      "status": "PASS",
+      "detail": "ID: deepseek_20260905_172824_94004",
+      "timestamp": "2026-09-05T17:28:24.597553"
+    },
+    {
+      "name": "delete_task函数",
+      "status": "PASS",
+      "detail": "删除成功",
+      "timestamp": "2026-09-05T17:28:29.365491"
+    },
+    {
+      "name": "删除验证",
+      "status": "PASS",
+      "detail": "任务已移除",
+      "timestamp": "2026-09-05T17:28:29.406162"
+    },
+    {
+      "name": "DELETE API响应",
+      "status": "FAIL",
+      "detail": "<urlopen error [WinError 10061] 由于目标计算机积极拒绝，无法连接。>",
+      "timestamp": "2026-09-05T17:28:31.434279"
+    },
+    {
+      "name": "build_pptx函数",
+      "status": "PASS",
+      "detail": "存在",
+      "timestamp": "2026-09-05T17:28:31.436346"
+    },
+    {
+      "name": "parse_to_slides函数",
+      "status": "PASS",
+      "detail": "存在",
+      "timestamp": "2026-09-05T17:28:31.436404"
+    },
+    {
+      "name": "已生成PPT",
+      "status": "PASS",
+      "detail": "共7个PPT文件",
+      "timestamp": "2026-09-05T17:28:31.439369"
+    },
+    {
+      "name": "PPT: demo.pptx",
+      "status": "PASS",
+      "detail": "32986 bytes, 24个XML文件",
+      "timestamp": "2026-09-05T17:28:31.522507"
+    },
+    {
+      "name": "PPT: demo2.pptx",
+      "status": "PASS",
+      "detail": "36875 bytes, 27个XML文件",
+      "timestamp": "2026-09-05T17:28:31.580573"
+    },
+    {
+      "name": "PPT: demo3.pptx",
+      "status": "PASS",
+      "detail": "34157 bytes, 25个XML文件",
+      "timestamp": "2026-09-05T17:28:31.652456"
+    },
+    {
+      "name": "PPT生成命令",
+      "status": "FAIL",
+      "detail": "<urlopen error [WinError 10061] 由于目标计算机积极拒绝，无法连接。>",
+      "timestamp": "2026-09-05T17:28:33.691730"
+    },
+    {
+      "name": "interruptTask函数",
+      "status": "PASS",
+      "detail": "存在",
+      "timestamp": "2026-09-05T17:28:33.705633"
+    },
+    {
+      "name": "停止按钮",
+      "status": "PASS",
+      "detail": "找到1个停止按钮",
+      "timestamp": "2026-09-05T17:28:33.746525"
+    },
+    {
+      "name": "中断API",
+      "status": "FAIL",
+      "detail": "<urlopen error [WinError 10061] 由于目标计算机积极拒绝，无法连接。>",
+      "timestamp": "2026-09-05T17:28:35.780652"
+    },
+    {
+      "name": "中断代码实现",
+      "status": "PASS",
+      "detail": "存在",
+      "timestamp": "2026-09-05T17:28:35.790919"
+    },
+    {
+      "name": "loadAttachments函数",
+      "status": "PASS",
+      "detail": "存在",
+      "timestamp": "2026-09-05T17:28:35.807425"
+    },
+    {
+      "name": "附件侧边栏",
+      "status": "PASS",
+      "detail": "存在",
+      "timestamp": "2026-09-05T17:28:35.829981"
+    },
+    {
+      "name": "附件API检查",
+      "status": "FAIL",
+      "detail": "<urlopen error [WinError 10061] 由于目标计算机积极拒绝，无法连接。>",
+      "timestamp": "2026-09-05T17:28:37.855715"
+    },
+    {
+      "name": "自动刷新附件",
+      "status": "WARN",
+      "detail": "可能未实现（需进一步验证）",
+      "timestamp": "2026-09-05T17:28:37.920950"
+    },
+    {
+      "name": "平台配置",
+      "status": "PASS",
+      "detail": "配置平台: deepseek, tongyi, doubao, yuanbao",
+      "timestamp": "2026-09-05T17:28:37.922806"
+    },
+    {
+      "name": "平台选择器",
+      "status": "WARN",
+      "detail": "未找到",
+      "timestamp": "2026-09-05T17:28:38.019405"
+    },
+    {
+      "name": "模型选择器",
+      "status": "PASS",
+      "detail": "存在",
+      "timestamp": "2026-09-05T17:28:38.258400"
+    },
+    {
+      "name": "模型切换函数",
+      "status": "PASS",
+      "detail": "存在",
+      "timestamp": "2026-09-05T17:28:38.276992"
+    },
+    {
+      "name": "当前模型状态",
+      "status": "INFO",
+      "detail": "当前: quick",
+      "timestamp": "2026-09-05T17:28:38.308622"
+    },
+    {
+      "name": "消息输入框",
+      "status": "PASS",
+      "detail": "存在",
+      "timestamp": "2026-09-05T17:28:38.362041"
+    },
+    {
+      "name": "发送按钮",
+      "status": "PASS",
+      "detail": "存在",
+      "timestamp": "2026-09-05T17:28:38.390463"
+    },
+    {
+      "name": "发送命令函数",
+      "status": "PASS",
+      "detail": "存在",
+      "timestamp": "2026-09-05T17:28:38.407233"
+    },
+    {
+      "name": "SSE连接支持",
+      "status": "PASS",
+      "detail": "支持",
+      "timestamp": "2026-09-05T17:28:38.424248"
+    },
+    {
+      "name": "主题切换",
+      "status": "INFO",
+      "detail": "未找到（可能通过命令控制）",
+      "timestamp": "2026-09-05T17:28:38.445584"
+    },
+    {
+      "name": "状态指示器",
+      "status": "PASS",
+      "detail": "存在",
+      "timestamp": "2026-09-05T17:28:38.479266"
+    },
+    {
+      "name": "日志面板",
+      "status": "PASS",
+      "detail": "存在",
+      "timestamp": "2026-09-05T17:28:38.510895"
+    }
+  ],
+  "summary": {
+    "total": 60,
+    "passed": 39,
+    "failed": 7,
+    "warnings": 9,
+    "info": 5
+  },
+  "categories": {
+    "文件上传控件": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "附件显示区域": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "pendingAtt": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "文件上传操作": {
+      "PASS": 0,
+      "FAIL": 0,
+      "WARN": 1,
+      "INFO": 0
+    },
+    "前端附件列表": {
+      "PASS": 0,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 1
+    },
+    "后端附件API": {
+      "PASS": 0,
+      "FAIL": 1,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "AI感知附件标记": {
+      "PASS": 0,
+      "FAIL": 0,
+      "WARN": 1,
+      "INFO": 0
+    },
+    "思考控制按钮": {
+      "PASS": 0,
+      "FAIL": 0,
+      "WARN": 1,
+      "INFO": 0
+    },
+    "showThinki": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "appendThin": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "endThinkin": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "思考模式状态": {
+      "PASS": 0,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 1
+    },
+    "SSE思考事件处理": {
+      "PASS": 0,
+      "FAIL": 0,
+      "WARN": 1,
+      "INFO": 0
+    },
+    "历史任务面板": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "loadHistor": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "任务列表显示": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "任务列表API": {
+      "PASS": 0,
+      "FAIL": 1,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "独立对话文件": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "对话独立性验证": {
+      "PASS": 0,
+      "FAIL": 0,
+      "WARN": 1,
+      "INFO": 0
+    },
+    "历史任务加载": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "恢复功能:resto": {
+      "PASS": 0,
+      "FAIL": 0,
+      "WARN": 1,
+      "INFO": 0
+    },
+    "恢复功能:恢复对话": {
+      "PASS": 0,
+      "FAIL": 0,
+      "WARN": 1,
+      "INFO": 0
+    },
+    "session.re": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "URL追溯恢复": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "JSON文件回退": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "恢复命令发送": {
+      "PASS": 0,
+      "FAIL": 1,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "deleteTask": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "删除按钮": {
+      "PASS": 0,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 1
+    },
+    "tasks.json": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "创建测试任务": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "delete_tas": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "删除验证": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "DELETE": {
+      "PASS": 0,
+      "FAIL": 1,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "build_pptx": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "parse_to_s": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "已生成PPT": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "PPT:": {
+      "PASS": 3,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "PPT生成命令": {
+      "PASS": 0,
+      "FAIL": 1,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "interruptT": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "停止按钮": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "中断API": {
+      "PASS": 0,
+      "FAIL": 1,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "中断代码实现": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "loadAttach": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "附件侧边栏": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "附件API检查": {
+      "PASS": 0,
+      "FAIL": 1,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "自动刷新附件": {
+      "PASS": 0,
+      "FAIL": 0,
+      "WARN": 1,
+      "INFO": 0
+    },
+    "平台配置": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "平台选择器": {
+      "PASS": 0,
+      "FAIL": 0,
+      "WARN": 1,
+      "INFO": 0
+    },
+    "模型选择器": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "模型切换函数": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "当前模型状态": {
+      "PASS": 0,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 1
+    },
+    "消息输入框": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "发送按钮": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "发送命令函数": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "SSE连接支持": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "主题切换": {
+      "PASS": 0,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 1
+    },
+    "状态指示器": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "日志面板": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    }
+  },
+  "timestamp": "2026-09-05T17:28:41.331166"
+}

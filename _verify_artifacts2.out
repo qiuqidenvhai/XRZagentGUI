@@ -1,0 +1,33 @@
+=== 1) 冷启动：没有任务 → 侧边栏必须为空 ===
+   parsed: {'items': 0, 'empty': True, 'scope': 'null'}
+  PASS  侧边栏 0 个产物  | 0
+  PASS  显示空态提示  | True
+  PASS  FILE_SCOPE_CONV 为空  | null
+
+=== 2) 前端函数已定义 ===
+   parsed: {'bind': 'function', 'load': 'function', 'clear': 'function', 'rec': 'function'}
+  PASS  函数 bind  | function
+  PASS  函数 load  | function
+  PASS  函数 clear  | function
+  PASS  函数 rec  | function
+
+=== 3) 绑定某任务 → 只显示该任务产物 ===
+  PASS  已绑定测试任务  | deepseek_TEST_SCOPE_001
+   parsed: {'items': ['mp2_deepseek.docx']}
+  PASS  该任务显示 1 个产物  | ['mp2_deepseek.docx']
+  PASS  产物是 mp2_deepseek.docx  | ['mp2_deepseek.docx']
+
+=== 4) 绑定无产物的任务 → 必须为空（不串场）===
+   parsed: {'items': 0}
+  PASS  无产物任务显示 0 个  | 0
+
+=== 5) 新建对话 → 侧边栏清空 ===
+   parsed: {'items': 0, 'scope': 'null'}
+  PASS  新对话后 0 个产物  | 0
+  PASS  scope 已清空  | null
+
+=== 6) 截图留证 ===
+   shot: True
+
+==============================================================
+RESULT: 13/13 PASS

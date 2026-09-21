@@ -29,6 +29,18 @@ from dataclasses import dataclass, field
 
 logger = logging.getLogger("platform_browser")
 
+# ── 同平台绝不双开的进程内互斥（核心防护）──
+# 同一个 user_data_dir（同一平台 profile）绝不能被两个持久化上下文同时占用——
+# 后开的会杀掉先开的活浏览器 / 抢 SingletonLock，导致「一个 deepseek 掉登」。
+# 不同平台的目录（deepseek 与 豆包）互不相干，可各开各的、并存多浏览器。
+# 这里用「目录 -> owner 管理器 + 锁」做进程内单例互斥：
+#   - 同目录第二个 manager 来时，要么拿到 owner 正在持有的 context 接管复用，
+#     要么在 owner 尚未 launch 时排队等它 launch 完再接管（绝不自己再开一个）。
+# 这是「同平台最多 1 个浏览器进程、跨平台可并存」的落地机制。
+_lock_by_dir: "Dict[str, Any]" = {}          # 目录str -> 保护该目录 launch 的 asyncio.Lock
+_owner_by_dir: "Dict[str, Any]" = {}         # 目录str -> 已持有该目录 context 的 manager 实例
+_dir_identity: "Dict[str, Path]" = {}        # manager id -> 其 user_data_dir（动态跟踪 fresh_profile 等）
+
 _DIAG_FILE = r"D:\软件\XianRenZhangAgent\_xrz_dom_dump.jsonl"
 
 
@@ -128,6 +140,9 @@ class PlatformProfile:
     #   "toggle" —— 点击即切换的开关按钮（如 DeepSeek 的 div.ds-toggle-button）
     #   "select" —— 点击展开下拉、再选「深度思考」选项（如 Qwen 的 ant-select 下拉框）
     thinking_mode: str = "toggle"
+    # ── 「联网搜索」开关的按钮选择器（如 DeepSeek 的「智能搜索」）──
+    # 空列表 = 该平台页面没有联网搜索开关，set_search() 直接返回 False（不瞎点按钮）。
+    search_toggle_selectors: list = field(default_factory=list)
     # 文件上传入口：点击后触发隐藏 file input 的元素选择器。
     # 空字符串表示「不点按钮、直接找 input[type=file] 用 set_input_files 设值」
     # （绝大多数现代聊天平台都有隐藏 file input，直接设值最稳，绕开系统文件对话框）。
@@ -183,7 +198,9 @@ PLATFORM_PROFILES = {
         url="https://chat.deepseek.com",
         chat_url="https://chat.deepseek.com",
         input_selector="textarea",
-        send_selector="button[type='submit']",
+        # 2026-09-20 真机 DOM 核对：新版 DeepSeek 的发送键已不是 button[type='submit']（0 匹配），
+        # 置空走 CDP 受信 Enter（windowsVirtualKeyCode=13，实测可用）。详见 platforms.json _send_note。
+        send_selector="",  # 用 Enter 发送（新版页面已无 submit 按钮）
         upload_button_selector="",  # 保留字段（兼容旧逻辑）；实际用 attach_button_selector
         # 深度思考开关：真实 DOM 确认是 div.ds-toggle-button（文字「深度思考」，
         # 开启时 class 含 ds-toggle-button--selected）。用 :has-text 精确锁定该按钮。
@@ -387,6 +404,8 @@ def list_platforms() -> list:
             "attach_button_selector": getattr(p, "attach_button_selector", "") or "",
             "multi_file": getattr(p, "multi_file", True),
             "models": models,
+            # 该平台网页是否真的带「联网搜索」开关（供 GUI 决定是否显示）
+            "has_search": bool(getattr(p, "search_toggle_selectors", None)),
         })
     return out
 
@@ -427,7 +446,84 @@ class PlatformBrowserManager:
         # 第一轮必然超时返回「（未收到回复）」。这正是第三方平台（新会话）首轮
         # 对话失败的根因（DeepSeek 因历史记录多而侥幸不触发）。
         self._pre_send_msg_count = None
-        
+        # 【同平台绝不双开】是否「接管了同平台 owner 的 context」：
+        # True = 与 owner 共享同一浏览器进程，close() 只清自己的 page，绝不关 owner。
+        self._adopted = False
+        # 僵尸检测用：浏览器主进程 PID 集 + context 关闭标记
+        self._chrome_pids = None
+        self._ctx_closed = False
+
+    def _find_browser_pids(self):
+        """找到本平台 context 对应 Chromium 主进程 PID（僵尸检测用）。"""
+        import psutil
+        try:
+            marker = Path(self.user_data_dir).name.lower()
+        except Exception:
+            return None
+        pids = set()
+        try:
+            for p in psutil.process_iter(["pid", "cmdline"]):
+                try:
+                    cl = p.info.get("cmdline") or []
+                    if "--remote-debugging-pipe" not in cl:
+                        continue
+                    full = " ".join(cl)
+                    if "--user-data-dir=" + marker in full or marker in full:
+                        pids.add(p.info["pid"])
+                except Exception:
+                    continue
+        except Exception:
+            return None
+        return pids or None
+
+    def _is_zombie(self):
+        """同步判定 self._browser 是否僵尸（进程死但 Playwright 侧还挂着）。"""
+        if self._browser is None:
+            return False, "无 context"
+        try:
+            if getattr(self, "_ctx_closed", False):
+                return True, "close 监听已触发"
+            if hasattr(self._browser, "is_closed") and self._browser.is_closed():
+                return True, "is_closed()"
+            pids = getattr(self, "_chrome_pids", None)
+            if pids:
+                import psutil
+                if not any(psutil.pid_exists(pid) for pid in pids):
+                    return True, f"浏览器进程全部退出 {sorted(pids)}"
+        except Exception:
+            return True, "检测异常（保守判死）"
+        return False, "存活"
+
+    async def _clear_zombie(self):
+        """僵尸则强制清理，让 launch() 走完整重建。"""
+        if self._browser is None:
+            return
+        dead, reason = self._is_zombie()
+        if not dead:
+            return
+        logger.warning(f"[{self.profile.name}] 检测到僵尸浏览器（{reason}），强制清理后重建...")
+        self._close_context_and_cleanup()
+
+    def _close_context_and_cleanup(self):
+        """把死 context 的所有引用清零（不清 registry——只有 close() 才释放 owner 登记）。"""
+        self._ctx_closed = False
+        try:
+            if self._browser is not None:
+                self._browser.remove_listener("close", self._on_context_closed)
+        except Exception:
+            pass
+        self._browser = None
+        self._page = None
+        self._chrome_pids = None
+
+    def _on_context_closed(self):
+        """context close 事件回调：标记已关，供 _is_zombie 快速判死。"""
+        try:
+            self._ctx_closed = True
+            logger.warning(f"[{self.profile.name}] 浏览器上下文已关闭（close 监听），下次调用将自动重建")
+        except Exception:
+            pass
+
     def _kill_stale_browser_for_profile(self):
         """启动前：杀掉仍占用本平台 user_data_dir 的残留 Chromium 进程。
 
@@ -477,9 +573,14 @@ class PlatformBrowserManager:
         """
         from playwright.async_api import async_playwright
 
+        # 【僵尸自愈】浏览器进程被杀/崩溃后 context 对象可能还挂着（is_closed() 不靠谱），
+        # 旧逻辑「_browser is not None 就复用」→ 永远复用死 context → 页面未初始化。
+        # 现在做 PID 级存活验证，僵尸一律清理后走完整重建。
         if self._browser is not None and not fresh_profile:
-            logger.info(f"{self.profile.name} 浏览器已启动")
-            return
+            await self._clear_zombie()
+            if self._browser is not None:
+                logger.info(f"{self.profile.name} 浏览器已启动")
+                return
 
         logger.info(f"[{self.profile.name}] 启动浏览器...")
 
@@ -496,8 +597,36 @@ class PlatformBrowserManager:
             stamp = _dt.now().strftime("%Y%m%d%H%M%S")
             self.user_data_dir = BROWSER_DATA_ROOT / f"{self.platform_key}_fresh_{stamp}"
             logger.warning(f"[{self.profile.name}] 使用全新临时目录启动: {self.user_data_dir}")
+
+        # 【同平台防双开】同目录（同一平台）已有活 owner → 直接接管复用，
+        # 绝不重开、绝不 kill owner（kill 活浏览器 = 掉登）。
+        # 不同平台目录不同（键不同）互不影响 → 一个 DeepSeek + 一个豆包可以并存。
+        from agent_core import profile_lock as _pl
+        if not fresh_profile:
+            _owner = _pl.acquire(self.user_data_dir, self)
+            if _owner is not None and _owner is not self:
+                logger.info(f"[{self.profile.name}] 同目录已有活 owner（{type(_owner).__name__}），"
+                            f"接管复用（同平台不双开，防掉登）")
+                # context 绑定 owner 的 Playwright 连接，必须共享 owner 的实例
+                self._playwright = _owner._playwright or self._playwright
+                self._browser = _owner._browser
+                self._chrome_pids = getattr(_owner, "_chrome_pids", None)
+                self._adopted = True
+                self._ctx_closed = False
+                try:
+                    self._browser.on("close", self._on_context_closed)
+                except Exception:
+                    pass
+                self._page = self._browser.pages[0] if self._browser.pages else await self._browser.new_page()
+                await self._load_cookies()
+                logger.info(f"[{self.profile.name}] 已接管同目录 owner 的浏览器（零双开）")
+                return
+
         self.user_data_dir.mkdir(parents=True, exist_ok=True)
-        # 2.1 先清残留进程（锁目录的主因），再清锁文件
+        # 2.1 清残留进程 + 锁文件。
+        # 【关键】_kill_stale_browser_for_profile() 会杀「所有命令行含本目录」的活进程——
+        # 包括另一个还活着的浏览器。现在走到这里说明本目录在进程内【没有活 owner】，
+        # 杀到的只可能是跨进程孤儿残留（上次崩溃留下的），是安全的。
         self._kill_stale_browser_for_profile()
         self._cleanup_lock_files()
 
@@ -535,10 +664,12 @@ class PlatformBrowserManager:
 
         # 3.5 监听浏览器异常关闭（便于定位「一启动就被关」的根因）
         try:
-            self._browser.on("close", lambda: logger.warning(
-                f"[{self.profile.name}] 浏览器上下文已关闭（可能异常崩溃）"))
+            self._browser.on("close", self._on_context_closed)
         except Exception:
             pass
+        # 记录浏览器主进程 PID + 关闭标记，供僵尸检测（launch/navigate 自愈用）
+        self._chrome_pids = self._find_browser_pids()
+        self._ctx_closed = False
 
         # 4. 初始化页面
         self._page = self._browser.pages[0] if self._browser.pages else await self._browser.new_page()
@@ -561,13 +692,19 @@ class PlatformBrowserManager:
         return _win_apply_cactus_icon()
 
     async def _apply_cactus_icon_loop(self):
-        """后台轮询给浏览器窗口设置仙人球图标（窗口可能稍后才出现/切换平台新开）。"""
+        """后台轮询给浏览器窗口设置仙人球图标。
+
+        【2026-09-21 修复】原来「设置成功 >0 就 return」，导致图标只贴到 launch
+        后最先出现的**临时窗口**上，晚几秒才出现的真正主窗口永远没人管。
+        现在改成**持续**巡检一段时间，不做成功即停；此外模块级还有常驻守护线程兜底。
+        """
         try:
-            for _ in range(15):  # ~30s 内反复尝试
-                if _win_apply_cactus_icon() > 0:
-                    logger.info(f"[{self.profile.name}] 已将浏览器窗口图标设为仙人球 🌵")
-                    return
+            total = 0
+            for _ in range(30):          # ~60s 内反复补，覆盖窗口陆续出现的窗口期
+                total += _win_apply_cactus_icon()
                 await asyncio.sleep(2.0)
+            if total:
+                logger.info(f"[{self.profile.name}] 浏览器窗口图标已设为仙人球 🌵（共补 {total} 次）")
         except Exception:
             pass
 
@@ -687,8 +824,12 @@ class PlatformBrowserManager:
     async def navigate_to_chat(self):
         """导航到聊天页面（自带自愈：若浏览器在导航时被杀，自动重启用，最多 3 次；
         最后 1 次用全新临时 profile 兜底，保证浏览器一定能开起来）"""
-        if not self._page and self._browser is None:
-            raise RuntimeError("浏览器未初始化")
+        # 【僵尸自愈】进程被杀后 context 对象可能还挂着，先判死，避免无谓进入重试循环
+        await self._clear_zombie()
+        if self._browser is None and self._page is None:
+            await self.launch()
+            if self._page is None:
+                raise RuntimeError("浏览器未初始化")
 
         last_err = None
         for _attempt in range(3):
@@ -1119,8 +1260,65 @@ class PlatformBrowserManager:
         return True
     
     # ============================================================
-    # 深度思考开关（每个平台 UI 不同，逐个适配）
+    # 通用 toggle 开关（深度思考 / 智能搜索等，每个平台 UI 不同）
     # ============================================================
+    async def _toggle_by_selectors(self, selectors, enable: bool, label: str) -> bool:
+        """按选择器列表把一个 toggle 按钮切到目标状态。
+
+        纯 UI 操作：检测激活态 → 不符就点 → 复检。全部候选失败返回 False。
+        深度思考与智能搜索共用这套逻辑（两者在 DeepSeek 上都是
+        div.ds-toggle-button，只是文案不同）。
+        """
+        if not self._page or not selectors:
+            return False
+        for sel in selectors:
+            try:
+                btns = self._page.locator(sel)
+                n = await btns.count()
+                for i in range(n):
+                    btn = btns.nth(i)
+                    try:
+                        if not await btn.is_visible():
+                            continue
+                    except Exception:
+                        continue
+                    is_active = await self._detect_toggle_active(btn)
+                    if is_active == enable:
+                        logger.info(f"[{self.profile.name}] {label}已是{'开启' if enable else '关闭'}")
+                        return True
+                    try:
+                        await btn.click(timeout=3000)
+                    except Exception as ce:
+                        logger.warning(f"[{self.profile.name}] 点击 {sel} 失败: {ce}")
+                        continue
+                    await asyncio.sleep(0.8)
+                    is_active2 = await self._detect_toggle_active(btn)
+                    if is_active2 == enable:
+                        logger.info(f"[{self.profile.name}] {label}已{'开启' if enable else '关闭'} (selector={sel})")
+                        return True
+                    logger.warning(
+                        f"[{self.profile.name}] 点击 {sel} 后 {label}状态未变 "
+                        f"({is_active}→{is_active2})，尝试下一个候选"
+                    )
+            except Exception as e:
+                logger.warning(f"[{self.profile.name}] 尝试选择器 {sel} 失败: {e}")
+                continue
+        return False
+
+    async def set_search(self, enable: bool) -> bool:
+        """开启/关闭当前平台的「联网搜索」开关（如 DeepSeek 的「智能搜索」）。
+
+        没有配置 search_toggle_selectors 的平台直接返回 False（不瞎点）。
+        """
+        selectors = getattr(self.profile, "search_toggle_selectors", None) or []
+        if not selectors:
+            logger.info(f"[{self.profile.name}] 该平台未提供联网搜索开关，跳过（不点击任何按钮）")
+            return False
+        ok = await self._toggle_by_selectors(selectors, enable, "智能搜索")
+        if not ok:
+            logger.warning(f"[{self.profile.name}] 未找到可用的联网搜索开关")
+        return ok
+
     async def enable_thinking(self, enable: bool) -> bool:
         """开启/关闭当前平台的「深度思考」模式。
 
@@ -1641,16 +1839,30 @@ class PlatformBrowserManager:
         return await self.upload_files([file_path])
     
     async def _read_thinking(self, selector: str) -> str:
-        """读取当前页面最长的「思考过程」文本"""
+        """读取当前页面最长的「思考过程」文本。
+
+        【2026-09-21 真机加固】两条防线，保证拿到的是「推理正文」而不是折叠条标题：
+          1) 优先读元素内部的 .ds-markdown（DeepSeek 实测推理正文就在这层，
+             折叠标题 ._9ecc93a 在折叠态下 innerText 为空、展开态下只有
+             「已思考（用时 N 秒）」这类一行状态，绝不该当成推理正文）；
+             取不到再退回元素自身 innerText。
+          2) 最后统一剥掉行首的「(已完成|已深度|已|完成)?(深度)?思考（用时 …）」
+             这一行 —— 展开态下它会混进 innerText，剥掉才算干净。
+        """
         if not selector or not self._page:
             return ""
         try:
-            return await self._page.evaluate(
+            raw = await self._page.evaluate(
                 "(sel) => {"
                 " const els = document.querySelectorAll(sel);"
                 " let best = '';"
                 " for (const el of els) {"
-                "   const t = (el.innerText || '').trim();"
+                # 优先取推理正文层（.ds-markdown / .markdown / .ds-markdown-paragraph 的父层）
+                "   let src = el.querySelector"
+                "       ? (el.querySelector('.ds-markdown') || el)"
+                "       : el;"
+                "   let t = (src.innerText || '').trim();"
+                "   if (!t) t = (el.innerText || '').trim();"
                 "   if (t && t.length > best.length) best = t;"
                 " }"
                 " return best;"
@@ -1659,6 +1871,20 @@ class PlatformBrowserManager:
             )
         except Exception:
             return ""
+        if not raw:
+            return ""
+        # 第二道防线：剥掉折叠条标题行（整行或行首的「已思考（用时 N 秒）」等）
+        try:
+            import re as _re
+            raw = _re.sub(
+                r"^[\s]*(?:已完成|已深度|已|完成)?(?:深度)?思考[（(][^）)]{0,20}[）)][\s]*$",
+                "", raw, flags=_re.M)
+            raw = _re.sub(
+                r"[\s]*(?:已完成|已深度|已|完成)?(?:深度)?思考[（(]用时[^）)]{0,20}[）)]",
+                "", raw)
+        except Exception:
+            pass
+        return raw.strip()
 
     async def _read_last_reply(self, baseline_count: int) -> dict:
         """读取当前页面最新消息的完整文本，以及消息总数。
@@ -1696,6 +1922,28 @@ class PlatformBrowserManager:
             " const norm = (s) => (s || '').replace(/\\s+/g, '').trim();"
             " const ex = norm(args[3] || '');"
             " const ubsel = args[4] || '';"
+            # 【2026-09-21 真机实测】DeepSeek 每次回答在 DOM 里是两块：
+            #   .ds-think-content                       ← 思考面板（「已思考（用时 N 秒）」+推理）
+            #   .ds-assistant-message-main-content      ← 用户真正要看的回复
+            # 旧实现整段读 innerText，把「已思考（用时 1 秒）」一起当成回复写进
+            # 会话记录、还回灌给模型。这里结构性剔除：命中思考面板的元素直接跳过，
+            # 并且不再把它内部文本拼进回复。
+            " const inThinkPanel = (el) => {"
+            "   if (!el) return false;"
+            "   if (el.classList) {"
+            "     const cn = el.className || '';"
+            "     if (typeof cn === 'string' && cn.indexOf('ds-think-content') !== -1) return true;"
+            "   }"
+            "   let n = el;"
+            "   for (let k = 0; k < 6 && n; k++) {"
+            "     try {"
+            "       if (n.classList && n.classList.contains"
+            "           && n.classList.contains('ds-think-content')) return true;"
+            "     } catch (e) {}"
+            "     n = n.parentElement;"
+            "   }"
+            "   return false;"
+            " };"
             " const isEcho = (t) => {"
             "   const a = norm(t);"
             "   if (!ex || a.length < 8) return false;"
@@ -1731,6 +1979,16 @@ class PlatformBrowserManager:
             "     }"
             "     if (isUi) continue;"
             "     let stripped = s;"
+            # 【2026-09-21 真机修复】DeepSeek 的思考面板折叠条文案是
+            # 「已思考（用时 1 秒）」，它不是一个独立行，而是和后面的思考正文粘在
+            # 同一行（innerText 拼出来是「已思考（用时 1 秒）\n\n用户要求…」，但有时
+            # 会整段并进一行）。行级 startsWith 判据在这种「同一行内」的情况下会
+            # 漏掉，于是这串 UI 文案留在回复里、还被写进会话 json 与后续上下文。
+            # 这里做一次全文正则剔除：已思考/深度思考 +（用时 …）这个模式。
+            "     stripped = stripped.replace("
+            "        /(?:已完成|已深度|已|完成)?(?:深度)?思考（用时[^）]{0,20}）/g, '');"
+            "     stripped = stripped.replace("
+            "        /(?:已完成|已深度|已|完成)?(?:深度)?思考\\(用时[^)]{0,20}\\)/g, '');"
             "     for (const n of noise) { stripped = stripTok(stripped, n); }"
             "     stripped = stripped.trim();"
             "     if (!stripped) continue;"
@@ -1765,6 +2023,7 @@ class PlatformBrowserManager:
             "     if (el.getAttribute && el.getAttribute('contenteditable') !== null) continue;"
             "     const t = (el.innerText || '').trim();"
             "     if (!t) continue;"
+            "     if (inThinkPanel(el)) continue;"
             "     if (inUserBubble(el)) continue;"
             "     if (isEcho(t)) continue;"
             "     const cleaned = cleanPart(t);"
@@ -1780,6 +2039,7 @@ class PlatformBrowserManager:
             "     if (el.getAttribute && el.getAttribute('contenteditable') !== null) continue;"
             "     const t = (el.innerText || '').trim();"
             "     if (!t) continue;"
+            "     if (inThinkPanel(el)) continue;"
             "     if (inUserBubble(el)) continue;"
             "     if (isEcho(t)) continue;"
             "     const cleaned = cleanPart(t);"
@@ -2231,22 +2491,32 @@ class PlatformBrowserManager:
 
     async def close(self):
         """关闭浏览器"""
-        # 子窗口：只关自己的 page，绝不动母代理的浏览器进程 / playwright
-        if getattr(self, "_is_child", False):
+        # 子窗口 / 接管窗口：只关自己的 page，绝不动 owner 的浏览器进程 / playwright
+        if getattr(self, "_is_child", False) or getattr(self, "_adopted", False):
             if self._page is not None:
                 try:
                     await self._page.close()
                 except Exception:
                     pass
                 self._page = None
-            logger.info(f"[{self.platform_key}] 子窗口已关闭（母代理浏览器保持运行）")
+            logger.info(f"[{self.platform_key}] 子/接管窗口已关闭（owner 浏览器保持运行）")
             return
 
         if self._browser:
             try:
+                self._browser.remove_listener("close", self._on_context_closed)
+            except Exception:
+                pass
+            try:
                 await self._browser.close()
             except:
                 pass
+        # 【同平台防双开】owner 关闭后摘除 registry 登记，后续 launch 可重新接管
+        try:
+            from agent_core import profile_lock as _pl
+            _pl.release(self.user_data_dir, self)
+        except Exception:
+            pass
         if self._playwright:
             try:
                 await self._playwright.stop()
@@ -2256,6 +2526,7 @@ class PlatformBrowserManager:
         self._browser = None
         self._page = None
         self._playwright = None
+        self._chrome_pids = None
         logger.info(f"[{self.profile.name}] 浏览器已关闭")
 
 
@@ -2298,35 +2569,48 @@ def _win_apply_cactus_icon() -> int:
         hicon_big = _WIN_CACTUS_HICON_BIG
         hicon_sm = _WIN_CACTUS_HICON_SM
 
-        # 1) 找本机所有 chrome.exe PID（用 tasklist，wmic 在新版 Windows 太慢/不可用）
-        target_pids = set()
-        try:
-            import subprocess as _sp
-            out = _sp.check_output(
-                ['tasklist', '/FI', 'IMAGENAME eq chrome.exe', '/NH', '/FO', 'CSV'],
-                creationflags=0x08000000,
-            ).decode('utf-8', errors='ignore')
-            import csv as _csv, io as _io
-            rdr = _csv.reader(_io.StringIO(out))
-            for row in rdr:
-                if len(row) >= 2 and row[1].isdigit():
-                    target_pids.add(int(row[1]))
-        except Exception:
-            pass
-        if not target_pids:
-            return 0
+        # 1) 枚举所有可见顶层窗口，直接按「窗口所属进程 exe 路径」判断是不是
+        #    Playwright Chromium —— 不再调用 tasklist（那是每轮 fork 一个进程，
+        #    在常驻巡检里太贵）；QueryFullProcessImageNameW 只是内核查询，极便宜。
+        import ctypes as _ct
+        from ctypes import wintypes as _wt
+        _k32 = _ct.windll.kernel32
+        _u32 = _ct.windll.user32
+        PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
+        _exe_cache = {}
 
-        # 2) 枚举所有可见顶层窗口，按 PID 过滤，并取所有 Chromium 窗口类
+        def _is_pw_chromium(pid):
+            if pid in _exe_cache:
+                return _exe_cache[pid]
+            ok = False
+            h = _k32.OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, False, pid)
+            if h:
+                try:
+                    buf = _ct.create_unicode_buffer(512)
+                    size = _wt.DWORD(512)
+                    if _k32.QueryFullProcessImageNameW(h, 0, buf, _ct.byref(size)):
+                        p = buf.value.lower().replace("/", "\\")
+                        ok = p.endswith("chrome.exe") and (
+                            "playwright_browsers" in p or "ms-playwright" in p)
+                finally:
+                    _k32.CloseHandle(h)
+            _exe_cache[pid] = ok
+            return ok
+
+        WM_SETICON = 0x0080
+        ICON_BIG, ICON_SMALL = 1, 0
+        SMTO_ABORTIFHUNG, SMTO_BLOCK = 0x0002, 0x0001
+
         hwnds = []
         def enum_cb(hwnd, results):
             try:
                 if not win32gui.IsWindowVisible(hwnd):
                     return True
                 _, pid = win32process.GetWindowThreadProcessId(hwnd)
-                if pid not in target_pids:
+                if not pid or not _is_pw_chromium(pid):
                     return True
                 cls = win32gui.GetClassName(hwnd)
-                # Chromium 所有窗口类：Chrome_WidgetWin_0/1/2...、Chrome_RenderWidgetHostHWND 等
+                # Chromium 所有窗口类：Chrome_WidgetWin_0/1/2...
                 if cls.startswith("Chrome_WidgetWin_") or cls.startswith("Chrome_RenderWidget") or "Cef" in cls:
                     results.append(hwnd)
             except Exception:
@@ -2334,18 +2618,21 @@ def _win_apply_cactus_icon() -> int:
             return True
         win32gui.EnumWindows(enum_cb, hwnds)
 
-        # 3) 对每个窗口发送 WM_SETICON（per-window，强制立即生效）
-        #    注意：不能用 SetClassLongPtr（仅 64 位 Python 才有这个 API），
-        #    32 位 Python 只有 SetClassLong，跨进程用还有锁的问题。
-        #    WM_SETICON 跨平台/跨位宽都稳，足够把任务栏图标改掉。
+        # 2) 对每个窗口发送 WM_SETICON（per-window，强制立即生效）。
+        #    · 已经是我们这张图的窗口直接跳过（幂等，让常驻巡检几乎零开销）。
+        #    · 用 SendMessageTimeout + SMTO_ABORTIFHUNG，避免目标进程卡住时把
+        #      常驻线程一起拖死。
         n = 0
-        WM_SETICON = 0x0080
-        ICON_BIG = 1
-        ICON_SMALL = 0
         for hwnd in hwnds:
             try:
-                win32gui.SendMessage(hwnd, WM_SETICON, ICON_BIG, hicon_big)
-                win32gui.SendMessage(hwnd, WM_SETICON, ICON_SMALL, hicon_sm)
+                if win32gui.SendMessageTimeout(
+                        hwnd, 0x007F, ICON_BIG, 0, SMTO_ABORTIFHUNG | SMTO_BLOCK, 500
+                )[1] == hicon_big:
+                    continue                      # 已经是仙人球，免打扰
+                win32gui.SendMessageTimeout(hwnd, WM_SETICON, ICON_BIG, hicon_big,
+                                            SMTO_ABORTIFHUNG | SMTO_BLOCK, 1000)
+                win32gui.SendMessageTimeout(hwnd, WM_SETICON, ICON_SMALL, hicon_sm,
+                                            SMTO_ABORTIFHUNG | SMTO_BLOCK, 1000)
                 n += 1
             except Exception:
                 pass
@@ -2353,7 +2640,57 @@ def _win_apply_cactus_icon() -> int:
     except Exception as e:
         logger.debug(f"[_cactus_icon] 设置失败: {type(e).__name__}: {e}")
         return 0
-    
+
+
+# ── 仙人球图标常驻守护线程 ─────────────────────────────────────────────
+# 【2026-09-21 真机根因修复】
+# 现象：后端日志明明打了「图标设置成功 HWND=xxxx」，用户看到的浏览器图标却仍是
+#       Chromium 原图标。
+# 根因：Chromium 的窗口是**动态创建**的。launch 之后先冒出来的往往是一个临时窗口
+#       （例如「要恢复页面吗？」对话框），真正的主窗口要晚几秒才出现。
+#       而旧实现（browser.py 的 _apply_window_icon_once / 本模块的
+#       _apply_cactus_icon_loop）**只要给任意一个窗口设置成功就立刻 return/break**，
+#       于是图标被贴到了那个临时窗口上，主窗口永远没人管 → 用户看到的还是 Chrome。
+# 修复：不再依赖「一次性 + 成功即停」，改成常驻守护线程持续巡检，
+#       任何后出现的 Chromium 窗口都会被补上仙人球。
+_CACTUS_WATCHER_STARTED = False
+
+
+def _cactus_icon_watcher_loop():
+    while True:
+        try:
+            _win_apply_cactus_icon()
+        except Exception:
+            pass
+        time.sleep(2.0)
+
+
+def _start_cactus_icon_watcher():
+    """启动常驻图标守护线程（幂等；非 Windows 直接跳过）。"""
+    global _CACTUS_WATCHER_STARTED
+    if _CACTUS_WATCHER_STARTED:
+        return
+    import sys as _sys
+    if _sys.platform != "win32":
+        return
+    _CACTUS_WATCHER_STARTED = True
+    try:
+        import threading
+        threading.Thread(target=_cactus_icon_watcher_loop,
+                         name="cactus-icon-watcher", daemon=True).start()
+        logger.info("[_cactus_icon] 常驻图标守护线程已启动（每 2s 巡检 Chromium 窗口）")
+    except Exception as e:
+        _CACTUS_WATCHER_STARTED = False
+        logger.debug(f"[_cactus_icon] 守护线程启动失败: {e}")
+
+
+# 模块被 import 即启动 —— terminal.py 通过 exec 加载 terminal.pyc，pyc 内部会
+# import 本模块，所以这里能覆盖「后端启动就拉起浏览器」的那条路径。
+try:
+    _start_cactus_icon_watcher()
+except Exception:
+    pass
+
 
 class MultiPlatformManager:
     """
@@ -2834,7 +3171,12 @@ class PlatformSession:
                 f"（会话可能已静默失效），按空回复上报，下一轮将自动换新会话"
             )
             self._last_reply_empty = True
-            self._messages.append({"role": "assistant", "content": "（未收到回复）"})
+            # 【关键修复】不要把「（未收到回复）」写进对话历史。
+            # 它是给人看的占位符，一旦进了 _messages：
+            #   1) 会被写进会话文件，下次回看任务时它作为"AI 的回复"被渲染出来；
+            #   2) 会被 _visible_messages 取到，混进「🧠 思考过程」块的开头，
+            #      界面上就出现「（未收到回复） The user sent ...」这种鬼东西。
+            # 空回复就如实留空，让上层走重试/报错分支，不要污染上下文。
             self._maybe_save_conversation()
             await self._ui_dump("empty-reply")
             return ""

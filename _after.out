@@ -1,0 +1,4 @@
+post -> {'type': 'accepted', 'text': '命令已接收，正在处理...', 'async_task': True}
+saw=['task_started', 'thinking', 'correction_sent', 'command_detected', 'tool_start', 'tool_end', 'command_success', 'ai_final_reply']
+FINAL={"type": "ai", "text": "已思考（用时 1 秒）\n\n用户只要求一句话回答，不需要工具。但系统要求必须输出协议行才能结束。应输出 done 协议。\n\n水在零摄氏度（标准大气压）时会结冰，从液态变为固态。", "task_id": "task_1789907803557"}
+DOM-after len=269983 url='https://chat.deepseek.com/a/chat/s/6465e62c-ee06-48fc-8b22-da670ea9f872' note=None

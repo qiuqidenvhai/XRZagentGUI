@@ -1,0 +1,43 @@
+total 106 lines
+mtime: 06:57:38
+---- lines mentioning 豆包/doubao (last 40) ----
+    DeepSeek + 通义千问 + 豆包 + 元宝
+2026-09-16 06:53:59,275 [platform_browser] INFO 已添加平台: doubao
+2026-09-16 06:54:23,604 [platform_browser] INFO [豆包] 启动浏览器...
+2026-09-16 06:54:25,319 [platform_browser] INFO [豆包] 已尝试清理占用本目录的残留浏览器进程
+2026-09-16 06:54:25,941 [platform_browser] INFO [豆包] 持久化上下文创建成功
+2026-09-16 06:54:26,084 [platform_browser] INFO [豆包] 已将浏览器窗口图标设为仙人球 🌵
+2026-09-16 06:54:26,084 [platform_browser] INFO [豆包] 已加载 40 条 cookies
+2026-09-16 06:54:26,084 [platform_browser] INFO [豆包] 浏览器启动完成
+2026-09-16 06:54:27,107 [platform_browser] INFO [豆包] 已导航到 https://www.doubao.com/chat/
+2026-09-16 06:54:27,661 [platform_browser] INFO [豆包] 页面仍在加载（骨架屏），等待稳定后再判定登录状态…
+2026-09-16 06:54:39,084 [platform_browser] INFO [豆包] 登录状态: True
+2026-09-16 06:54:39,092 [platform_browser] INFO [豆包] 已保存 40 条 cookies
+2026-09-16 06:55:40,745 [platform_browser] INFO [豆包] 已导航到 https://www.doubao.com/chat/
+2026-09-16 06:55:40,950 [platform_browser] INFO [豆包] 页面仍在加载（骨架屏），等待稳定后再判定登录状态…
+2026-09-16 06:55:48,082 [platform_browser] INFO [豆包] 登录状态: True
+2026-09-16 06:55:48,087 [platform_browser] INFO [豆包] 已保存 40 条 cookies
+2026-09-16 06:55:48,088 [platform_browser] INFO [豆包] 首轮登录预检通过
+2026-09-16 06:55:48,598 [platform_browser] INFO [豆包] send_message: 输入 6756 字符
+2026-09-16 06:55:49,675 [platform_browser] INFO [豆包] 已通过 CDP 受信 Enter 键发送
+2026-09-16 06:55:50,805 [platform_browser] INFO [豆包] 登录状态: True
+2026-09-16 06:55:55,291 [platform_browser] INFO [豆包] 等待回复（UI 信号驱动，210s 上限）... baseline_msg=0 (pre_sent=0)
+2026-09-16 06:56:35,477 [platform_browser] WARNING [豆包] 等待 40s 仍未抓到任何回复正文（page_msg≈1），判定该网页会话已静默失效，提前结束等待
+2026-09-16 06:56:35,517 [platform_browser] INFO [豆包] 登录状态: True
+2026-09-16 06:56:35,517 [platform_browser] WARNING [豆包] 本轮未抓到任何回复正文（会话可能已静默失效），按空回复上报，下一轮将自动换新会话
+2026-09-16 06:56:35,913 [platform_browser] INFO [豆包] 对话已自动持久化 (url=有)
+2026-09-16 06:56:35,914 [platform_browser] WARNING [豆包] 上一轮未抓到回复，自动开启新会话后重试
+2026-09-16 06:56:36,772 [platform_browser] INFO [豆包] 已导航到 https://www.doubao.com/chat/
+2026-09-16 06:56:39,575 [platform_browser] INFO [豆包] send_message: 输入 6781 字符
+2026-09-16 06:56:41,461 [platform_browser] INFO [豆包] 已通过 CDP 受信 Enter 键发送
+2026-09-16 06:56:46,915 [platform_browser] INFO [豆包] 等待回复（UI 信号驱动，210s 上限）... baseline_msg=0 (pre_sent=0)
+2026-09-16 06:57:27,271 [platform_browser] WARNING [豆包] 等待 40s 仍未抓到任何回复正文（page_msg≈1），判定该网页会话已静默失效，提前结束等待
+2026-09-16 06:57:27,293 [platform_browser] INFO [豆包] 登录状态: True
+2026-09-16 06:57:27,302 [platform_browser] INFO [豆包] 已保存 40 条 cookies
+2026-09-16 06:57:27,302 [platform_browser] WARNING [豆包] 本轮未抓到任何回复正文（会话可能已静默失效），按空回复上报，下一轮将自动换新会话
+2026-09-16 06:57:27,660 [platform_browser] INFO [豆包] 对话已自动持久化 (url=有)
+2026-09-16 06:57:27,661 [platform_browser] WARNING [豆包] 上一轮未抓到回复，自动开启新会话后重试
+2026-09-16 06:57:28,506 [platform_browser] INFO [豆包] 已导航到 https://www.doubao.com/chat/
+2026-09-16 06:57:31,188 [platform_browser] INFO [豆包] send_message: 输入 6781 字符
+2026-09-16 06:57:33,381 [platform_browser] INFO [豆包] 已通过 CDP 受信 Enter 键发送
+2026-09-16 06:57:38,782 [platform_browser] INFO [豆包] 等待回复（UI 信号驱动，210s 上限）... baseline_msg=0 (pre_sent=0)

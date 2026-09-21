@@ -1,0 +1,9 @@
+platforms.json valid; platforms=['deepseek', 'tongyi', 'doubao', 'yuanbao']
+deepseek send_selector='' input='textarea'
+deepseek thinking_toggle=["div[class*='ds-toggle-button']:has-text('深度思考')", "div.ds-toggle-button:has-text('深度思考')", "[class*='ds-toggle-button']:has-text('深度思考')", "button:has-text('深度思考')"]
+deepseek response="[class*='message']:last-child"
+COMPILE OK  agent_core/platform_browser.py
+COMPILE OK  agent_core/browser.py
+COMPILE OK  agent_core/profile_lock.py
+COMPILE OK  terminal.py
+COMPILE OK  _dom_dump_patch.py

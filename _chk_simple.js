@@ -1,0 +1,1 @@
+JSON.stringify((function(){ try { return (() => { return 'A'; })()); } catch(e) { return {__err: String(e)}; } })())

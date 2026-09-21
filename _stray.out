@@ -1,0 +1,2 @@
+15776 gone psutil.NoSuchProcess(pid=15776, msg='process PID not found')
+8888 still up=True

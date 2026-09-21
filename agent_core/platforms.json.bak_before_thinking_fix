@@ -1,0 +1,199 @@
+{
+  "deepseek": {
+    "platform": "deepseek",
+    "name": "DeepSeek",
+    "url": "https://chat.deepseek.com",
+    "chat_url": "https://chat.deepseek.com",
+    "input_selector": "textarea",
+    "send_selector": "",
+    "_send_note": "2026-09-20 真机 DOM 核对（/dom 端点 dump）：新版 DeepSeek 网页的输入框仍是 textarea（class=ds-scroll-area，placeholder『给 DeepSeek 发送消息』），但发送键已不是 button[type='submit']（整页 0 匹配，旧标志失效）。真实发送靠输入框回车；platform_browser.send_message 的 CDP 受信 Enter（windowsVirtualKeyCode=13）已实测可用。故 send_selector 置空走 Enter 路径，不再依赖过期的 submit 按钮。",
+    "upload_button_selector": "",
+    "thinking_toggle_selectors": [
+      "div.ds-toggle-button:has-text('深度思考')",
+      "div[class*='ds-toggle-button']:has-text('深度思考')",
+      "[class*='ds-toggle-button']:has-text('深度思考')"
+    ],
+    "_thinking_note": "2026-09-21 真机 DOM 核对（/dom 端点 dump chat.deepseek.com）：工具栏只有两个 div.ds-toggle-button —— 「深度思考」与「智能搜索」，开启态 class 含 ds-toggle-button--selected、aria-pressed=true。页面**没有**任何模型下拉（role=radio/menuitem/combobox/aria-haspopup 全为 0 匹配），所以不要配置 models 切换。",
+    "thinking_mode": "toggle",
+    "attach_button_selector": "",
+    "multi_file": true,
+    "response_selector": "[class*='message']:last-child",
+    "_response_note": "2026-09-20 真机核对：新版 DeepSeek 每条消息外层是 .ds-message（用户/AI 各一条，虚拟列表），AI 正文在 .ds-markdown（class 含 ds-assistant-message-main-content）。[class*=message] 在真实会话里能命中消息节点且实测能稳定读到回复，故保留；勿改成 .ds-markdown（会漏掉用户气泡，破坏 _read_existing_messages 的 user/assistant 交替）。",
+    "thinking_selector": "",
+    "generating_selector": ".loading, [class*='generating']",
+    "login_texts": [
+      "登录",
+      "Login"
+    ],
+    "viewport_width": 1280,
+    "viewport_height": 900,
+    "display": "DeepSeek",
+    "icon": "💭",
+    "models": [],
+    "search_toggle_selectors": [
+      "div.ds-toggle-button:has-text('智能搜索')",
+      "div[class*='ds-toggle-button']:has-text('智能搜索')"
+    ],
+    "_models_note": "2026-09-21 核实：DeepSeek 网页版当前**没有**模型/模式选择器。旧配置里的『快速模式/专家模式/识图模式』是臆造的（页面 0 匹配），已删除。「深度思考」通过 thinking_toggle_selectors 开关，不是模型选项。"
+  },
+  "tongyi": {
+    "platform": "tongyi",
+    "name": "通义千问",
+    "url": "https://chat.qwen.ai/",
+    "chat_url": "https://chat.qwen.ai/",
+    "input_selector": "textarea, [contenteditable='true']",
+    "send_selector": "button[aria-label='发送']",
+    "upload_button_selector": "",
+    "thinking_toggle_selectors": [
+      "div.qwen-thinking-selector",
+      ".qwen-select-thinking .ant-select-selector",
+      "div.qwen-select-thinking",
+      "button:has-text('深度思考')",
+      "div[role='switch']:has-text('思考')"
+    ],
+    "thinking_mode": "select",
+    "thinking_timeout": 60,
+    "skip_thinking_selector": "button:has-text('跳过'), button:has-text('取消'), span:has-text('跳过思考')",
+    "attach_button_selector": "[aria-label='选择模式']",
+    "multi_file": true,
+    "response_selector": ".qwen-chat-message-assistant",
+    "thinking_selector": "[class*='thinking'], [class*='reasoning'], [class*='think'], [data-testid*='thinking']",
+    "generating_selector": ".stop-button",
+    "login_texts": [
+      "登录",
+      "Login"
+    ],
+    "viewport_width": 1280,
+    "viewport_height": 900,
+    "display": "通义千问",
+    "icon": "💬",
+    "attach_menu_item_text": "上传附件",
+    "models": [
+      {
+        "value": "qwen3.8-max",
+        "label": "Qwen3.8-Max",
+        "selector": "div[role='button']:has-text('Qwen') || text=Qwen3.8-Max"
+      },
+      {
+        "value": "qwen3.7-plus",
+        "label": "Qwen3.7-Plus",
+        "selector": "div[role='button']:has-text('Qwen') || text=Qwen3.7-Plus"
+      }
+    ]
+  },
+  "doubao": {
+    "platform": "doubao",
+    "name": "豆包",
+    "url": "https://www.doubao.com/chat/",
+    "chat_url": "https://www.doubao.com/chat/",
+    "input_selector": "div.tiptap.ProseMirror",
+    "send_selector": "",
+    "upload_button_selector": "",
+    "thinking_toggle_selectors": [
+      "button:has-text('深度思考')",
+      "button:has-text('深度思考 Beta')",
+      "[class*='deep-think']",
+      "div[role='switch']:has-text('深度')"
+    ],
+    "thinking_mode": "toggle",
+    "supports_thinking": false,
+    "_thinking_note": "2026-09-13 实测：豆包网页端没有可用的「深度思考」toggle（button:has-text('深度思考') / deep-think 类名均不存在）。旧实现退而去点工具栏的「快速」按钮，把页面点进异常态 → 之后连续 210s 收不到任何回复。故标注 supports_thinking=false：不点任何按钮，由上层如实告知模型。",
+    "attach_button_selector": "input[type=file], .UploadFileInput, [class*='Attach'] input, [class*='upload']",
+    "multi_file": true,
+    "response_selector": "[class*=\"md-box-root\"]",
+    "user_bubble_selector": "[class*=\"bg-g-send\"], [class*=\"send-msg-bubble\"]",
+    "thinking_selector": "[class*='thinking'], [class*='reasoning'], [class*='think']",
+    "generating_selector": "[class*=\"break-btn\"], [class*=\"stop-btn\"]",
+    "login_texts": [
+      "登录",
+      "Log in"
+    ],
+    "viewport_width": 1280,
+    "viewport_height": 900,
+    "display": "豆包",
+    "icon": "🤖",
+    "models": [
+      {
+        "value": "doubao-mode-0",
+        "label": "对话",
+        "selector": "text=对话"
+      },
+      {
+        "value": "doubao-mode-1",
+        "label": "深入研究",
+        "selector": "text=深入研究"
+      },
+      {
+        "value": "doubao-mode-2",
+        "label": "帮我写作",
+        "selector": "text=帮我写作"
+      },
+      {
+        "value": "doubao-mode-3",
+        "label": "图像生成",
+        "selector": "text=图像生成"
+      },
+      {
+        "value": "doubao-mode-4",
+        "label": "翻译",
+        "selector": "text=翻译"
+      },
+      {
+        "value": "doubao-mode-5",
+        "label": "音乐生成",
+        "selector": "text=音乐生成"
+      },
+      {
+        "value": "doubao-mode-6",
+        "label": "视频生成",
+        "selector": "text=视频生成"
+      }
+    ],
+    "_dom_note": "2026-09-12 实测：消息列表 [class*=message-list-]；用户气泡 .content-<hash> + .bg-g-send-msg-bubble-bg；正文渲染 [class*=md-box-root]；停止按钮 [class*=break-btn-]；旧值 .agent-chat__bubble 为元宝类名，豆包不匹配（page_msg 恒为 0）"
+  },
+  "yuanbao": {
+    "platform": "yuanbao",
+    "name": "元宝",
+    "url": "https://yuanbao.tencent.com/chat/",
+    "chat_url": "https://yuanbao.tencent.com/chat/",
+    "input_selector": "[contenteditable].ql-editor.ql-blank",
+    "send_selector": "div[aria-label='发送']",
+    "upload_button_selector": "span.icon-upload",
+    "thinking_toggle_selectors": [
+      "button:has-text('深度思考')",
+      "div[role='switch']:has-text('深度')",
+      "[class*='T1-deep'] button",
+      "[class*='deep-think']"
+    ],
+    "thinking_mode": "toggle",
+    "attach_button_selector": ".UploadFileSelector_iconContainer__6Wpsp, .UploadFileSelector_iconButton__LEwqk, [class*='UploadFileSelector']",
+    "multi_file": true,
+    "response_selector": ".agent-chat__bubble",
+    "thinking_selector": "[class*='thinking'], [class*='reasoning'], [class*='think']",
+    "generating_selector": ".stop-button, [class*='stop'], [class*='generating']",
+    "login_texts": [
+      "登录",
+      "Log in"
+    ],
+    "viewport_width": 1280,
+    "viewport_height": 900,
+    "display": "元宝",
+    "icon": "✨",
+    "models": [
+      {
+        "value": "hy3",
+        "label": "Hy3",
+        "selector": "button[class*=\"max-w-[180px]\"]||button[aria-label='选择模型']||[role='menuitemradio']:has-text('Hy3')"
+      },
+      {
+        "value": "deepseek",
+        "label": "DeepSeek",
+        "selector": "button[class*=\"max-w-[180px]\"]||button[aria-label='选择模型']||[role='menuitemradio']:has-text('DeepSeek')"
+      }
+    ],
+    "_models_note": "2026-09-13 实测（probe_yuanbao/）：元宝新版 UI 的模型/模式藏在底部工具栏「深度思考∨」下拉里。结构：模型 = Hy3（推荐日常）/ DeepSeek（适合深度思考）/ Hy4 preview（处理复杂任务，仅支持专家模式，禁用）；模式 = 快速回答 / 深度思考 / 专家模式（专家模式=使用工具处理多步任务，是元宝自己的沙箱，严禁进入）。选择器走三步：点工具栏触发按钮 → 点「选择模型」行（aria-label）→ 点子菜单里的模型项（role=menuitemradio）。terminal.pyc 的 _two_step 支持 || 多步连点。",
+    "forbidden_modes": [
+      "专家模式"
+    ]
+  }
+}

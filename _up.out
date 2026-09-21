@@ -1,0 +1,2 @@
+port8888 UP after ~1s
+terminal.py procs=['1780', '9300']

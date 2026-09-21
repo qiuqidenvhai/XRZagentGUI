@@ -1,0 +1,41 @@
+=== 1) 冷启动：没有任务 → 侧边栏必须为空 ===
+   raw: {"value": "{\"items\":0,\"empty\":true,\"scope\":\"null\",\"text\":\"暂无文件上传文件或拖放文件到此处\"}"}
+  FAIL  侧边栏 0 个产物
+  FAIL  显示空态提示
+  FAIL  FILE_SCOPE_CONV 为空
+
+=== 2) 前端函数存在（bindFileScope / loadAttachments / clearPendingAttachments）===
+   raw: {"value": "{\"bind\":\"function\",\"load\":\"function\",\"clear\":\"function\",\"rec\":\"function\"}"}
+  FAIL  函数 bind 已定义
+  FAIL  函数 load 已定义
+  FAIL  函数 clear 已定义
+  FAIL  函数 rec 已定义
+
+=== 3) 切换任务时侧边栏只显示该任务产物（真实 DOM 行为）===
+   raw: {"value": "{\"scope\":\"deepseek_TEST_SCOPE_001\"}"}
+  FAIL  已绑定测试任务
+   raw: {"value": "{\"items\":[\"mp2_deepseek.docx\"]}"}
+  FAIL  该任务显示 1 个产物
+  FAIL  产物是 mp2_deepseek.docx
+
+=== 4) 新建对话后侧边栏清空 ===
+   raw: {"value": "{\"scope\":\"null\"}"}
+   raw: {"value": "{\"items\":0}"}
+  FAIL  新对话后 0 个产物
+
+=== 5) 截图留证 ===
+   shot: {"value": true}
+
+============================================================
+RESULT: 0/11 PASS
+  FAILED: 侧边栏 0 个产物 None
+  FAILED: 显示空态提示 None
+  FAILED: FILE_SCOPE_CONV 为空 None
+  FAILED: 函数 bind 已定义 None
+  FAILED: 函数 load 已定义 None
+  FAILED: 函数 clear 已定义 None
+  FAILED: 函数 rec 已定义 None
+  FAILED: 已绑定测试任务 None
+  FAILED: 该任务显示 1 个产物 []
+  FAILED: 产物是 mp2_deepseek.docx []
+  FAILED: 新对话后 0 个产物 None

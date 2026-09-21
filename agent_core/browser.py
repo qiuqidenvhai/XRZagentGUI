@@ -61,6 +61,9 @@ class BrowserManager:
         self._chromium = None
         # 标记是否为「子窗口」（共享母代理浏览器，只关自己的 page，不关整个浏览器）
         self._is_child = False
+        # 【同目录防双开】是否为「接管同目录 owner 的 context」：True = 与 owner 共享浏览器进程，
+        # close() 只关自己的 page，绝不关 owner、绝不摘 owner 的 registry 登记。
+        self._adopted = False
 
     @property
     def context(self):
@@ -70,29 +73,96 @@ class BrowserManager:
     def page(self):
         return self._page
 
+    def _find_browser_pids(self):
+        """找到本 context 对应 Chromium 主进程的 PID（用于僵尸检测）。
+
+        主进程特征：cmdline 同时含「本 user_data_dir 目录名」与 --remote-debugging-pipe。
+        找不到返回 None（僵尸检测退化为 close 监听 + is_closed，不影响主流程）。
+        """
+        import psutil
+        try:
+            marker = Path(self._user_data_dir_override).name.lower()
+        except Exception:
+            return None
+        pids = set()
+        try:
+            for p in psutil.process_iter(["pid", "cmdline"]):
+                try:
+                    cl = p.info.get("cmdline") or []
+                    if "--remote-debugging-pipe" not in cl:
+                        continue
+                    full = " ".join(cl)
+                    if "--user-data-dir=" + marker in full or marker in full:
+                        pids.add(p.info["pid"])
+                except Exception:
+                    continue
+        except Exception:
+            return None
+        return pids or None
+
+    def _is_zombie(self):
+        """同步判定 self._browser 是否僵尸（进程死但 Playwright 侧还挂着）。
+
+        判死条件（任一命中）：
+          1) close 监听回调已触发（Chromium 自杀时 Playwright 会发 context close）
+          2) is_closed() 为 True
+          3) 登记的 _chrome_pids 全部进程已退出
+        """
+        if self._browser is None:
+            return False, "无 context"
+        try:
+            if getattr(self, "_ctx_closed", False):
+                return True, "close 监听已触发"
+            if hasattr(self._browser, "is_closed") and self._browser.is_closed():
+                return True, "is_closed()"
+            pids = getattr(self, "_chrome_pids", None)
+            if pids:
+                import psutil
+                if not any(psutil.pid_exists(pid) for pid in pids):
+                    return True, f"浏览器进程全部退出 {sorted(pids)}"
+        except Exception:
+            return True, "检测异常（保守判死）"
+        return False, "存活"
+
+    async def _clear_zombie(self):
+        """僵尸则强制清理（同步判定 + 异步清理），让 launch() 走完整重建。"""
+        if self._browser is None:
+            return
+        dead, reason = self._is_zombie()
+        if not dead:
+            return
+        logger.warning(f"[BrowserManager] 检测到僵尸浏览器（{reason}），强制清理后重建...")
+        self._close_context_and_cleanup()
+
+    def _close_context_and_cleanup(self):
+        """把死 context 的所有引用清零（供 navigate/launch 复用的清理路径）。"""
+        self._ctx_closed = False
+        try:
+            if self._browser is not None:
+                self._browser.remove_listener("close", self._on_context_closed)
+        except Exception:
+            pass
+        self._browser = None
+        self._page = None
+        self._chrome_pids = None
+
+    def _on_context_closed(self):
+        """context close 事件回调：标记已关，供 _is_zombie 快速判死。"""
+        try:
+            self._ctx_closed = True
+            logger.warning("[BrowserManager] 浏览器上下文已关闭（close 监听），下次调用将自动重建")
+        except Exception:
+            pass
+
     async def launch(self):
         # 验证现有浏览器是否真活着——死引用不算「已启动」。
-        # 场景：navigate() 检测到 _page 已死，只置了 _page=None，没动 _browser。
-        # 旧逻辑：self._browser is not None → 直接 return → _page 永远 None → 抛「页面未初始化」。
+        # 【僵尸修复】Chromium 进程被杀/崩溃后，Playwright 侧 context 对象可能仍
+        # is_closed()=False，旧代码永远"复用"这个死 context → new_page 报
+        # Target has been closed → 「页面未初始化 / 消息发送失败」。
+        # 现在：close 监听 + is_closed + PID 级存活验证，僵尸一律清理后走完整重建。
         if self._browser is not None:
-            dead = False
-            try:
-                if hasattr(self._browser, "is_closed") and self._browser.is_closed():
-                    dead = True
-            except Exception:
-                dead = True
-            if dead:
-                logger.warning("检测到浏览器已关闭/死引用，清理后重新启动...")
-                self._browser = None
-                self._page = None
-                if self._playwright is not None:
-                    try:
-                        await self._playwright.stop()
-                    except Exception:
-                        pass
-                    self._playwright = None
-                # 继续走下面的完整启动流程
-            else:
+            await self._clear_zombie()
+            if self._browser is not None:
                 logger.info("浏览器已启动，复用")
                 return
 
@@ -103,6 +173,31 @@ class BrowserManager:
         # 使用指定的用户数据目录或默认的
         user_data_dir = self._user_data_dir_override
         Path(user_data_dir).mkdir(parents=True, exist_ok=True)
+
+        # 【同目录防双开】同目录（同一平台 profile）已有活 owner 时直接接管复用，
+        # 绝不重开第二个持久化上下文、绝不 kill owner 的活浏览器（否则掉登）。
+        # 不同目录（跨平台）键不同，互不影响 → 可并存多浏览器。
+        from agent_core import profile_lock as _pl
+        _owner = _pl.acquire(user_data_dir, self)
+        if _owner is not None and _owner is not self:
+            logger.info(f"[BrowserManager] 同目录已有活 owner（{type(_owner).__name__}），"
+                        f"接管复用其浏览器进程（同平台不双开，防掉登）")
+            # context 绑定 owner 的 Playwright 连接，必须共享 owner 的实例，
+            # 不能自己再 pw.start()（新连接用不了别人的 context）。
+            self._playwright = _owner._playwright
+            self._browser = _owner._browser
+            self._chrome_pids = getattr(_owner, "_chrome_pids", None)
+            self._adopted = True          # close() 只关自己的 page，绝不关 owner、绝不 stop pw
+            self._ctx_closed = False
+            try:
+                self._browser.on("close", self._on_context_closed)
+            except Exception:
+                pass
+            self._page = self._browser.pages[0] if self._browser.pages else await self._browser.new_page()
+            await self._load_cookies_from_file()
+            logger.info("[BrowserManager] 已接管同目录 owner 的浏览器（跨实例共享，零双开）")
+            return
+        # 走到这里 self 就是本目录 owner：清跨进程孤儿残留 + 锁文件
         self._cleanup_lock_files(Path(user_data_dir))
 
         # 2. 启动 Playwright
@@ -131,6 +226,12 @@ class BrowserManager:
                 accept_downloads=True,
             )
             logger.info(f"持久化上下文创建成功: {user_data_dir}")
+            # 注册 close 监听 + 记录浏览器 PID（僵尸检测用）
+            try:
+                self._browser.on("close", self._on_context_closed)
+            except Exception:
+                pass
+            self._chrome_pids = self._find_browser_pids()
             BrowserManager._shared_browser_instance = self
         except Exception as e:
             _msg = str(e)
@@ -138,6 +239,7 @@ class BrowserManager:
             # 绝对不要偷偷开一个「未登录的临时浏览器」——那正是用户看到的
             # 「两个 DeepSeek 浏览器（一个没登录）」的根因。直接抛出明确错误。
             if any(k in _msg for k in ("SingletonLock", "already in use", "single instance", "locked", "被占用")):
+                _pl.release(user_data_dir, self)
                 raise RuntimeError(
                     f"DeepSeek profile（{user_data_dir}）已被其他浏览器实例占用，"
                     f"请勿同时打开两个 DeepSeek 浏览器。请先关闭多余的实例后再试。"
@@ -169,12 +271,17 @@ class BrowserManager:
         self._launched = True
 
     async def _icon_poll_loop(self):
-        """后台轮询设置仙人球图标，最多重试10次（~10秒）"""
+        """后台轮询设置仙人球图标。
+
+        【2026-09-21 修复】原来「一旦成功就 break」，导致图标只贴到 launch 后
+        最先冒出来的临时窗口（如「要恢复页面吗？」）上，晚几秒才出现的主窗口
+        永远没被设置 → 用户仍看到 Chromium 原图标。
+        现在持续补 ~30s，不做成功即停。
+        """
         try:
-            for _ in range(10):
+            for _ in range(30):
                 await asyncio.sleep(1)
-                if await self._apply_window_icon_once():
-                    break
+                await self._apply_window_icon_once()
         except Exception:
             pass
 
@@ -241,15 +348,18 @@ class BrowserManager:
             if not hits:
                 return False
 
+            # 【2026-09-21 修复】必须给**所有**窗口都设置，不能碰到第一个就 return。
+            # Chromium 会陆续创建多个顶层窗口，只设第一个会把图标贴错对象。
+            ok = 0
             for hwnd in hits:
                 try:
                     user32.SendMessageTimeoutW(hwnd, WM_SETICON, ICON_SMALL, hicon_sm, 0x0002, 1000, None)
                     user32.SendMessageTimeoutW(hwnd, WM_SETICON, ICON_BIG, hicon_big, 0x0002, 1000, None)
+                    ok += 1
                     logger.debug(f"图标设置成功 HWND={hwnd}")
-                    return True
                 except Exception:
                     pass
-            return False
+            return ok > 0
         except Exception as e:
             logger.debug(f"_apply_window_icon_once 异常: {e}")
             return False
@@ -393,29 +503,40 @@ class BrowserManager:
                     pass
 
     async def close(self):
-        # 子窗口：只关自己的 page，绝不动母代理的浏览器进程 / playwright
-        if getattr(self, "_is_child", False):
+        # 子窗口 / 接管窗口：只关自己的 page，绝不动 owner 的浏览器进程 / playwright
+        if getattr(self, "_is_child", False) or getattr(self, "_adopted", False):
             if self._page is not None:
                 try:
                     await self._page.close()
                 except Exception:
                     pass
                 self._page = None
-            logger.info("[BrowserManager] 子窗口已关闭（母代理浏览器保持运行）")
+            logger.info(f"[BrowserManager] 子/接管窗口已关闭（owner 浏览器保持运行）")
             return
 
         if self._browser:
+            try:
+                self._browser.remove_listener("close", self._on_context_closed)
+            except Exception:
+                pass
             try:
                 await self._browser.close()
             except:
                 pass
             self._browser = None
+        # 【同目录防双开】owner 关闭后摘除 registry 登记，让后续 launch 能重新接管
+        try:
+            from agent_core import profile_lock as _pl
+            _pl.release(self._user_data_dir_override, self)
+        except Exception:
+            pass
         if self._playwright:
             try:
                 await self._playwright.stop()
             except:
                 pass
             self._playwright = None
+        self._chrome_pids = None
 
     async def _load_cookies_from_file(self):
         """从持久化目录加载 cookies（兼容旧目录迁移 + 子代理隔离目录）
@@ -516,9 +637,12 @@ class BrowserManager:
                 logger.warning(f"迁移顶层文件失败: {e}")
 
     async def navigate(self, url: str = DEEPSEEK_URL):
+        # 【僵尸自愈】先做僵尸检测：进程被杀后 _page 可能不是 None 但 context 已死，
+        # 直接 goto 必报 Target has been closed。判死则清理，让 launch() 走完整重建。
+        await self._clear_zombie()
         # 检测浏览器是否已关闭，自动重启
         needs_restart = False
-        if self._page is None:
+        if self._page is None or self._browser is None:
             needs_restart = True
         elif hasattr(self._browser, "is_closed"):
             # 浏览器进程被强杀时 is_closed() 可能抛异常而非返回 True，统一按「需重启」处理
@@ -971,8 +1095,10 @@ class BrowserManager:
             # 实时抓取思考过程
             if thinking_selector and on_thinking:
                 try:
-                    t = await self.browser_get_thinking_content()
-                    # browser_get_thinking_content 已按固定选择器抓，这里用 thinking_selector 兜底
+                    # 把平台配置的选择器传进去（旧实现漏传 → 只有写死的通用选择器
+                    # 生效 → DeepSeek 的 .ds-think-content 永远抓不到 → GUI 思考块空白）
+                    t = await self.browser_get_thinking_content(thinking_selector)
+                    # 兜底：仍取不到就用 thinking_selector 直接查innerText
                     if not t and thinking_selector:
                         t = await self._page.evaluate(
                             "(sel) => {"
@@ -985,7 +1111,35 @@ class BrowserManager:
                             " }",
                             thinking_selector,
                         )
-                    if t and t != last_thinking:
+                        if t:
+                            try:
+                                from agent_core.session import _strip_thinking_header
+                                t = _strip_thinking_header(t)
+                            except Exception:
+                                pass
+                    # ── 思考流去噪 + 去重 ────────────────────────────────
+                    # 真机实测发现两类脏数据：
+                    #  1) 截断碎片：流式渲染时页面只挂了半个词（实测收到过 "The"），
+                    #     这种半截片段画进思考块就是一行莫名其妙的英文残片；
+                    #  2) 重复推送：同一段思考文字被连推 2~5 次（同一 ts 附近的
+                    #     多次轮询读到同一份 DOM 快照），GUI 上表现为思考块刷屏。
+                    # 处理：太短的片段直接丢；与上次内容完全相同、或上次内容已包含
+                    # 本次内容的（说明是旧快照），都不再重复上报。
+                    _emit = t
+                    if _emit:
+                        _stripped = _emit.strip()
+                        # 过短且没有标点/中文的碎片，视为截断噪声
+                        if len(_stripped) <= 3 and not any(
+                            ch in _stripped for ch in "。，！？：；、,.!?:;"
+                        ):
+                            _emit = ""
+                        # 完全重复
+                        elif _stripped == last_thinking.strip():
+                            _emit = ""
+                        # 旧快照（本次内容是上次的前缀 → 页面还没渲染出新内容）
+                        elif last_thinking.strip().startswith(_stripped):
+                            _emit = ""
+                    if _emit:
                         last_thinking = t
                         try:
                             on_thinking(t)
@@ -1046,29 +1200,56 @@ class BrowserManager:
         except Exception as e:
             return f"获取文本失败：{e}"
 
-    async def browser_get_thinking_content(self) -> str:
-        """获取当前深度思考内容（如果正在显示）"""
+    async def browser_get_thinking_content(self, thinking_selector: str = "") -> str:
+        """获取当前深度思考内容（如果正在显示）。
+
+        【2026-09-21 真机修复·用户报「思考过程显示有大问题」的根因】
+        旧实现只按写死的 6 个通用选择器找（[class*='thinking'] / .reasoning-content …），
+        这些【全部不匹配 DeepSeek 真实的思考面板 class `.ds-think-content`】——
+        真机 /probe 实测：写死选择器 0 匹配，而 `.ds-think-content .ds-markdown`
+        稳定命中并返回上百字真实推理。结果就是整轮任务里 on_thinking 一次都不触发，
+        GUI 的「🧠 模型推理（深度思考）」块永远是空的。
+
+        修法：把「平台配置的 thinking_selector」提到最前面（platforms.json 已按真机 DOM
+        逐个平台核对），只有它取不到才回落到通用选择器。同时按 DeepSeek 的实际层级
+        优先取内层 .ds-markdown，避免把折叠条标题「已思考（用时 N 秒）」当成推理正文。
+        """
         if self._page is None:
             return ""
+        # 候选顺序：平台配置优先 → 通用兜底
+        selectors = []
+        if thinking_selector:
+            selectors.append(thinking_selector)
+        selectors += [
+            ".ds-think-content .ds-markdown",   # DeepSeek 真机命中（推理正文层）
+            ".ds-think-content",                # DeepSeek 兜底（含标题，下面会剥）
+            "[class*='thinking']",
+            "[class*='deep-think']",
+            "[class*='reasoning']",
+            "[class*='思考']",
+            ".thinking-content",
+            ".reasoning-content",
+        ]
         try:
-            # 尝试多种可能的深度思考内容选择器
-            selectors = [
-                "[class*='thinking']",
-                "[class*='deep-think']",
-                "[class*='reasoning']",
-                "[class*='思考']",
-                ".thinking-content",
-                ".reasoning-content",
-            ]
             for sel in selectors:
                 try:
                     elem = self._page.locator(sel).first
                     if await elem.is_visible(timeout=500):
-                        return await elem.inner_text()
-                except:
+                        txt = await elem.inner_text()
+                        if not txt or not txt.strip():
+                            continue
+                        # 剥掉折叠条标题行（grep 不出正文 vs 标题的区别时以内容为准）
+                        try:
+                            from agent_core.session import _strip_thinking_header
+                            txt = _strip_thinking_header(txt)
+                        except Exception:
+                            pass
+                        if txt and txt.strip():
+                            return txt
+                except Exception:
                     continue
             return ""
-        except Exception as e:
+        except Exception:
             return ""
 
     async def browser_get_html(self) -> str:

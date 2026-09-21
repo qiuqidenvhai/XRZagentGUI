@@ -1,0 +1,9 @@
+PID 11148 NAME python.exe STATUS running
+CMD D:\软件\Python\python.exe -c 
+import psutil
+for p in psutil.process_iter(['pid','name','cmdline','status']):
+    cmd=' '.join(p.info['cmdline'] or [])
+    if 'desktop_app.py' in cmd:
+        print('PID', p.info['pid'], 'NAME', p.info['name'], 'STATUS', p.info['status'])
+        print('CMD', cmd)
+

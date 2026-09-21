@@ -1,0 +1,4 @@
+14732 gone (psutil.NoSuchProcess(pid=14732, msg='process PID not found'))
+terminal.py procs=['9524']
+port8888=False
+--- stderr ---

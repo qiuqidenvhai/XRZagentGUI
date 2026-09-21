@@ -1,0 +1,60 @@
+[
+ {
+  "name": "A_minimal",
+  "args": [
+   "--no-first-run",
+   "--no-service-autorun"
+  ],
+  "tmp": "C:\\Users\\XE76F~1.LAP\\AppData\\Local\\Temp\\xrz_test_A_minimal_0p1v39um",
+  "launch_ok": true,
+  "launch_ms": 2664,
+  "pages_initial": 1,
+  "page_live": true,
+  "goto_ok": true
+ },
+ {
+  "name": "B_minimal_no_sandbox",
+  "args": [
+   "--no-first-run",
+   "--no-service-autorun",
+   "--no-sandbox"
+  ],
+  "tmp": "C:\\Users\\XE76F~1.LAP\\AppData\\Local\\Temp\\xrz_test_B_minimal_no_sandbox_nhhzvmv_",
+  "launch_ok": true,
+  "launch_ms": 1465,
+  "pages_initial": 1,
+  "page_live": true,
+  "goto_ok": true
+ },
+ {
+  "name": "C_browser_py_args",
+  "args": [
+   "--no-first-run",
+   "--no-service-autorun",
+   "--no-sandbox",
+   "--disable-gpu",
+   "--disable-dev-shm-usage"
+  ],
+  "tmp": "C:\\Users\\XE76F~1.LAP\\AppData\\Local\\Temp\\xrz_test_C_browser_py_args_lf25pfbk",
+  "launch_ok": true,
+  "launch_ms": 3306,
+  "pages_initial": 1,
+  "page_live": true,
+  "goto_ok": true
+ },
+ {
+  "name": "D_no_sandbox_nogpu_off",
+  "args": [
+   "--no-first-run",
+   "--no-service-autorun",
+   "--no-sandbox",
+   "--disable-dev-shm-usage"
+  ],
+  "tmp": "C:\\Users\\XE76F~1.LAP\\AppData\\Local\\Temp\\xrz_test_D_no_sandbox_nogpu_off_yeh6uazh",
+  "launch_ok": true,
+  "launch_ms": 1468,
+  "pages_initial": 1,
+  "page_live": true,
+  "goto_ok": true
+ }
+]

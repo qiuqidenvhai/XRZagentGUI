@@ -1,0 +1,226 @@
+{
+  "tests": [
+    {
+      "num": 1,
+      "name": "文件上传控件",
+      "status": "WARN",
+      "detail": "未找到文件输入框（可能是拖放方式）"
+    },
+    {
+      "num": 2,
+      "name": "附件显示区域",
+      "status": "WARN",
+      "detail": "未找到附件列表容器"
+    },
+    {
+      "num": 3,
+      "name": "pendingAttachments变量",
+      "status": "PASS",
+      "detail": "变量已定义"
+    },
+    {
+      "num": 4,
+      "name": "后端附件API",
+      "status": "PASS",
+      "detail": "返回17个附件"
+    },
+    {
+      "num": 5,
+      "name": "showThinking函数",
+      "status": "PASS",
+      "detail": "存在"
+    },
+    {
+      "num": 6,
+      "name": "appendThinking函数",
+      "status": "PASS",
+      "detail": "存在"
+    },
+    {
+      "num": 7,
+      "name": "endThinking函数",
+      "status": "PASS",
+      "detail": "存在"
+    },
+    {
+      "num": 8,
+      "name": "SSE连接状态",
+      "status": "WARN",
+      "detail": "未连接或断开"
+    },
+    {
+      "num": 9,
+      "name": "ai_thinking事件处理",
+      "status": "PASS",
+      "detail": "已注册"
+    },
+    {
+      "num": 10,
+      "name": "历史抽屉",
+      "status": "WARN",
+      "detail": "未找到"
+    },
+    {
+      "num": 11,
+      "name": "loadHistory函数",
+      "status": "PASS",
+      "detail": "存在"
+    },
+    {
+      "num": 12,
+      "name": "任务列表API",
+      "status": "PASS",
+      "detail": "共156个任务"
+    },
+    {
+      "num": 13,
+      "name": "任务结构",
+      "status": "PASS",
+      "detail": "字段完整"
+    },
+    {
+      "num": 14,
+      "name": "独立对话文件",
+      "status": "PASS",
+      "detail": "共178个独立文件"
+    },
+    {
+      "num": 15,
+      "name": "restoreTask函数",
+      "status": "WARN",
+      "detail": "不存在（使用命令方式恢复）"
+    },
+    {
+      "num": 16,
+      "name": "session.restore_conversation",
+      "status": "PASS",
+      "detail": "存在"
+    },
+    {
+      "num": 17,
+      "name": "恢复实现方式",
+      "status": "PASS",
+      "detail": "URL:True, JSON:True"
+    },
+    {
+      "num": 18,
+      "name": "恢复命令发送",
+      "status": "PASS",
+      "detail": "插话消息已入队"
+    },
+    {
+      "num": 19,
+      "name": "deleteTask函数",
+      "status": "PASS",
+      "detail": "存在"
+    },
+    {
+      "num": 20,
+      "name": "tasks.json权限",
+      "status": "PASS",
+      "detail": "666 (可写)"
+    },
+    {
+      "num": 21,
+      "name": "文件写入测试",
+      "status": "PASS",
+      "detail": "权限正常"
+    },
+    {
+      "num": 22,
+      "name": "删除API响应",
+      "status": "WARN",
+      "detail": "HTTP 500（可能端点路径不对）"
+    },
+    {
+      "num": 23,
+      "name": "build_pptx函数",
+      "status": "PASS",
+      "detail": "存在"
+    },
+    {
+      "num": 24,
+      "name": "parse_to_slides函数",
+      "status": "PASS",
+      "detail": "存在"
+    },
+    {
+      "num": 25,
+      "name": "已生成PPT",
+      "status": "PASS",
+      "detail": "8个有效PPT"
+    },
+    {
+      "num": 26,
+      "name": "PPT生成命令",
+      "status": "PASS",
+      "detail": "插话消息已入队"
+    },
+    {
+      "num": 27,
+      "name": "interruptTask函数",
+      "status": "PASS",
+      "detail": "存在"
+    },
+    {
+      "num": 28,
+      "name": "停止按钮",
+      "status": "WARN",
+      "detail": "未找到（可能动态创建）"
+    },
+    {
+      "num": 29,
+      "name": "中断API",
+      "status": "PASS",
+      "detail": "已发送中断信号"
+    },
+    {
+      "num": 30,
+      "name": "loadAttachments函数",
+      "status": "PASS",
+      "detail": "存在"
+    },
+    {
+      "num": 31,
+      "name": "附件侧边栏",
+      "status": "PASS",
+      "detail": "存在"
+    },
+    {
+      "num": 32,
+      "name": "附件列表含PPT",
+      "status": "PASS",
+      "detail": "共8个PPT"
+    },
+    {
+      "num": 33,
+      "name": "PPT: 2fc8b7fa373c4cbc9983",
+      "status": "INFO",
+      "detail": "28348 bytes"
+    },
+    {
+      "num": 34,
+      "name": "PPT: 414b1b9bf40c4f7ca218",
+      "status": "INFO",
+      "detail": "28348 bytes"
+    },
+    {
+      "num": 35,
+      "name": "PPT: 41b8927e0c844ad98e2e",
+      "status": "INFO",
+      "detail": "28348 bytes"
+    },
+    {
+      "num": 36,
+      "name": "自动刷新附件",
+      "status": "WARN",
+      "detail": "可能未实现"
+    }
+  ],
+  "summary": {
+    "total": 36,
+    "passed": 25,
+    "failed": 0,
+    "warning": 8
+  }
+}

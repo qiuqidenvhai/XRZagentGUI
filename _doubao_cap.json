@@ -1,0 +1,125 @@
+{
+ "found": true,
+ "frame_url": "https://rmc.bytedance.com/verifycenter/captcha/v2?from=iframe&fp=verify_mtb2rs7x_Wea02tgr_hEqf_4DU2_8mra_avjhwZew6dod&env=%7B%22screen%22%3A",
+ "prompt": "属于动物的 ",
+ "body_text": "属于动物的 \n请选择所有符合上文描述的图片，并拖拽到下方\n拖拽到这里\n刷新\n反馈\n202609161137527B328C94BDE040439057\n提交",
+ "imgs": [],
+ "actions": [
+  {
+   "sel": "drag-area",
+   "cls": "drag-area",
+   "x": 15,
+   "y": 441,
+   "w": 350,
+   "h": 54,
+   "txt": "拖拽到这里",
+   "tag": "DIV"
+  },
+  {
+   "sel": "vc-captcha-verify-pb",
+   "cls": "vc-captcha-verify-pb disable",
+   "x": 295,
+   "y": 512,
+   "w": 65,
+   "h": 32,
+   "txt": "",
+   "tag": "DIV"
+  },
+  {
+   "sel": "vc-captcha-refresh",
+   "cls": "vc-captcha-refresh",
+   "x": 20,
+   "y": 511,
+   "w": 50,
+   "h": 20,
+   "txt": "刷新",
+   "tag": "DIV"
+  },
+  {
+   "sel": "vc-captcha-refresh",
+   "cls": "vc-captcha-refresh--icon",
+   "x": 20,
+   "y": 511,
+   "w": 20,
+   "h": 20,
+   "txt": "",
+   "tag": "SPAN"
+  },
+  {
+   "sel": "vc-captcha-refresh",
+   "cls": "vc-captcha-refresh--text",
+   "x": 42,
+   "y": 511,
+   "w": 28,
+   "h": 20,
+   "txt": "刷新",
+   "tag": "SPAN"
+  },
+  {
+   "sel": "vc-captcha-feedback",
+   "cls": "vc-captcha-feedback",
+   "x": 80,
+   "y": 511,
+   "w": 50,
+   "h": 20,
+   "txt": "反馈",
+   "tag": "DIV"
+  },
+  {
+   "sel": "vc-captcha-feedback",
+   "cls": "vc-captcha-feedback--icon",
+   "x": 80,
+   "y": 511,
+   "w": 20,
+   "h": 20,
+   "txt": "",
+   "tag": "SPAN"
+  },
+  {
+   "sel": "vc-captcha-feedback",
+   "cls": "vc-captcha-feedback--text",
+   "x": 102,
+   "y": 511,
+   "w": 28,
+   "h": 20,
+   "txt": "反馈",
+   "tag": "SPAN"
+  },
+  {
+   "sel": "vc-captcha-verify-action",
+   "cls": "vc-captcha-verify-action captcha_verify_action",
+   "x": 20,
+   "y": 511,
+   "w": 193,
+   "h": 20,
+   "txt": "刷新\n反馈",
+   "tag": "DIV"
+  },
+  {
+   "sel": "vc-captcha-close-btn",
+   "cls": "vc-captcha-close-btn captcha_verify_bar--close",
+   "x": 326,
+   "y": 0,
+   "w": 54,
+   "h": 54,
+   "txt": "",
+   "tag": "DIV"
+  }
+ ],
+ "iframe_box": [
+  {
+   "src": "https://www.doubao.com/drive-iframe/drive/home/?drive_iframe_defer_render=1&drive_iframe_l",
+   "x": 0,
+   "y": 0,
+   "w": 1280,
+   "h": 900
+  },
+  {
+   "src": "https://rmc.bytedance.com/verifycenter/captcha/v2?from=iframe&fp=verify_mtb2rs7x_Wea02tgr_",
+   "x": 450,
+   "y": 167,
+   "w": 380,
+   "h": 565
+  }
+ ]
+}

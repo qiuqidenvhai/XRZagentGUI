@@ -1,0 +1,14 @@
+total conv files=539
+conv_deepseek_20260920_083831.json | mtime=1789906490 | title='' | nmsg=36 | first='在桌面创建一个word报告，简述今日新闻生成一个关于AI的PPT，7页接着刚才那个任务，用一句话告诉我：它当时要做什么？'
+conv_deepseek_20260920_200541.json | mtime=1789905950 | title='' | nmsg=3 | first='用一句话回答：数字 1 加 1 等于几？只回答数字。'
+conv_deepseek_20260916_083110.json | mtime=1789518687 | title='' | nmsg=5 | first='用一句话告诉我：多肉植物为什么耐旱？上一条你答的对不对？再补 1 条多肉植物光照要点。'
+conv_doubao_20260916_080718.json | mtime=1789517399 | title='' | nmsg=2 | first='上一条你答的对不对？再补 1 条多肉植物光照要点。'
+conv_deepseek_20260916_080616.json | mtime=1789517183 | title='' | nmsg=3 | first='用一句话告诉我：多肉植物为什么耐旱？'
+conv_doubao_20260916_074049.json | mtime=1789515813 | title='' | nmsg=2 | first='上一条你答的对不对？再补 1 条多肉植物光照要点。'
+conv_deepseek_20260916_073955.json | mtime=1789515601 | title='' | nmsg=3 | first='用一句话告诉我：多肉植物为什么耐旱？'
+conv_doubao_20260916_073456.json | mtime=1789515461 | title='' | nmsg=2 | first='上一条你答的对不对？再补 1 条多肉植物光照要点。'
+conv_deepseek_20260916_073400.json | mtime=1789515247 | title='' | nmsg=3 | first='用一句话告诉我：多肉植物为什么耐旱？'
+conv_doubao_20260916_072950.json | mtime=1789515155 | title='' | nmsg=2 | first='上一条你答的对不对？再补 1 条多肉植物光照要点。'
+conv_deepseek_20260916_072848.json | mtime=1789514934 | title='' | nmsg=3 | first='用一句话告诉我：多肉植物为什么耐旱？'
+conv_doubao_20260916_071948.json | mtime=1789514552 | title='' | nmsg=2 | first='上一条你答的对不对？再补 1 条多肉植物光照要点。'
+--- title hits ---

@@ -1,0 +1,4 @@
+health agent_ready=True keys=['status', 'agent_ready', 'browser', 'commander', 'platform', 'port']
+command post -> {'type': 'accepted', 'text': '命令已接收，正在处理...', 'async_task': True}
+saw event types: ['task_started', 'thinking', 'command_detected', 'tool_start', 'tool_end', 'command_success', 'ai_final_reply']
+FINAL={"type": "ai", "text": "已思考（用时 1 秒）\n\n用户要求只回答数字。这是纯问答，不需要工具调用，直接调用 done() 结束。按要求把回答写在 done 之前的自然语言里。\n\n2", "task_id": "task_1789905930439"}

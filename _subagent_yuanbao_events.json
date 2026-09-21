@@ -1,0 +1,15 @@
+{
+  "platform": "yuanbao",
+  "seq": [
+    "task"
+  ],
+  "task_out": "错误: 必须提供 goal",
+  "wait_out": "",
+  "sub_events": [],
+  "types_sub": {},
+  "res_path": null,
+  "sub_success": null,
+  "sub_err": null,
+  "rpt_exists": false,
+  "docx_txt": ""
+}

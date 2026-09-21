@@ -266,6 +266,17 @@ body {
 .msg-thought { align-self: flex-start; background: rgba(163,113,247,0.1); border: 1px solid rgba(163,113,247,0.3); color: var(--purple); font-style: italic; }
 .msg-log { align-self: flex-start; background: rgba(88,166,255,0.08); border: 1px solid rgba(88,166,255,0.2); color: var(--blue); font-size: 13px; }
 .msg-system { align-self: center; color: var(--text2); font-size: 12px; text-align: center; padding: 4px 12px; }
+/* 本地卡片：状态/帮助等由软件自己即时渲染的信息，不进消息流、不发给 AI */
+.local-card {
+  align-self: stretch; max-width: 100%; text-align: left;
+  background: var(--bg2, rgba(127,127,127,0.08));
+  border: 1px solid var(--border, rgba(127,127,127,0.3));
+  border-radius: 10px; padding: 12px 14px; margin: 6px 0;
+  color: var(--text1, inherit); font-size: 12.5px; line-height: 1.65;
+  animation: localCardIn 0.18s ease-out;
+}
+.local-card-body { white-space: pre-wrap; word-break: break-word; font-family: inherit; }
+@keyframes localCardIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
 .msg-error { align-self: flex-start; background: rgba(248,81,73,0.1); border: 1px solid rgba(248,81,73,0.3); color: var(--red); }
 .msg-question { align-self: center; background: rgba(216,154,255,0.12); border: 1px solid rgba(216,154,255,0.35); color: #d89aff; font-size: 13px; max-width: 90%; }
 
@@ -587,7 +598,12 @@ body {
 .toolbar-bottom {
     display: flex;
     align-items: center;
+    /* 【2026-09-21 修复】右侧文件预览栏展开后中央区变窄，这一行（模型/思考/搜索）
+       原来不换行 → 最右边的控件被裁掉半截（截图实证：「思考」开关只剩一半）。
+       与 .quick-actions 保持一致：窄了就换行，永远不裁控件。 */
+    flex-wrap: wrap;
     gap: 12px;
+    row-gap: 8px;
     padding: 8px 16px;
     background: var(--bg2);
     border-top: 1px solid var(--border);
@@ -656,6 +672,22 @@ body {
 .welcome h1 { font-size: 20px; color: var(--text); margin-bottom: 8px; }
 .welcome p { font-size: 13px; line-height: 1.8; }
 
+/* 首次引导卡片：独立于 .welcome，SSE 系统日志不会顶掉它 */
+.onboarding {
+    margin: 14px 16px;
+    padding: 18px 20px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    color: var(--text);
+    box-shadow: 0 2px 10px rgba(0,0,0,.15);
+}
+.onboarding .ob-icon { font-size: 34px; margin-bottom: 8px; }
+.onboarding h1 { font-size: 17px; margin-bottom: 10px; color: var(--text); }
+.onboarding .ob-body { font-size: 13px; line-height: 1.9; color: var(--text2); }
+.onboarding .ob-body b { color: var(--text); }
+.onboarding .ob-body br { }
+
 /* 历史对话抽屉 */
 .history-backdrop {
     display: none;
@@ -694,25 +726,29 @@ body {
     padding: 10px 12px; margin-bottom: 8px;
     background: var(--bg); border: 1px solid var(--border);
     border-radius: 8px; cursor: pointer; transition: all 0.15s;
-    display: flex; align-items: center; gap: 8px;
+    display: flex; flex-direction: column; align-items: stretch; gap: 5px;
 }
 .history-item:hover { border-color: var(--green); }
 .history-item .hi-title {
     color: var(--text); font-size: 13px; margin-bottom: 0;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.history-item .hi-meta { color: var(--text2); font-size: 11px; display: flex; gap: 8px; }
+.history-item .hi-meta { color: var(--text2); font-size: 11px; display: flex; gap: 8px; align-items: center; }
 .history-item .hi-plat {
     color: var(--green); border: 1px solid var(--green);
     border-radius: 4px; padding: 0 5px;
 }
-.history-item .hi-delete {
-    width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;
-    border-radius: 4px; cursor: pointer; color: var(--text2); font-size: 12px; flex-shrink: 0;
-    opacity: 0; transition: all 0.15s;
+/* 操作行：恢复（切回该任务继续聊）+ 删除 */
+.history-item .hi-actions { display: flex; gap: 6px; margin-top: 2px; }
+.history-item .hi-resume, .history-item .hi-delete {
+    display: inline-flex; align-items: center; gap: 3px;
+    border-radius: 4px; cursor: pointer; color: var(--text2); font-size: 11px;
+    padding: 2px 8px; transition: all 0.15s; flex-shrink: 0;
+    border: 1px solid var(--border);
 }
-.history-item:hover .hi-delete { opacity: 1; }
-.history-item .hi-delete:hover { background: rgba(248,81,73,0.15); color: var(--red); }
+.history-item .hi-resume:hover { background: rgba(40,179,104,0.15); color: var(--green); border-color: var(--green); }
+.history-item .hi-delete { padding: 2px 7px; font-size: 12px; }
+.history-item .hi-delete:hover { background: rgba(248,81,73,0.15); color: var(--red); border-color: var(--red); }
 
 /* ── 历史任务视图：顶部横幅 + 按任务隔离的消息流 ──
    点历史任务时进入「只读回看」模式，顶部横幅给出任务标识与返回入口；
@@ -821,8 +857,8 @@ body {
     <button id="sidebarToggle" onclick="toggleSidebar()" title="收起/展开侧边栏" style="position:absolute;left:0;top:50%;transform:translateY(-50%);z-index:10;width:18px;height:50px;background:var(--bg3);border:1px solid var(--border);border-left:none;border-radius:0 6px 6px 0;color:var(--text);cursor:pointer;font-size:12px;padding:0;display:flex;align-items:center;justify-content:center;">‹</button>
     <div class="sidebar" id="leftSidebar">
         <div class="section">🚀 快捷操作</div>
-        <button onclick="sendCmd('status')" title="查看系统状态">📊 状态</button>
-        <button onclick="sendCmd('help')" title="显示帮助信息">❓ 帮助</button>
+<button onclick="showLocalPanel('status')" title="查看系统状态">📊 状态</button>
+<button onclick="showLocalPanel('help')" title="显示帮助信息">❓ 帮助</button>
 
         <div class="section">🌐 平台切换</div>
         <div id="platformList" style="display:flex;flex-direction:column;gap:4px;"><button id="pl-deepseek" class="active">💭 DeepSeek</button><button id="pl-tongyi">💬 通义千问</button><button id="pl-doubao">🤖 豆包</button><button id="pl-yuanbao">✨ 元宝</button></div>
@@ -846,7 +882,7 @@ body {
 
     <!-- 中央聊天区 -->
     <div class="chat">
-        <div class="chat-messages" id="messages"><div class="msg msg-system">已连接到仙人掌 Agent 终端</div><div class="msg msg-log">[命令成功] {"text":"已切换到 DeepSeek"}</div><div class="msg msg-log">[执行命令...] {"text":"正在启动 豆包 浏览器..."}</div><div class="msg msg-log">[命令成功] {"type":"system","text":"已切换到 豆包，已携带切换前的对话背景"}</div><div class="msg msg-log">[命令成功] {"text":"已切换到 DeepSeek"}</div><div class="msg msg-log">[命令成功] {"text":"已切换到 DeepSeek"}</div><div class="msg msg-log">[命令成功] {"type":"system","text":"已切换到 豆包，已携带切换前的对话背景"}</div><div class="msg msg-log">[命令成功] {"text":"已切换到 DeepSeek"}</div><div class="msg msg-log">[执行命令...] {"text":"正在启动 通义千问 浏览器..."}</div><div class="msg msg-log">[命令成功] {"type":"system","text":"已切换到 通义千问，已携带切换前的对话背景"}</div></div>
+        <div class="chat-messages" id="messages"><div class="welcome"><div class="icon">🌵</div><h1>仙人掌 Agent</h1><p>连接中...</p></div></div>
         <div class="quick-actions">
         <button onclick="sendMsg('帮我制定2026年AI路线图')" class="qa-btn">🔍 AI路线图</button>
         <button onclick="sendMsg('帮我写一篇竞品分析')" class="qa-btn">🔍 写作</button>
@@ -857,9 +893,9 @@ body {
         
         <!-- 底部工具栏：模型选择 + 思考模式 -->
         <div class="toolbar-bottom">
-            <div class="tool-group">
+            <div class="tool-group" id="modelGroup">
                 <span class="tool-label">🤖 模型:</span>
-                <select id="modelSelect" class="tool-select" onchange="onModelChange(this.value)"><option value="quick">快速模式</option><option value="expert">专家模式</option><option value="vision">识图模式</option></select>
+                <select id="modelSelect" class="tool-select" onchange="onModelChange(this.value)"></select>
             </div>
             <div class="tool-separator"></div>
             <div class="tool-group" id="thinkingGroup">
@@ -867,13 +903,20 @@ body {
                 <!-- 动态渲染：toggle 平台用开关，select 平台用下拉框 -->
                 <div id="thinkingControl" style="display:flex;align-items:center;gap:6px;"><button id="thinkingToggleBtn" class="tool-select" style="min-width: 80px; padding: 6px 12px; font-size: 13px; border-radius: 6px; cursor: pointer; border: 1px solid var(--border); background: var(--bg3); color: var(--text);">🧠 思考: 关</button></div>
             </div>
+            <!-- 联网搜索开关：只有平台网页真的带该开关（如 DeepSeek「智能搜索」）才显示 -->
+            <div class="tool-group" id="searchGroup" style="display:none;">
+                <span class="tool-label">🔍 搜索:</span>
+                <div id="searchControl" style="display:flex;align-items:center;gap:6px;">
+                    <button id="searchToggleBtn" class="tool-select" style="min-width: 80px; padding: 6px 12px; font-size: 13px; border-radius: 6px; cursor: pointer; border: 1px solid var(--border); background: var(--bg3); color: var(--text);">🔍 搜索: 关</button>
+                </div>
+            </div>
             <div style="flex:1;"></div>
             <span class="tool-label" id="modelStatus">● 就绪</span>
         </div>
         <div class="input-area" id="inputArea">
             <div class="attach-list" id="attachList"></div>
             <div class="input-row">
-                <textarea id="input" placeholder="输入任务描述，或把文件拖到这里 / 点 📎 选文件..." rows="1" onkeydown="handleKey(event)" style=""></textarea>
+                <textarea id="input" placeholder="输入任务描述，或把文件拖到这里 / 点 📎 选文件...（Enter 发送，Shift+Enter 换行）" rows="1" onkeydown="handleKey(event)" style=""></textarea>
                 <button class="btn-attach" id="attachBtn" onclick="openFilePicker()" title="选择本地文件作为附件">📎</button>
                 <button class="btn-send" id="sendBtn" onclick="sendInput()">▶</button>
                 <button class="btn-stop" id="stopBtn" onclick="interruptTask()" style="display:none;" title="中断任务">⏹</button>
@@ -885,8 +928,8 @@ body {
     <!-- 右侧文件预览侧边栏 -->
     <button id="fileSidebarToggle" onclick="toggleFileSidebar()" title="收起/展开文件栏" style="position:absolute;right:0;top:50%;transform:translateY(-50%);z-index:10;width:18px;height:50px;background:var(--bg3);border:1px solid var(--border);border-right:none;border-radius:6px 0 0 6px;color:var(--text);cursor:pointer;font-size:12px;padding:0;display:flex;align-items:center;justify-content:center;">›</button>
     <div class="file-sidebar" id="fileSidebar">
-        <div class="section">附件文件</div>
-        <div id="fileList"><div class="file-empty">暂无文件</div></div>
+        <div class="section">📦 文件产物（上传 + 生成）</div>
+        <div id="fileList"><div class="file-empty">暂无文件<br>生成或上传后会自动出现在这里</div></div>
         <div id="filePreviewContainer"></div>
     </div>
     <!-- 历史对话抽屉 -->
@@ -894,7 +937,7 @@ body {
     <div class="history-drawer" id="historyDrawer">
         <div class="history-head">
             <span>📚 历史对话</span>
-            <button class="btn-small" onclick="sendCmd('新对话')">➕ 新建</button>
+            <button class="btn-small" onclick="newConversation()" title="开一个全新的独立对话">➕ 新建对话</button>
             <button class="btn-small" onclick="toggleHistory(false)">✕</button>
         </div>
         <div class="history-list" id="historyList"><div class="history-empty">加载中...</div></div>
@@ -931,14 +974,54 @@ inputEl.addEventListener('input', () => {
 });
 
 function handleKey(e) {
-    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-        e.preventDefault();
-        sendInput();
+    // 【交互约定】与主流聊天软件一致：Enter 发送，Shift+Enter 换行。
+    // 旧实现只认 Ctrl+Enter —— 普通用户按 Enter 只会插入换行符，
+    // 界面上既不出现自己气泡也不发送，就是用户投诉的「我发的消息面板不显示」。
+    //
+    // 【重要】判定必须建立在 keyCode 上，不能只信 e.key：
+    //   本机 QtWebEngine(6.11) 在构造/派发 KeyboardEvent 时会把 key 初始化值
+    //   正则化（"Enter" 变成字符串 "/Enter/"），只比 e.key==="Enter"
+    //   在真实环境里有概率漏判。keyCode 13 是 IE 时代就稳定的字段，最可靠。
+    var isEnter = (e.keyCode === 13) || (e.which === 13);
+    if (!isEnter) {
+        // 兜底：没有 keyCode 的合成事件，才退回比 e.key（兼容 "/Enter/" 这种畸形值）
+        var k = (e.key || '');
+        isEnter = (k === 'Enter') || (k.replace(/\//g, '') === 'Enter');
     }
+    if (!isEnter) return;
+    // 中文输入法组字过程中的 Enter 是在选词，不能当发送
+    if (e.isComposing || e.keyCode === 229) return;
+    if (e.shiftKey) return;              // Shift+Enter = 换行
+    e.preventDefault();
+    sendInput();
 }
 
 function escapeHtml(s) {
     return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── 把环境层「删除/写入拦截」的内部噪音从展示文本里剥掉 ──
+// 生成 PPT/Word 等会清理 50+ 个中间文件，触发沙箱的 safe-delete 批量确认
+// （SAFE_DELETE_BULK_CONFIRM_REQUIRED），原始 JSON 会混进工具输出/回复。
+// 这是【环境守卫】，产物其实已生成成功——不该把这段吓人的内部报文甩给终端用户。
+function stripNoise(text) {
+    if (!text || typeof text !== 'string') return text;
+    let s = text;
+    // 删掉形如 [safe-delete][SAFE_DELETE_...] {...} 的整行/整段
+    s = s.replace(/\[safe-delete\]\[SAFE_DELETE_[A-Z_]+\][^\n]*/g, '');
+    s = s.replace(/\[safe-delete\][^\n]*/g, '');
+    // 删掉裸的 SAFE_DELETE_* JSON 块
+    s = s.replace(/SAFE_DELETE_[A-Z_]+\s*[:{]?/g, '');
+    // 删掉把「写入被拦截 / 删除被拒绝」这类内部措辞换成友好说法
+    s = s.replace(/(文件写入|对话索引写入)被(拦截|拒绝)[^\n。；;]*/g, '');
+    s = s.replace(/删除被拦截[^\n。；;]*/g, '');
+    // 删掉内部指令协议 @@@@{...}@@@@（模型偶尔会把指挥官的协议原样吐回对话里）
+    s = s.replace(/@{2,}\s*\{[\s\S]*?\}\s*@{2,}/g, '');
+    s = s.replace(/@{2,}[^\n]*@{2,}/g, '');
+    s = s.replace(/@{3,}\s*/g, '');
+    // 清掉因此产生的多余空行
+    s = s.replace(/\n{3,}/g, '\n\n').trim();
+    return s;
 }
 
 // ── 任务列表（WorkBuddy 风格）──
@@ -986,12 +1069,47 @@ function addTask(id, title, platform) {
 function completeTask(id, status = 'done') {
     const t = TASKS.find(t => t.id === id);
     if (t) t.status = status;
+    // 没有在跑的任务了 → 清掉"已受理"过渡窗口，否则轮询会一直把状态压成 busy
+    if (!(TASKS || []).some(x => x.status === 'running')) clearBusy();
     renderTaskList();
+    // 【产物显示修复】任务结束就拉「该任务自己的」产物列表。
+    // 关键：必须带上 task id 作为会话范围 —— 否则会把别的任务的产物混进来。
+    //
+    // 【2026-09-21 修复】但**不许抢用户正在看的任务**：
+    // 后台任务收尾时若无条件 loadAttachments(id)，会把右侧产物栏从
+    // 「用户正在回看的那个任务」切到「刚结束的那个任务」，用户看起来就是
+    // 产物串台 / 一直在转圈。只在下面两种情况才自动绑定：
+    //   a) 用户没有选中任何任务（实时视图、产物栏是空的）→ 自动展示刚结束任务的产物
+    //   b) 用户当前看的就是这个任务 → 刷新它
+    if (status === 'done' || status === 'failed') {
+        const noScope = (FILE_SCOPE_CONV === null || FILE_SCOPE_CONV === undefined);
+        const mine = String(FILE_SCOPE_CONV) === String(id);
+        const mayBind = typeof loadAttachments === 'function'
+            && (noScope ? !HIST_VIEW : mine);
+        if (mayBind) loadAttachments(id);
+    }
 }
 
-function removeTask(id) {
+async function removeTask(id) {
+    if (!confirm('确定删除这个任务（对话记录）吗？\n删除后无法恢复。')) return;
     TASKS = TASKS.filter(t => t.id !== id);
     renderTaskList();
+    if (TRANSCRIPTS[id]) { delete TRANSCRIPTS[id]; saveTranscripts(); }
+    if (CURRENT_TASK_ID === id) CURRENT_TASK_ID = null;
+    // 【核心修复】旧实现只从前端数组里删（刷新/重启就复活），是「假删除」。
+    // 真正调后端 DELETE /conversations/<id>，把后端对话索引 + 文件一起删掉。
+    try {
+        const resp = await fetch(API + '/conversations/' + encodeURIComponent(id), { method: 'DELETE' });
+        const data = await safeJson(resp);
+        if (data.type === 'ok') {
+            addMsg('🗑 已删除任务 ' + id, 'system');
+            setTimeout(() => { try { loadHistory(); } catch (e) {} }, 300);
+        } else {
+            addMsg('删除任务: ' + ((data.text) || '未知错误'), 'error');
+        }
+    } catch (e) {
+        addMsg('删除任务失败: ' + e.message, 'error');
+    }
 }
 
 function selectTask(id) {
@@ -1010,6 +1128,7 @@ let TRANSCRIPTS = {};
 let LAST_USER_TEXT = '';      // 待归属到下一个 task_started 的用户输入
 let CURRENT_TASK_ID = null;   // 当前正在跑的任务
 let HIST_VIEW = null;         // null = 实时视图；否则 {taskId}
+let NEWING = false;           // 「新建对话」进行中：防连点
 let LIVE_DOM_CACHE = null;    // 进入历史视图前的实时 DOM，用于返回
 const TR_KEY = 'xrz_transcripts_v1';
 
@@ -1141,6 +1260,12 @@ async function openHistoryTask(id, file, title, platform, time) {
     const steps = TRANSCRIPTS[id];
     HIST_VIEW = { taskId: id, title: title || id, platform: platform || '', time: time || '' };
     LIVE_DOM_CACHE = msgDiv.innerHTML;
+    // 【2026-09-21 修复】先把右侧「文件产物」绑到这个任务，再去加载转录。
+    // 旧顺序是最后才 bindFileScope：老任务没有转录时要先 fetch 会话 JSON（大文件、
+    // 可能要等好几秒），期间右侧一直是「暂无文件」——用户点了任务却像没反应，
+    // 而且慢一步的探测会误判成「产物不显示」。
+    activeTaskId = id;
+    bindFileScope(id);
     if (steps && steps.length) {
         renderTranscript(id, steps, null);
     } else if (file) {
@@ -1169,18 +1294,33 @@ async function openHistoryTask(id, file, title, platform, time) {
     document.querySelectorAll('.task-item').forEach(el => el.classList.remove('active'));
     const el = document.querySelector(`.task-item[onclick*="${id}"]`);
     if (el) el.classList.add('active');
-    activeTaskId = id;
+    // 侧边栏产物已在函数开头绑定（见上面注释），这里不再重复调用。
 }
 function closeHistoryView() {
-    if (!HIST_VIEW) return;
+    if (!HIST_VIEW) {
+        // 【2026-09-21 修复】即使 HIST_VIEW 已是 null，也要把缓存清掉。
+        // 否则残留的 LIVE_DOM_CACHE（回看历史前抓的旧 HTML 快照）会在之后的
+        // 某次 closeHistoryView / resetChatView 里把「已清空的实时视图」
+        // 覆盖回旧内容，表现为：用户发的消息气泡莫名其妙消失 / 空对话里冒出旧消息。
+        LIVE_DOM_CACHE = null;
+        return;
+    }
     HIST_VIEW = null;
     if (LIVE_DOM_CACHE !== null) {
-        msgDiv.innerHTML = LIVE_DOM_CACHE;
+        // 只有「当前消息区确实处于历史回看态」时才恢复快照。
+        // 若消息区已经被 resetChatView / 新一轮对话重新写过（含 .welcome 或
+        // 只剩系统提示），恢复旧快照就是错的 —— 直接丢弃缓存。
+        const inHistMode = !!msgDiv.querySelector('.hist-banner');
+        if (inHistMode) {
+            msgDiv.innerHTML = LIVE_DOM_CACHE;
+        }
         LIVE_DOM_CACHE = null;
     }
     msgDiv.scrollTop = msgDiv.scrollHeight;
     activeTaskId = null;
     document.querySelectorAll('.task-item').forEach(el => el.classList.remove('active'));
+    // 回到实时视图 = 没有选中历史任务 → 侧边栏无产物
+    bindFileScope(null);
     resetThinking();
 }
 
@@ -1217,7 +1357,7 @@ function showThinking(text) {
         currentThinkingBody = body;
     }
     if (currentThinkingBody) {
-        currentThinkingBody.textContent = text;
+        currentThinkingBody.textContent = stripNoise(text);
         msgDiv.scrollTop = msgDiv.scrollHeight;
     }
 }
@@ -1249,7 +1389,7 @@ function appendThinking(text) {
     // 每个思考片段作为独立段落追加，保留完整推理链（不覆盖上一步）
     const p = document.createElement('div');
     p.className = 'think-step';
-    p.textContent = text;
+    p.textContent = stripNoise(text);
     currentPlanBody.appendChild(p);
     msgDiv.scrollTop = msgDiv.scrollHeight;
 }
@@ -1260,6 +1400,8 @@ function endPlan() {
 
 function addMsg(text, cls = 'system', isHtml) {
     if (cls === 'user') resetThinking();  // 新对话轮开始，重置上一轮的思考块
+    // 剥掉「写入/删除被拦截」等环境内部噪音，避免把 safe-delete 守卫报文甩给用户
+    if (!isHtml) text = stripNoise(text);
     const el = document.createElement('div');
     el.className = 'msg msg-' + cls;
     if (isHtml) {
@@ -1292,8 +1434,38 @@ function hideTyping() {
 function setStatus(state) {
     statusDot.className = 'status-dot ' + state;
     if (state === 'online') { statusText.textContent = '已连接'; connected = true; sendBtn.disabled = false; stopBtn.style.display = 'none'; insertBtn.style.display = 'none'; }
-    else if (state === 'busy') { statusText.textContent = '工作中...'; connected = true; sendBtn.disabled = true; stopBtn.style.display = 'flex'; insertBtn.style.display = 'flex'; }
+    // busy：任务在跑。⏹中断 / 💬插话 必须可见；但发送按钮【不锁】——
+    // 用户明确要求多任务并行（同一浏览器各占一个标签页），
+    // 锁住发送按钮就变成了「上一个任务在跑就不能派新活」= 变相排队。
+    else if (state === 'busy') { statusText.textContent = '工作中...'; connected = true; sendBtn.disabled = false; stopBtn.style.display = 'flex'; insertBtn.style.display = 'flex'; }
     else { statusText.textContent = '未连接'; connected = false; sendBtn.disabled = true; stopBtn.style.display = 'none'; insertBtn.style.display = 'none'; }
+}
+
+// 【2026-09-21 修复】还有任务在跑吗？
+// 为什么需要它：每 5 秒一次的健康轮询（以及 SSE 重连）过去无条件 setStatus('online')，
+// 而 online 会隐藏 ⏹中断/💬插话 两个按钮 → 任务明明在跑，按钮却闪一下就没了
+// （实测：Enter 发出后 5 秒，状态从「工作中...」变回「已连接」，按钮全隐藏）。
+// 轮询只能恢复「连接」这一事实，不能覆盖「有任务在跑」这一更高的状态。
+//
+// BUSY_UNTIL：「指令已受理、task_started 还没到」的过渡窗口。
+// /command 是异步的（立即回 accepted，任务随后才通过 SSE 宣告开始），
+// 这道窗口避免轮询在这几秒的空档里把按钮隐藏掉。
+let BUSY_UNTIL = 0;
+
+function markBusy(ms) { BUSY_UNTIL = Math.max(BUSY_UNTIL, Date.now() + (ms || 0)); }
+function clearBusy() { BUSY_UNTIL = 0; }
+
+function hasRunningTask() {
+    try {
+        if (sending) return true;
+        if (Date.now() < BUSY_UNTIL) return true;
+        return (TASKS || []).some(t => t.status === 'running');
+    } catch (e) { return !!sending; }
+}
+
+// 空闲时才允许把状态压回 online；否则保持 busy。
+function setIdleUnlessBusy() {
+    setStatus(hasRunningTask() ? 'busy' : 'online');
 }
 
 // 中断当前任务
@@ -1350,7 +1522,8 @@ function connectEvents() {
     eventSource.onopen = () => {
         console.log('Events connected');
         // 【修复】重连成功后恢复可发送状态（否则按钮会一直保持禁用）
-        if (!sending) setStatus('online');
+        // 但别把「有任务在跑」的状态压回空闲 —— 见 setIdleUnlessBusy 注释。
+        setIdleUnlessBusy();
     };
     eventSource.onmessage = (ev) => {
         if (!ev.data) return;  // 跳过 keepalive / 空行
@@ -1443,8 +1616,11 @@ function handleGuiEvent(etype, data) {
         addMsg('❓ ' + (q || '（Agent 向你提问）'), 'question');
         return;
     }
-    // 系统提示（不是错误）：例如「上一条任务还在执行，新指令已排队」。
-    // 之前这类提示只能复用 error 事件，GUI 会画成红色报错，误导用户。
+    // 系统提示（不是错误）：例如「该标签页上有任务正在执行」。
+    // 注意：这里【不再】渲染任何「排队」话术 —— 多任务本来就该并行（每个任务/子代理
+    // 在同一浏览器里各占一个标签页），旧版那句「上一条任务还在执行，你的新指令已排队」
+    // 会让用户误以为软件在无谓地排队，用户已明确要求去掉。现在若真出现提示，
+    // 说明是【同一个标签页】被并发驱动，措辞必须点明「该标签页」，而不是笼统的"排队"。
     if (etype === 'warning' || etype === 'info') {
         const w = (data && data.text) ? data.text : '';
         if (w) addMsg('⏳ ' + w, 'system');
@@ -1472,23 +1648,83 @@ function handleGuiEvent(etype, data) {
 
     // 工具结束：把工具输出渲染成可折叠「结果卡」，diff 自动高亮（对标 opencode）
     if (etype === 'tool_end' && data && data.output) {
+        // 【产物归属】把本工具产出的文件登记到当前任务名下，
+        // 这样侧边栏按任务过滤时才能取到「这个任务自己的产物」。
+        try { recordArtifactsFromTool(data); } catch (e) {}
         renderToolResult(data.tool || label, data.status || 'success', data.output);
         return;
     }
 
-    let extra = '';
-    if (data) {
-        if (typeof data === 'object') {
-            try { extra = JSON.stringify(data).substring(0, 100); } catch {}
-        } else {
-            extra = String(data).substring(0, 100);
+    const line = eventLine(etype, label, data);
+    if (line) addLogLine(line);
+}
+
+// 把后端事件渲染成一行「人话」。
+// 【2026-09-21 修复】旧实现是 addMsg(`[${label}] ${JSON.stringify(data)}`, 'log')，
+// 结果对话区被内部报文刷屏，用户看到的是：
+//   [命令成功] {"type":"system","text":"已切换到 豆包，已携带切换前的对话背景"}
+//   [识别指令] {"tool":"done","id":""}
+//   [开始工具] {"tool":"done"}
+//   [命令成功] ExecutionResult(id='1', status='success', tool='done', output='任务完成', error='')
+// 这些是给机器看的，不该出现在人机对话里。
+function tidyProtocolText(s) {
+    let t = String(s);
+    // Python repr 形状的 ExecutionResult(...)：只留工具名/状态/产出
+    if (t.indexOf('ExecutionResult(') >= 0) {
+        const g = (re) => { const m = t.match(re); return m ? m[1] : ''; };
+        const tool = g(/tool='([^']*)'/);
+        const st = g(/status='([^']*)'/);
+        const out = g(/output='([^']*)'/);
+        const err = g(/error='([^']*)'/);
+        t = '工具 ' + (tool || '?') + (st ? ' ' + st : '')
+            + (out ? '：' + out : '') + (err ? '（' + err + '）' : '');
+    }
+    return t;
+}
+
+function eventLine(etype, label, data) {
+    const head = {
+        tool_start: '🔧 开始工具：',
+        tool_error: '⚠️ 工具失败：',
+        command_executing: '⌛ 执行命令…',
+        command_success: '✅ ',
+        command_detected: '🔎 识别到指令：',
+    }[etype] || ('· ' + label);
+
+    if (data && typeof data === 'object') {
+        // 后端最常见的包装：{"type":"system","text":"..."}
+        if (data.text) return head + tidyProtocolText(data.text).slice(0, 200);
+        if (etype === 'tool_start') return head + (data.tool || '?');
+        if (etype === 'tool_error') {
+            return head + (data.tool || '?') + ' '
+                + tidyProtocolText(data.error || data.output || '').slice(0, 120);
         }
+        if (etype === 'command_detected') return head + (data.tool || data.id || '?');
+        if (etype === 'command_success') {
+            if (data.tool || data.status) {
+                return head + (data.tool || '?') + (data.status ? ' ' + data.status : '')
+                    + (data.output ? '：' + tidyProtocolText(data.output).slice(0, 120) : '');
+            }
+            return head + '命令已执行';
+        }
+        // 兜底：只说有哪些字段，绝不把值（常含内部路径/协议）成片吐出来
+        return head + '(' + Object.keys(data).slice(0, 6).join('/') + ')';
     }
-    if (extra) {
-        addMsg(`[${label}] ${escapeHtml(String(extra))}`, 'log');
-    } else {
-        addMsg(`[${label}]`, 'log');
+    if (data === null || data === undefined || data === '') return head.replace(/：$/, '');
+    return head + tidyProtocolText(data).slice(0, 160);
+}
+
+// 连续的事件行合并进同一条 log 气泡。
+// 旧实现每个事件一个新气泡 → 一次任务刷出十几条碎片气泡，对话区被淹没。
+function addLogLine(text) {
+    const last = msgDiv.lastElementChild;
+    if (last && last.classList && last.classList.contains('msg-log')
+        && (last.textContent || '').length < 1200) {
+        last.textContent = (last.textContent || '') + '\n' + text;
+        msgDiv.scrollTop = msgDiv.scrollHeight;
+        return;
     }
+    addMsg(text, 'log');
 }
 
 // 把工具输出渲染成可折叠结果卡；若内容像统一 diff 则逐行着色
@@ -1502,7 +1738,8 @@ function renderToolResult(tool, status, output) {
         + `<span style="margin-left:auto;opacity:.55">点击${'展开/收起'}</span>`;
     const body = document.createElement('pre');
     body.className = 'tr-body';
-    body.innerHTML = renderDiffLines(output);
+    // 先剥掉「写入/删除被拦截」等环境内部噪音再渲染，避免 PPT 清理的 safe-delete 报文刷屏
+    body.innerHTML = renderDiffLines(stripNoise(output));
     wrap.appendChild(head);
     wrap.appendChild(body);
     head.onclick = () => wrap.classList.toggle('collapsed');
@@ -1597,8 +1834,147 @@ async function sendMsg(msg) {
     await sendInput();
 }
 
-async function sendCmd(cmd) {
-    await sendInput(cmd);
+// ── GUI 本地按钮：状态 / 帮助 ──
+// 【重要】这些是软件自身的功能，必须点击**瞬间**由本地渲染出来。
+// 旧实现走 sendCmd('status') → 经过 /command → 变成一条消息发给 AI，
+// 既慢（要等后端和模型）又出现在对话区，属于明确禁止的行为。
+// 现在改为：只打本地 /status、/help 端点，直接把自己渲染成一个本地卡片，
+// 绝不进发送队列、绝不发给模型。
+async function showLocalPanel(kind) {
+    try {
+        const r = await fetch(API + '/' + kind, { signal: AbortSignal.timeout(4000) });
+        const d = await r.json();
+        addLocalCard((d && d.text) ? d.text : '（无内容）');
+    } catch (e) {
+        addLocalCard('⚠️ 本地' + kind + '读取失败：' + e.message);
+    }
+}
+
+// 把本地信息渲染成一张「软件自己的」卡片 —— 不进消息流、不参与发送。
+function addLocalCard(text) {
+    const box = document.getElementById('messages');
+    if (!box) return;
+    const node = document.createElement('div');
+    node.className = 'msg msg-system local-card';
+    node.innerHTML = '<div class="local-card-body"></div>';
+    node.querySelector('.local-card-body').textContent = text;
+    box.appendChild(node);
+    box.scrollTop = box.scrollHeight;
+    // 本地卡片是瞬时的软件反馈，3 秒后自动淡出，不污染对话记录。
+    setTimeout(() => { try { node.remove(); } catch (e) {} }, 8000);
+}
+
+// sendCmd 已移除：它会把命令当普通消息经 sendInput 发给 AI。
+// 所有 GUI 自己的操作（状态/帮助/会话管理/新建对话）都改为本地端点，
+// 点击即时响应、不进对话、不发给模型。
+
+// ── 新建对话（真正的独立对话）──
+// 旧实现点「➕ 新建」只是 sendCmd('新对话')，把这三个字当成普通消息发给 AI，
+// 既不清空界面、后端也多半不认 → 用户感觉「完全没反应 / 不能新建对话」。
+// 这里改成：调后端命令「新对话」（session.start_new_conversation，会清上下文
+// 并在平台点「新对话」开独立页），成功后把整个界面重置成干净的空对话。
+async function newConversation() {
+    if (switching) return; // 正在切平台时别动
+    if (NEWING) return;    // 防连点
+    NEWING = true;
+    // 回看历史时先回实时视图
+    if (HIST_VIEW) closeHistoryView();
+    addMsg('🗂 正在开一个全新的独立对话（会在平台网页真正新建一个对话页，请稍候）...', 'system');
+    try {
+        // 【关键】走同步端点 /new_conversation：后端内部真实调用
+        // start_new_conversation（含 navigate_to_chat，即在平台网页开新对话页），
+        // 做完才回包。所以这里拿到 ok 就是真的成功了，不用盲猜、不用定时刷新。
+        // 不再走 /command（那是异步的，只会回 accepted，界面无法确定结果）。
+        const r = await fetch(API + '/new_conversation', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({}),
+            signal: AbortSignal.timeout(120000),
+        });
+        const d = await safeJson(r);
+        const ok = (d && (d.type === 'ok' || d.type === 'accepted'));
+        // 无论成功与否都先重置界面视图（清消息 + 清产物绑定 + 解锁发送）
+        resetChatView();
+        if (ok) {
+            addMsg('✅ 已开启一个全新的独立对话（独立上下文）。之前的对话已存进「📚 历史记录」。', 'system');
+        } else {
+            addMsg('⚠️ 新建对话未完成：' + ((d && d.text) ? d.text : '后端未确认'), 'error');
+        }
+        setTimeout(() => { try { loadHistory(); } catch (e) {} }, 800);
+    } catch (e) {
+        addMsg('新建对话失败: ' + e.message, 'error');
+    } finally {
+        NEWING = false;
+    }
+}
+
+// ── 切回旧任务并继续聊（把某条历史任务的上下文还原成当前活动会话，接着发新消息）──
+// 后端 /command 原生支持「恢复对话 <id>」（restore_conversation：把该任务的会话 JSON
+// 载入为当前会话 + 导航回平台对应网页），这里做三件事：
+//   1) 调后端恢复该任务；
+//   2) 退出历史只读回看态（HIST_VIEW 清空），让后续发送走「实时活动会话」；
+//   3) 界面切回实时视图并提示「已恢复」，用户直接在输入框发新话即可继续该任务。
+async function resumeTask(taskId, fallbackTitle) {
+    if (!taskId || switching) return;
+    if (HIST_VIEW) closeHistoryView();          // 回实时视图，避免只读态拦发送
+    addMsg(`🔄 正在切回任务「${fallbackTitle || taskId}」并恢复其上下文...`, 'system');
+    try {
+        const r = await fetch(API + '/command', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ command: '恢复对话 ' + taskId }),
+            signal: AbortSignal.timeout(60000),
+        });
+        const d = await safeJson(r);
+        const ok = d && (d.type === 'accepted' || d.type === 'ok');
+        // 恢复结果会走 SSE（ai_final_reply）。这里只重置界面、把发送解锁，让用户接着聊。
+        sending = false;
+        if (typeof hideTyping === 'function') hideTyping();
+        sendBtn.disabled = false;
+        if (ok) {
+            addMsg('✅ 已切回任务「' + (fallbackTitle || taskId) + '」，其上下文已还原为当前会话。\n'
+                 + '直接在下面输入框发新消息即可继续这个任务；点「➕ 新建对话」可随时开全新上下文。', 'system');
+        } else {
+            addMsg('⚠️ 恢复任务：' + ((d && d.text) ? d.text : '后端未确认') + '\n可点「📚 历史记录」回看该任务内容。', 'system');
+        }
+        // 刷新历史抽屉（当前任务标记）
+        setTimeout(() => { try { loadHistory(); } catch (e) {} }, 1200);
+    } catch (e) {
+        addMsg('切回任务失败: ' + e.message, 'error');
+    }
+}
+
+// 把界面重置成「干净的空对话」：清掉消息区/本轮任务条/子代理卡/发送状态
+function resetChatView() {
+    const msgDiv = document.getElementById('messages');
+    // 【2026-09-21 修复】重置界面时把「回看历史」的快照缓存一并丢弃。
+    // 否则缓存里那份旧 HTML 会在后续 closeHistoryView 时盖回来，
+    // 把刚清空的实时视图又填成旧内容（用户看到「发了消息气泡却不见了」）。
+    LIVE_DOM_CACHE = null;
+    HIST_VIEW = null;
+    if (msgDiv) {
+        msgDiv.innerHTML = '<div class="msg msg-system">已开启全新对话</div>'
+            + '<div class="welcome"><div class="icon">🌵</div>'
+            + '<h1>仙人掌 Agent · 新对话</h1>'
+            + '<p>发一条任务（或点「📚 历史记录」回看旧任务）。上一段对话已自动保存为独立任务。</p></div>';
+    }
+    // 任务条只保留「仍在运行」的（已完成的旧任务清出当前界面，仍在历史记录里可回看）
+    TASKS = TASKS.filter(t => t.status === 'running');
+    if (typeof renderTaskList === 'function') renderTaskList();
+    // 清子代理卡
+    try { for (const k in SUBAGENT_CARDS) delete SUBAGENT_CARDS[k]; } catch (e) {}
+    // 释放发送锁
+    sending = false;
+    if (typeof hideTyping === 'function') hideTyping();
+    if (typeof setIdleUnlessBusy === 'function') setIdleUnlessBusy();
+    else if (!switching) setStatus('online');
+    CURRENT_TASK_ID = null;
+    LAST_USER_TEXT = '';
+    // 【产物上下文修复】全新对话 = 还没有任何任务 → 右侧产物栏必须清空。
+    // 旧实现漏了这一步，导致「一个任务都没建，旁边却堆着一堆任务产物」。
+    activeTaskId = null;
+    if (typeof bindFileScope === 'function') bindFileScope(null);
+    if (typeof clearPendingAttachments === 'function') clearPendingAttachments();
 }
 
 // ── 历史对话抽屉 ──
@@ -1634,11 +2010,15 @@ async function loadHistory() {
             const plat = (t.platform || '?').toUpperCase();
             const time = (t.updated_at || '').replace('T', ' ').slice(0, 19);
             const title = (t.title || '(无标题)').replace(/</g, '&lt;');
+            const safeId = String(t.id).replace(/'/g, '');
             item.innerHTML =
                 `<div class="hi-title">${title}</div>` +
                 `<div class="hi-meta"><span class="hi-plat">${plat}</span>` +
                 `<span>${time}</span></div>` +
-                `<div class="hi-delete" onclick="event.stopPropagation(); deleteTask('${t.id}')" title="删除">✕</div>`;
+                `<div class="hi-actions">` +
+                `<span class="hi-resume" onclick="event.stopPropagation(); resumeTask('${safeId}','${safeId}')">▶ 恢复</span>` +
+                `<span class="hi-delete" onclick="event.stopPropagation(); deleteTask('${safeId}')" title="删除">✕</span>` +
+                `</div>`;
             item.onclick = () => {
                 toggleHistory(false);
                 openHistoryTask(t.id, t.file, t.title, t.platform, time);
@@ -1722,6 +2102,7 @@ async function switchPlatform(platform) {
         CURRENT_PLATFORM_CFG = PLATFORMS[platform] || null;
         renderModelSelect(CURRENT_PLATFORM_CFG);
         renderThinkingControl(CURRENT_PLATFORM_CFG);
+        renderSearchControl(CURRENT_PLATFORM_CFG);
         setStatus('online');
     } catch(e) {
         addMsg('切换平台失败: ' + e.message, 'error');
@@ -1768,19 +2149,125 @@ function removeAttachment(i) {
     pendingAttachments.splice(i, 1);
     renderAttachments();
 }
+// 清空「待发送附件」暂存区（新建对话时调用，避免旧任务的待传附件串场）
+function clearPendingAttachments() {
+    pendingAttachments = [];
+    renderAttachments();
+}
+
+// ── 产物归属：把工具产出的文件登记到「当前任务」名下 ──
+// 侧边栏按任务过滤，靠的就是这份登记；没有当前任务时不登记（产物不落全局桶）。
+function recordArtifactsFromTool(data) {
+    const cid = activeTaskId || CURRENT_TASK_ID;
+    if (!cid) return;                       // 没有任务 → 不登记
+    const txt = String((data && data.output) || '');
+    if (!txt) return;
+    const ART = /\.(docx?|pptx?|xlsx?|csv|pdf|txt|md|html?|json|py|png|jpe?g|gif|svg)\b/gi;
+    const found = [];
+    // 工具输出里常见的「已写入 / 保存到 / 路径:」后面跟的路径
+    const pathRe = /([A-Za-z]:[\\\/][^\s"'<>|]+?\.[A-Za-z0-9]{1,5})/g;
+    let m;
+    while ((m = pathRe.exec(txt)) !== null) {
+        if (ART.test(m[1])) { found.push(m[1]); ART.lastIndex = 0; }
+    }
+    if (!found.length) return;
+    try {
+        fetch(API + '/register_artifacts', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ conversation_id: cid, paths: found }),
+        }).then(() => {
+            // 若用户此刻正看着这个任务，刷新一下侧边栏
+            if (String(FILE_SCOPE_CONV) === String(cid)) loadAttachments(cid);
+        }).catch(() => {});
+    } catch (e) {}
+}
 
 // ── 右侧文件预览侧边栏 ──
 let FILE_LIST = []; // 当前会话的附件列表
+let FILE_LOAD_ERROR = null; // 产物列表读取失败的原因（null = 没出错）
+let FILE_LOADING = false;   // 正在读取该任务的产物列表
 
-async function loadAttachments() {
-    try {
-        const r = await fetch(API + '/attachments', { signal: AbortSignal.timeout(5000) });
-        const data = await safeJson(r);
-        if (data && data.files) {
-            FILE_LIST = data.files;
+// 当前挂载在侧边栏的会话 id：null / '' 表示「当前没有任务」。
+// 任务产物必须与对话记录一样是任务私有的 —— 没选任务就不能显示任何产物。
+let FILE_SCOPE_CONV = null;
+
+async function loadAttachments(convId) {
+    // 显式传入会话 id；不传则沿用当前挂载的会话；都没有 → 清空列表
+    const cid = (convId === undefined) ? FILE_SCOPE_CONV : convId;
+    if (!cid) {
+        FILE_SCOPE_CONV = null;
+        FILE_LIST = [];
+        FILE_LOAD_ERROR = null;
+        FILE_LOADING = false;
+        renderFileSidebar();
+        return;
+    }
+    FILE_SCOPE_CONV = cid;
+    FILE_LOAD_ERROR = null;
+    // 【2026-09-21 修复】先画「读取中…」再发请求。
+    // 旧实现请求期间界面停留在上一次的渲染结果（经常是「暂无文件」），
+    // 用户点了任务却看到"没有产物"，几秒后列表才突然出现 —— 看起来像产物丢了。
+    FILE_LOADING = true;
+    // 同时清掉上一个任务的列表：否则切换任务时旧任务的产物会短暂"串台"
+    // （用户会以为产物归错任务了）。清空 + 明确的读取中提示更诚实。
+    FILE_LIST = [];
+    renderFileSidebar();
+    // 【2026-09-21 修复】看门狗：15 秒内必须给出终态。
+    // 实测（页面资源计时）：后端空闲时这个请求只要 0.2~0.4 秒；但极端情况下
+    // （后端忙 / 浏览器连接被排队）请求可能长时间不返回，而 AbortSignal 也未必
+    // 每次都生效 → 右侧会永远停在「⏳ 正在读取…」，用户只能重启软件。
+    // 这里用定时器兜底：到点还没结果就明确报超时，绝不无限转圈。
+    const watchdog = setTimeout(() => {
+        if (FILE_SCOPE_CONV === cid && FILE_LOADING) {
+            FILE_LOADING = false;
+            FILE_LOAD_ERROR = '产物列表读取超时（后端可能很忙）。稍后重新点一下这个任务即可。';
             renderFileSidebar();
         }
-    } catch (e) {}
+    }, 15000);
+    try {
+        // 【2026-09-21 修复】后端正在跑任务时，/attachments 可能几秒才回得来；
+        // 旧实现只发一次、5 秒超时就把列表清空显示「暂无文件」—— 用户会以为
+        // 任务产物丢了。现在改成最多 3 次带退避的重试，并把"读取失败"和
+        // "确实没有产物"在界面上区分开。
+        let data = null, lastErr = null;
+        for (let attempt = 0; attempt < 2; attempt++) {
+            try {
+                const r = await fetch(API + '/attachments?conversation_id=' + encodeURIComponent(cid),
+                    { signal: AbortSignal.timeout(6000) });
+                data = await safeJson(r);
+                lastErr = null;
+                break;
+            } catch (e) {
+                lastErr = e;
+                await new Promise(res => setTimeout(res, 600 * (attempt + 1)));
+                if (FILE_SCOPE_CONV !== cid) return;   // 已经切走了，别再浪费重试
+            }
+        }
+        // 竞态保护：请求返回时若已切到别的任务，丢弃这次结果
+        if (FILE_SCOPE_CONV !== cid) return;
+        if (lastErr) {
+            FILE_LIST = [];
+            FILE_LOAD_ERROR = '产物列表读取失败（后端可能正在跑任务）：' + lastErr.message
+                + '<br>可点左上角「📊 状态」确认后端是否在忙。';
+            return;
+        }
+        FILE_LIST = (data && data.files) ? data.files : [];
+    } finally {
+        clearTimeout(watchdog);
+        // 只有"这次请求仍然归我管"时才收尾，避免把新任务正在跑的那次读取标志抹掉。
+        // 放在 finally 里是为了杜绝「转圈卡死」：任何异常路径都不会留下
+        // FILE_LOADING=true（否则右侧会永远显示「⏳ 正在读取…」）。
+        if (FILE_SCOPE_CONV === cid) {
+            FILE_LOADING = false;
+            renderFileSidebar();
+        }
+    }
+}
+
+// 传入任务 id（= 会话 id）时精确绑定；传 null 清空侧边栏
+function bindFileScope(taskId) {
+    loadAttachments(taskId || null);
 }
 
 function renderFileSidebar() {
@@ -1790,7 +2277,15 @@ function renderFileSidebar() {
     const allFiles = [...new Set([...FILE_LIST, ...pendingAttachments.map(p => ({ path: p, name: p.split(/[\\/]/).pop(), size: 0 }))])];
     
     if (!allFiles.length) {
-        container.innerHTML = '<div class="file-empty">暂无文件<br>上传文件或拖放文件到此处</div>';
+        // 三种"空"必须区分开：
+        //   读取中 → 「⏳ 读取中…」（否则用户会以为产物丢了）
+        //   读取失败 → 「⚠️ …」
+        //   确实没有 → 「暂无文件」
+        container.innerHTML = FILE_LOADING
+            ? '<div class="file-empty">⏳ 正在读取该任务的产物…</div>'
+            : (FILE_LOAD_ERROR
+                ? '<div class="file-empty">⚠️ ' + FILE_LOAD_ERROR + '</div>'
+                : '<div class="file-empty">暂无文件<br>上传文件或拖放文件到此处</div>');
         return;
     }
     
@@ -1931,41 +2426,40 @@ function renderSessionBar() {
         box.appendChild(el);
     });
 }
+// 会话管理：走本地 /session_cmd，由软件自己即时完成。
+// 【重要】旧实现把这串 '@@@@{"tool":"session_manager",...}@@@@' 当 command 发给
+// /command，导致内部协议被当成一条消息投给模型、还显示在对话区。GUI 的点击必须
+// 本地即时响应，不能变成发给 AI 的指令。
+async function sessionCmd(action, id) {
+    const r = await fetch(API + '/session_cmd', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ action: action, id: id }),
+        signal: AbortSignal.timeout(20000),
+    });
+    return await safeJson(r);
+}
 async function createSession() {
     try {
-        const r = await fetch(API + '/command', {
-            method: 'POST', headers: {'Content-Type':'application/json'},
-            body: JSON.stringify({ command: '@@@@{"tool":"session_manager","action":"create"}@@@@' }),
-            signal: AbortSignal.timeout(30000),
-        });
-        const d = await safeJson(r);
-        addMsg('🗂 已新建会话: ' + (d && d.text ? d.text : JSON.stringify(d)), 'log');
-    } catch (e) { addMsg('新建会话失败: ' + e.message, 'error'); }
+        const d = await sessionCmd('create');
+        addLocalCard('🗂 ' + ((d && d.text) ? d.text : '已新建会话'));
+        try { loadSessions(); } catch (e) {}
+    } catch (e) { addLocalCard('新建会话失败: ' + e.message); }
 }
 async function switchSession(id) {
     try {
-        const r = await fetch(API + '/command', {
-            method: 'POST', headers: {'Content-Type':'application/json'},
-            body: JSON.stringify({ command: '@@@@{"tool":"session_manager","action":"switch","id":' + id + '}@@@@' }),
-            signal: AbortSignal.timeout(30000),
-        });
-        const d = await safeJson(r);
-        addMsg('🗂 ' + (d && d.text ? d.text : JSON.stringify(d)), 'log');
-    } catch (e) { addMsg('切换会话失败: ' + e.message, 'error'); }
+        const d = await sessionCmd('switch', id);
+        addLocalCard('🗂 ' + ((d && d.text) ? d.text : ('已切换到会话 ' + id)));
+        CURRENT_SESSION = id;
+        try { loadSessions(); } catch (e) {}
+    } catch (e) { addLocalCard('切换会话失败: ' + e.message); }
 }
 async function deleteSession(id) {
     if (!confirm('确定删除这个会话吗？')) return;
     try {
-        const r = await fetch(API + '/command', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ command: '@@@@{"tool":"session_manager","action":"delete","id":' + id + '}@@@@' }),
-            signal: AbortSignal.timeout(10000),
-        });
-        const d = await safeJson(r);
-        addMsg('🗂 ' + (d && d.text ? d.text : ''), 'log');
+        const d = await sessionCmd('delete', id);
+        addLocalCard('🗂 ' + ((d && d.text) ? d.text : ('已删除会话 ' + id)));
         loadSessions();
-    } catch (e) { addMsg('删除会话失败: ' + e.message, 'error'); }
+    } catch (e) { addLocalCard('删除会话失败: ' + e.message); }
 }
 async function uploadFile(file) {
     try {
@@ -2024,6 +2518,7 @@ function onFilePicked(e) {
 async function sendInput(forceText) {
     const text = (forceText || inputEl.value).trim();
     if (!text) return;
+    dismissOnboarding();  // 用户一旦动手发消息，引导卡就该让位
 
     // 正在回看历史任务时，一旦要发消息就自动回到实时视图
     if (HIST_VIEW) closeHistoryView();
@@ -2062,6 +2557,9 @@ async function sendInput(forceText) {
     }
 
     if (!forceText) inputEl.value = '';
+    // 【核心修复】自己的消息绝不能被「吃掉」：一发出就立刻在对话区显示用户气泡。
+    // 旧实现只靠后端 SSE 回包才显示，任务在后台跑时用户那条话在界面上凭空消失。
+    addMsg(text, 'user');
     LAST_USER_TEXT = text;      // 归属到即将开始的这个任务（task_started 到达时归档）
     CURRENT_TASK_ID = null;
     if (pendingAttachments.length) {
@@ -2085,7 +2583,15 @@ async function sendInput(forceText) {
         const rtype = data.type || 'ai';
         const rtext = data.text || '';
 
-        if (rtype === 'accepted') {
+        // 【受理判定】后端 /command 是异步的，受理成功回 {"type":"accepted"}；
+        // 部分路径回 {"type":"ok"}（等价于已受理）。这两者都算"任务已被接手"，
+        // 没有文本可显示时绝不能再当成即时结果去 setStatus('online')。
+        const isAccepted = (rtype === 'accepted') || (rtype === 'ok' && !rtext);
+        if (isAccepted) {
+            // 后端只是"受理"了，真正的任务随后才经 SSE 宣告开始。
+            // 这里先押一个 30 秒的忙碌窗口，免得健康轮询在这空档里
+            // 把 ⏹中断/💬插话 按钮隐藏掉（就是「按钮闪一下就没了」）。
+            markBusy(30000);
             setStatus('busy');
         } else {
             const cls = { ai: 'ai', system: 'system', error: 'error' }[rtype] || 'system';
@@ -2142,24 +2648,92 @@ function toggleThinking() {
 function setThinkingMode(val) { toggleThinking(); }
 
 // 渲染思考控件（已取消：不再渲染 AI 代开关的入口）
+// 渲染「思考」控件。
+// 【2026-09-21 修复】旧实现是个空壳：清空容器后**什么都不渲染**（只有一个
+// `if (!cfg) return; return;`），于是「🧠 思考:」标签后面永远空白 ——
+// 截图实证是一个悬空的标签，用户以为控件坏了/被裁了。
+// 这里按平台真实能力给「诚实」的控件，遵循与联网搜索同一原则：
+// 不让 AI 代开代关、不谎报状态。
+//   toggle = 平台网页上真的有「深度思考」开关 → 提示它在网页里可控
+//   select = 思考模式由「模型」下拉决定（如通义 Qwen）→ 直接说明
+//   其它   = 平台没这个能力 → 整组隐藏，不留悬空标签
 function renderThinkingControl(cfg) {
     const container = document.getElementById('thinkingControl');
+    const group = document.getElementById('thinkingGroup');
     if (!container) return;
     container.innerHTML = '';
-    if (!cfg) return;
-    return;
+    if (!cfg) { if (group) group.style.display = 'none'; return; }
+
+    const mode = String(cfg.thinking_mode || '').toLowerCase();
+    const mk = (text, tip, hint) => {
+        const b = document.createElement('button');
+        b.id = 'thinkingToggleBtn';
+        b.className = 'tool-select';
+        b.style.cssText = 'min-width:80px;padding:6px 12px;font-size:13px;'
+            + 'border-radius:6px;cursor:pointer;border:1px solid var(--border);'
+            + 'background:var(--bg3);color:var(--text);';
+        b.textContent = text;
+        b.title = tip;
+        b.onclick = () => addLocalCard('🧠 ' + hint);
+        return b;
+    };
+
+    if (mode === 'toggle') {
+        if (group) group.style.display = '';
+        container.appendChild(mk(
+            '🧠 思考: 网页可控',
+            '该平台网页提供「深度思考」开关，直接在浏览器窗口里点击即可切换',
+            '本平台的「深度思考」开关在平台网页上（浏览器窗口里可直接点），'
+            + '这里只做提示，不代你去开关，也不会谎报已开启。'));
+        return;
+    }
+    if (mode === 'select') {
+        if (group) group.style.display = '';
+        container.appendChild(mk(
+            '🧠 思考: 随模型',
+            '该平台的思考模式由上方「🤖 模型」下拉决定',
+            '本平台的思考模式跟着「🤖 模型」下拉走（例如选到带思考的模型才会深度思考）。'));
+        return;
+    }
+    if (group) group.style.display = 'none';
+}
+
+// ── 联网搜索控件 ──
+// 只有平台网页真的带该开关（后端 /platforms 返回 search 选择器）才显示。
+// 注意：仍遵循「不让 AI 代开代关」的原则 —— 这里只做 UI 展示与状态提示，
+// 真正的切换走用户自己操作或在网页上点，避免出现「假装已开启」的谎报。
+function renderSearchControl(cfg) {
+    const group = document.getElementById('searchGroup');
+    const btn = document.getElementById('searchToggleBtn');
+    if (!group || !btn) return;
+    const has = !!(cfg && cfg.has_search);
+    group.style.display = has ? '' : 'none';
+    if (!has) return;
+    btn.textContent = '🔍 搜索: 网页可控';
+    btn.title = '该平台网页提供「联网搜索」开关，可直接在浏览器窗口里点击切换';
 }
 
 // 渲染模型下拉框
 function renderModelSelect(plat) {
     const sel = document.getElementById('modelSelect');
+    const group = document.getElementById('modelGroup');
     if (!sel) return;
     sel.innerHTML = '';
+
+    // 【真实性修复】平台网页上根本没有模型/模式选择器时（如 DeepSeek 网页版），
+    // 不要伪造下拉项 —— 直接隐藏整个「模型」控件，避免用户以为能切。
+    // models 为空数组 = 该平台没有模型选择器（区别于 undefined = 未配置）。
+    if (plat && Array.isArray(plat.models) && plat.models.length === 0) {
+        if (group) group.style.display = 'none';
+        return;
+    }
+    if (group) group.style.display = '';
+
     if (!plat || !plat.models || !plat.models.length) {
-        // 无模型配置，直接用平台 key 作为唯一选项
+        // 未配置模型列表：用平台显示名占位（保持控件可见）
         const opt = document.createElement('option');
-        opt.value = plat.key;
-        opt.textContent = plat.display || plat.name;
+        opt.value = plat && plat.key ? plat.key : '';
+        opt.textContent = (plat && (plat.display || plat.name)) || '默认';
         sel.appendChild(opt);
         return;
     }
@@ -2198,6 +2772,7 @@ async function loadPlatforms() {
             CURRENT_PLATFORM_CFG = first;
             renderModelSelect(first);
             renderThinkingControl(first);
+        renderSearchControl(first);
             const activeBtn = document.getElementById('pl-' + first.key);
             if (activeBtn) activeBtn.classList.add('active');
         }
@@ -2221,12 +2796,46 @@ setInterval(async () => {
                     CURRENT_PLATFORM_CFG = PLATFORMS[d.platform] || null;
                     renderModelSelect(CURRENT_PLATFORM_CFG);
                     renderThinkingControl(CURRENT_PLATFORM_CFG);
+        renderSearchControl(CURRENT_PLATFORM_CFG);
                 }
             }
-            setStatus('online');
+            // 【2026-09-21 修复】轮询只能确认「连接正常」，不能把有任务在跑的状态
+            // 压回空闲 —— 否则每 5 秒就会把 ⏹中断/💬插话 按钮隐藏一次。
+            setIdleUnlessBusy();
         }
     } catch { if (!sending) setStatus('offline'); }
 }, 5000);
+// ── 引导对话（首次连接时给一段新手引导）──
+// 用独立的 .onboarding 类（不是 .welcome），这样 SSE 的系统日志不会把它顶掉；
+// 只在用户真正发消息（sendInput）或开始任务时移除。
+function showOnboarding() {
+    const msgDiv = document.getElementById('messages');
+    if (!msgDiv) return;
+    if (msgDiv.querySelector('.onboarding')) return; // 已经有了就别再插
+    // 若当前只剩「连接中」占位 welcome，先替换掉
+    const pre = msgDiv.querySelector('.welcome');
+    if (pre && pre.innerText && pre.innerText.indexOf('连接中') >= 0) pre.remove();
+    const box = document.createElement('div');
+    box.className = 'onboarding';
+    box.innerHTML =
+        '<div class="ob-icon">🌵</div>' +
+        '<h1>欢迎使用 仙人掌 Agent</h1>' +
+        '<div class="ob-body">' +
+        '<b>这是干嘛的：</b>把任务交给它，它会自动在网页平台（DeepSeek/通义/豆包/元宝）里帮你干活、生成文件。<br>' +
+        '<b>怎么用：</b>① 在左侧「🌐 平台切换」选一个平台 → ② 在下方输入框写任务（可拖文件进来）→ ③ 按 Enter 发送（Shift+Enter 换行）。<br>' +
+        '<b>常用：</b>左侧「📚 历史记录」回看旧任务；「➕ 新建对话」开全新独立对话；右侧「📦 文件产物」看生成出的 PPT/Word/Excel。<br>' +
+        '<b>控制：</b>任务运行时会出现 ⏹「中断/暂停」和 💬「插话」按钮，随时可打断或补一句。<br>' +
+        '<b>现在试试：</b>在输入框写一条任务，比如「帮我生成一份 5 页的 PPT，主题是…」，然后发出去。' +
+        '</div>';
+    msgDiv.insertBefore(box, msgDiv.firstChild);
+    msgDiv.scrollTop = 0;
+}
+function dismissOnboarding() {
+    const box = document.getElementById('messages');
+    if (!box) return;
+    const o = box.querySelector('.onboarding');
+    if (o) o.remove();
+}
 
 // 初始连接
 loadTranscripts();   // 载入按任务归档的过程记录（历史任务回看用）
@@ -2236,12 +2845,14 @@ loadTranscripts();   // 载入按任务归档的过程记录（历史任务回�
             const r = await fetch(API + '/health', { signal: AbortSignal.timeout(2000) });
             if (r.ok) {
                 setStatus('online');
-                // 清空残留的旧消息（避免上次会话的错误一直显示）
-                const msgWrap = document.getElementById('messages');
-                if (msgWrap) msgWrap.innerHTML = '';
-                addMsg('已连接到仙人掌 Agent 终端', 'system');
+                // 【引导对话修复】不再只甩一句「已连接」——
+                // 第一次进来给一段新手引导，告诉用户能干嘛、怎么操作。
+                showOnboarding();
                 await loadPlatforms(); // 动态渲染平台按钮
                 connectEvents(); // 启动SSE事件
+                // 【产物上下文修复】刚启动时还没有选中任何任务，
+                // 所以侧边栏必须是空的 —— 产物只属于具体任务，不搞全局堆叠。
+                if (typeof bindFileScope === 'function') bindFileScope(null);
                 return;
             }
         } catch {}

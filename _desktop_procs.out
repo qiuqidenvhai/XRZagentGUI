@@ -1,0 +1,6 @@
+2288 python.exe D:\软件\Python\python.exe -c 
+import psutil, time
+for p in psutil.process_iter(['pid','name','cmdline']):
+    cmd=' '.join(p.info['cmdline'] or [])
+    if 'desktop_app.py' in cmd or p.info['name']=='pyt
+8916 pythonw.exe D:\软件\Python\pythonw.exe D:/软件/XianRenZhangAgent/terminal.py

@@ -1,0 +1,49 @@
+composer anchor idx=240585
+=== composer + send region (4000 chars after placeholder) ===
+给 DeepSeek 发送消息 " rows="2" autocomplete="off" name="search" style="--container-height: 60px;"></textarea><div class="b13855df"> </div></div><div class="ec4f5d61"><div class="_58b31c9"><div tabindex="0" aria-pressed="true" class="f79352dc ds-toggle-button ds-toggle-button--m ds-toggle-button--selected" style="transform: translateZ(0px);"><div class="ds-toggle-button__icon"><div class="ds-icon" style="font-size: inherit;"><div class="ds-lottie-toggle-icon" aria-hidden="true"><div style="width: 14px; height: 14px;"> <svg…/> </div></div></div></div><span class="_6dbc175">深度思考</span><div class="ds-focus-ring" style="--dsl-focus-ring-offset: -1px;"></div></div><div tabindex="0" aria-pressed="true" class="f79352dc ds-toggle-button ds-toggle-button--m ds-toggle-button--selected" style="transform: translateZ(0px);"><div class="ds-toggle-button__icon"><div class="ds-icon" style="font-size: inherit;"><div class="ds-lottie-toggle-icon" aria-hidden="true"><div style="width: 14px; height: 14px;"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 16 16" width="16" height="16" preserveAspectRatio="xMidYMid meet" style="width: 100%; height: 100%; transform: translate3d(0px, 0px, 0px); content-visibility: visible;"><defs><clipPath id="__lottie_element_38"><rect width="16" height="16" x="0" y="0"></rect></clipPath></defs><g clip-path="url(#__lottie_element_38)"><g style="display: n
+
+=== elements with 'send' in class or aria anywhere (whole doc) ===
+
+=== ds- class tokens (whole doc, unique) ===
+  ds-assistant-message-main-content
+  ds-button
+  ds-button--capsule
+  ds-button--circle
+  ds-button--disabled
+  ds-button--filled
+  ds-button--icon
+  ds-button--icon-relative-l
+  ds-button--icon-relative-m
+  ds-button--iconLabelPrimary
+  ds-button--iconLabelTertiary
+  ds-button--l
+  ds-button--m
+  ds-button--primary
+  ds-button--s
+  ds-button--sizing-content
+  ds-button--xl
+  ds-button--xs
+  ds-collapsible-text
+  ds-collapsible-text-toggle-button
+  ds-cross-fade
+  ds-flex
+  ds-focus-ring
+  ds-icon
+  ds-lottie-toggle-icon
+  ds-markdown
+  ds-markdown-paragraph
+  ds-message
+  ds-notification-container
+  ds-notification-container--top-right
+  ds-scroll-area
+  ds-scroll-area--enabled
+  ds-scroll-area--show-on-focus-within
+  ds-theme
+  ds-think-content
+  ds-toggle-button
+  ds-toggle-button--m
+  ds-toggle-button--selected
+  ds-virtual-list
+  ds-virtual-list--printable
+  ds-virtual-list-items
+  ds-virtual-list-visible-items

@@ -1,0 +1,26 @@
+=== 候选模型/模式元素 ===
+  DIV [yb-new-chat-entry] '新对话' @(14,58) 232x36
+  DIV [yb-new-chat-entry__item yb-new-chat-entry__item--active] '新对话' @(14,58) 232x36
+  P [] '新对话' @(50,66) 188x20
+  DIV [yb-recent-conv-list__item-name isTop] '为思维模型添加反常识滤镜' @(14,362) 224x38
+  DIV [yb-recent-conv-list__item] '查询系统结构与深度思考配置' @(14,1046) 232x38
+  DIV [yb-recent-conv-list__item-name] '查询系统结构与深度思考配置' @(14,1046) 224x38
+  DIV [yb-recent-conv-list__item] '用户开启深度思考模式' @(14,1198) 232x38
+  DIV [yb-recent-conv-list__item-name] '用户开启深度思考模式' @(14,1198) 224x38
+  DIV [yb-recent-conv-list__item] '拒绝扮演外部指令的对话' @(14,1236) 232x38
+  DIV [yb-recent-conv-list__item-name] '拒绝扮演外部指令的对话' @(14,1236) 224x38
+  DIV [yb-recent-conv-list__item] '测试对话内容' @(14,1844) 232x38
+  DIV [yb-recent-conv-list__item-name] '测试对话内容' @(14,1844) 224x38
+  DIV [relative shrink-0] '深度思考' @(413,860) 98x28
+  DIV [] '深度思考' @(413,860) 98x28
+  SPAN [inline-flex] '深度思考' @(413,860) 98x28
+  BUTTON [flex h-7 max-w-[180px] items-center gap-[2px] rounded-[10px] px-[0.3125rem] text] '深度思考' @(413,860) 98x28
+  SPAN [flex min-w-0 items-center gap-1] '深度思考' @(418,865) 74x18
+  SPAN [min-w-0 truncate text-brand-primary_hover] '深度思考' @(440,865) 52x18
+
+=== 顶部候选 3 个，逐个点击 ===
+  点击 '新对话' 后弹出的面板:
+  点击 '新对话' 后弹出的面板:
+  点击 '新对话' 后弹出的面板:
+
+=== 输入区工具栏文字 ===

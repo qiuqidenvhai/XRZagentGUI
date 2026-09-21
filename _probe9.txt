@@ -1,0 +1,85 @@
+total lines: 191
+mtime: 23:22:46
+2026-09-15 23:11:02,218 [platform_browser] INFO [平台注册表] 当前支持平台: deepseek, doubao, tongyi, yuanbao
+    DeepSeek + 通义千问 + 豆包 + 元宝
+2026-09-15 23:11:02,926 [platform_browser] INFO 已添加平台: doubao
+2026-09-15 23:13:18,892 [platform_browser] INFO [豆包] 启动浏览器...
+2026-09-15 23:13:20,311 [platform_browser] INFO [豆包] 已尝试清理占用本目录的残留浏览器进程
+2026-09-15 23:13:21,326 [platform_browser] INFO [豆包] 持久化上下文创建成功
+2026-09-15 23:13:21,578 [platform_browser] INFO [豆包] 已将浏览器窗口图标设为仙人球 🌵
+2026-09-15 23:13:21,578 [platform_browser] INFO [豆包] 已加载 40 条 cookies
+2026-09-15 23:13:21,578 [platform_browser] INFO [豆包] 浏览器启动完成
+2026-09-15 23:13:22,683 [platform_browser] INFO [豆包] 已导航到 https://www.doubao.com/chat/
+2026-09-15 23:13:23,009 [platform_browser] INFO [豆包] 页面仍在加载（骨架屏），等待稳定后再判定登录状态…
+2026-09-15 23:13:34,858 [platform_browser] INFO [豆包] 登录状态: True
+2026-09-15 23:13:34,881 [platform_browser] INFO [豆包] 已保存 39 条 cookies
+2026-09-15 23:13:37,276 [platform_browser] INFO [豆包] 登录状态: True
+2026-09-15 23:13:37,276 [platform_browser] INFO [豆包] 首轮登录预检通过
+2026-09-15 23:13:37,835 [platform_browser] INFO [豆包] send_message: 输入 6827 字符
+2026-09-15 23:13:39,036 [platform_browser] INFO [豆包] 已通过 CDP 受信 Enter 键发送
+2026-09-15 23:13:39,957 [platform_browser] INFO [豆包] 发送已验证（输入框已清空）
+2026-09-15 23:13:39,957 [platform_browser] INFO [豆包] 等待回复（UI 信号驱动，210s 上限）... baseline_msg=0 (pre_sent=0)
+2026-09-15 23:14:20,035 [platform_browser] WARNING [豆包] 等待 40s 仍未抓到任何回复正文（page_msg≈1），判定该网页会话已静默失效，提前结束等待
+2026-09-15 23:14:20,067 [platform_browser] INFO [豆包] 登录状态: True
+2026-09-15 23:14:20,068 [platform_browser] WARNING [豆包] 本轮未抓到任何回复正文（会话可能已静默失效），按空回复上报，下一轮将自动换新会话
+2026-09-15 23:14:20,502 [platform_browser] INFO [豆包] 对话已自动持久化 (url=有)
+2026-09-15 23:14:20,503 [platform_browser] WARNING [豆包] 上一轮未抓到回复，自动开启新会话后重试
+2026-09-15 23:14:21,446 [platform_browser] INFO [豆包] 已导航到 https://www.doubao.com/chat/
+2026-09-15 23:14:24,138 [platform_browser] INFO [豆包] send_message: 输入 6923 字符
+2026-09-15 23:14:26,429 [platform_browser] INFO [豆包] 已通过 CDP 受信 Enter 键发送
+2026-09-15 23:14:31,813 [platform_browser] INFO [豆包] 等待回复（UI 信号驱动，210s 上限）... baseline_msg=0 (pre_sent=0)
+2026-09-15 23:15:11,843 [platform_browser] WARNING [豆包] 等待 40s 仍未抓到任何回复正文（page_msg≈1），判定该网页会话已静默失效，提前结束等待
+2026-09-15 23:15:11,889 [platform_browser] INFO [豆包] 登录状态: True
+2026-09-15 23:15:11,912 [platform_browser] INFO [豆包] 已保存 40 条 cookies
+2026-09-15 23:15:11,913 [platform_browser] WARNING [豆包] 本轮未抓到任何回复正文（会话可能已静默失效），按空回复上报，下一轮将自动换新会话
+2026-09-15 23:15:12,325 [platform_browser] INFO [豆包] 对话已自动持久化 (url=有)
+2026-09-15 23:15:12,325 [platform_browser] WARNING [豆包] 上一轮未抓到回复，自动开启新会话后重试
+2026-09-15 23:15:13,212 [platform_browser] INFO [豆包] 已导航到 https://www.doubao.com/chat/
+2026-09-15 23:15:15,864 [platform_browser] INFO [豆包] send_message: 输入 6923 字符
+2026-09-15 23:15:18,352 [platform_browser] INFO [豆包] 已通过 CDP 受信 Enter 键发送
+2026-09-15 23:15:23,668 [platform_browser] INFO [豆包] 等待回复（UI 信号驱动，210s 上限）... baseline_msg=0 (pre_sent=0)
+2026-09-15 23:16:03,774 [platform_browser] WARNING [豆包] 等待 40s 仍未抓到任何回复正文（page_msg≈1），判定该网页会话已静默失效，提前结束等待
+2026-09-15 23:16:03,825 [platform_browser] INFO [豆包] 登录状态: True
+2026-09-15 23:16:03,825 [platform_browser] WARNING [豆包] 本轮未抓到任何回复正文（会话可能已静默失效），按空回复上报，下一轮将自动换新会话
+2026-09-15 23:16:04,331 [platform_browser] INFO [豆包] 对话已自动持久化 (url=有)
+2026-09-15 23:16:04,332 [platform_browser] WARNING [豆包] 上一轮未抓到回复，自动开启新会话后重试
+2026-09-15 23:16:05,646 [platform_browser] INFO [豆包] 已导航到 https://www.doubao.com/chat/
+2026-09-15 23:16:08,133 [platform_browser] INFO [豆包] send_message: 输入 6923 字符
+2026-09-15 23:16:10,205 [platform_browser] INFO [豆包] 已通过 CDP 受信 Enter 键发送
+2026-09-15 23:16:15,577 [platform_browser] INFO [豆包] 等待回复（UI 信号驱动，210s 上限）... baseline_msg=0 (pre_sent=0)
+2026-09-15 23:16:55,707 [platform_browser] WARNING [豆包] 等待 40s 仍未抓到任何回复正文（page_msg≈1），判定该网页会话已静默失效，提前结束等待
+2026-09-15 23:16:55,753 [platform_browser] INFO [豆包] 登录状态: True
+2026-09-15 23:16:55,774 [platform_browser] INFO [豆包] 已保存 40 条 cookies
+2026-09-15 23:16:55,774 [platform_browser] WARNING [豆包] 本轮未抓到任何回复正文（会话可能已静默失效），按空回复上报，下一轮将自动换新会话
+2026-09-15 23:16:56,192 [platform_browser] INFO [豆包] 对话已自动持久化 (url=有)
+---- last 30 lines ----
+  File "D:\软件\Python\Lib\socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\软件\Python\Lib\socketserver.py", line 766, in __init__
+    self.handle()
+    ~~~~~~~~~~~^^
+  File "D:\软件\Python\Lib\http\server.py", line 447, in handle
+    self.handle_one_request()
+    ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "D:\软件\Python\Lib\http\server.py", line 435, in handle_one_request
+    method()
+    ~~~~~~^^
+  File "D:\软件\XianRenZhangAgent\_files_listing_fix.py", line 183, in _new_do_get
+    _patched_do_GET(self, main_module, orig, app_dir)
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\软件\XianRenZhangAgent\_files_listing_fix.py", line 164, in _patched_do_GET
+    orig_do_get(self)
+    ~~~~~~~~~~~^^^^^^
+  File "terminal.py", line 865, in do_GET
+  File "D:\软件\XianRenZhangAgent\_sse_resilience.py", line 141, in _safe_serve_sse
+    _w(": keepalive\n\n")
+    ~~^^^^^^^^^^^^^^^^^^^
+  File "D:\软件\XianRenZhangAgent\_sse_resilience.py", line 106, in _w
+    self.wfile.write(s.encode("utf-8"))
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "D:\软件\Python\Lib\socketserver.py", line 845, in write
+    self._sock.sendall(b)
+    ~~~~~~~~~~~~~~~~~~^^^
+ConnectionAbortedError: [WinError 10053] 你的主机中的软件中止了一个已建立的连接。
+----------------------------------------

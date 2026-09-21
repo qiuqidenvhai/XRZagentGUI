@@ -1,0 +1,56 @@
+======================================================================
+chromium-1217 [CURRENT]
+D:\软件\XianRenZhangAgent\xrz_data\playwright_browsers\chromium-1217\chrome-win64\chrome.exe
+  group 'IDR_MAINFRAME': 10 sizes
+     16x16  bpp=32    1128B DIB
+     20x20  bpp=32    1720B DIB
+     24x24  bpp=32    2440B DIB
+     32x32  bpp=32    4264B DIB
+     40x40  bpp=32    6760B DIB
+     48x48  bpp=32    9640B DIB
+     64x64  bpp=32   16936B DIB
+     96x96  bpp=32   38056B DIB
+    128x128 bpp=32   67624B DIB
+    256x256 bpp=32  270376B DIB
+    -> rendered D:/软件/XianRenZhangAgent\_audit_chromium-1217__CURRENT.png src_size=(256, 256)
+======================================================================
+chromium-1217 [BACKUP]
+D:\软件\XianRenZhangAgent\xrz_data\playwright_browsers\chromium-1217\chrome-win64\chrome.exe.cactus_backup
+  group 'IDR_MAINFRAME': 8 sizes
+     16x16  bpp=8    1384B DIB
+     24x24  bpp=8    1736B DIB
+     32x32  bpp=8    2216B DIB
+     48x48  bpp=8    3752B DIB
+     72x72  bpp=8    7112B DIB
+     96x96  bpp=8   11432B DIB
+    128x128 bpp=8   19496B DIB
+    256x256 bpp=32   18526B PNG
+    -> rendered D:/软件/XianRenZhangAgent\_audit_chromium-1217__BACKUP.png src_size=(256, 256)
+======================================================================
+chromium-1234 [CURRENT]
+D:\软件\XianRenZhangAgent\xrz_data\playwright_browsers\chromium-1234\chrome-win64\chrome.exe
+  group 'IDR_MAINFRAME': 10 sizes
+     16x16  bpp=32    1128B DIB
+     20x20  bpp=32    1720B DIB
+     24x24  bpp=32    2440B DIB
+     32x32  bpp=32    4264B DIB
+     40x40  bpp=32    6760B DIB
+     48x48  bpp=32    9640B DIB
+     64x64  bpp=32   16936B DIB
+     96x96  bpp=32   38056B DIB
+    128x128 bpp=32   67624B DIB
+    256x256 bpp=32  270376B DIB
+    -> rendered D:/软件/XianRenZhangAgent\_audit_chromium-1234__CURRENT.png src_size=(256, 256)
+======================================================================
+chromium-1234 [BACKUP]
+D:\软件\XianRenZhangAgent\xrz_data\playwright_browsers\chromium-1234\chrome-win64\chrome.exe.cactus_backup
+  group 'IDR_MAINFRAME': 8 sizes
+     16x16  bpp=8    1384B DIB
+     24x24  bpp=8    1736B DIB
+     32x32  bpp=8    2216B DIB
+     48x48  bpp=8    3752B DIB
+     72x72  bpp=8    7112B DIB
+     96x96  bpp=8   11432B DIB
+    128x128 bpp=8   19496B DIB
+    256x256 bpp=32   18526B PNG
+    -> rendered D:/软件/XianRenZhangAgent\_audit_chromium-1234__BACKUP.png src_size=(256, 256)

@@ -1,0 +1,22 @@
+点击了 深度思考
+  [think] (347,807 960x97) [new-framework-input_searchContent__YopMv app-search-bar relative mx-auto flex min-h-[96px]] '模型\nHy3\n快速回答\n快速作答，处理日常问题\n深度思考\n深入推理，分析复杂问题\n专家模式\n使用工具，处理多步任务\n深度思考\nAI 生图\n写作\n解题\n深度研究\nPPT 生成\n数据分析\n金融理财\n个人计划\nAI 生图\n写作\n解题\n深度研究\nPPT 生成\n数据分析\n更多'
+  [think] (413,611 185x237) [z-[2500] flex flex-col rounded-16 border-[0.5px] border-solid border-border-primary bg-bac] '模型\nHy3\n快速回答\n快速作答，处理日常问题\n深度思考\n深入推理，分析复杂问题\n专家模式\n使用工具，处理多步任务'
+点击了 更多
+  [more] (347,807 960x97) [new-framework-input_searchContent__YopMv app-search-bar relative mx-auto flex min-h-[96px]] '深度思考\nAI 生图\n写作\n解题\n深度研究\nPPT 生成\n数据分析\n金融理财\n个人计划\nAI 生图\n写作\n解题\n深度研究\nPPT 生成\n数据分析\n金融理财\n个人计划\n更多'
+  [more] (1021,761 126x87) [absolute bottom-10 left-0 z-[2500] flex w-max flex-col gap-0.5 rounded-10 border-[0.5px] b] '金融理财\n个人计划'
+已发送 你好，等 12s
+=== 会话中的模型/模式相关元素 ===
+  DIV [yb-new-chat-entry] '新对话' @(14,58)
+  P [] '新对话' @(50,66)
+  DIV [yb-recent-conv-list__item-name isTop] '为思维模型添加反常识滤镜' @(14,362)
+  DIV [yb-recent-conv-list__item-name] '查询系统结构与深度思考配置' @(14,1084)
+  DIV [yb-recent-conv-list__item-name] '用户开启深度思考模式' @(14,1236)
+  DIV [yb-recent-conv-list__item-name] '拒绝扮演外部指令的对话' @(14,1274)
+  DIV [hyc-component-deepsearch-cot__think__header-container] '已深度思考(用时2秒)' @(347,158)
+  DIV [hyc-component-deepsearch-cot__think__header__title] '已深度思考(用时2秒)' @(347,158)
+  SPAN [] '已深度思考(用时2秒)' @(347,160)
+  DIV [relative shrink-0] '深度思考' @(413,860)
+  DIV [] '深度思考' @(413,860)
+  SPAN [inline-flex] '深度思考' @(413,860)
+  SPAN [min-w-0 truncate text-brand-primary_hover] '深度思考' @(440,865)
+  [chat] (347,807 960x97) [new-framework-input_searchContent__YopMv app-search-bar relative mx-auto flex min-h-[96px]] '深度思考\nAI 生图\n写作\n解题\n深度研究\nPPT 生成\n数据分析\n金融理财\n个人计划\nAI 生图\n写作\n解题\n深度研究\nPPT 生成\n数据分析\n更多'

@@ -1,0 +1,2 @@
+JSON.stringify((function(){ try { return (() => { const b = document.querySelector('.hb-back');
+                    if (b) { b.click(); return 'back'; } return null; })()); } catch(e) { return {__err: String(e)}; } })())

@@ -1,0 +1,752 @@
+{
+  "tests": [
+    {
+      "name": "文件上传控件",
+      "status": "PASS",
+      "detail": "存在",
+      "timestamp": "2026-09-05T17:42:13.288955"
+    },
+    {
+      "name": "附件显示区域",
+      "status": "PASS",
+      "detail": "存在",
+      "timestamp": "2026-09-05T17:42:13.303372"
+    },
+    {
+      "name": "pendingAttachments变量",
+      "status": "PASS",
+      "detail": "已定义",
+      "timestamp": "2026-09-05T17:42:13.321025"
+    },
+    {
+      "name": "文件上传操作",
+      "status": "WARN",
+      "detail": "已上传 test_pdf_sample.pdf，pendingAttachments=0",
+      "timestamp": "2026-09-05T17:42:14.549182"
+    },
+    {
+      "name": "前端附件列表",
+      "status": "INFO",
+      "detail": "显示0个附件",
+      "timestamp": "2026-09-05T17:42:14.557407"
+    },
+    {
+      "name": "后端附件API",
+      "status": "PASS",
+      "detail": "返回17个附件",
+      "timestamp": "2026-09-05T17:42:14.825401"
+    },
+    {
+      "name": "AI感知附件标记",
+      "status": "WARN",
+      "detail": "未检测到（可能需发送后验证）",
+      "timestamp": "2026-09-05T17:42:15.359623"
+    },
+    {
+      "name": "思考控制按钮",
+      "status": "WARN",
+      "detail": "未找到",
+      "timestamp": "2026-09-05T17:42:15.364549"
+    },
+    {
+      "name": "showThinking函数",
+      "status": "PASS",
+      "detail": "存在",
+      "timestamp": "2026-09-05T17:42:15.379975"
+    },
+    {
+      "name": "appendThinking函数",
+      "status": "PASS",
+      "detail": "存在",
+      "timestamp": "2026-09-05T17:42:15.385973"
+    },
+    {
+      "name": "endThinking函数",
+      "status": "PASS",
+      "detail": "存在",
+      "timestamp": "2026-09-05T17:42:15.392818"
+    },
+    {
+      "name": "思考模式状态",
+      "status": "INFO",
+      "detail": "当前: 未知",
+      "timestamp": "2026-09-05T17:42:15.397826"
+    },
+    {
+      "name": "SSE思考事件处理",
+      "status": "WARN",
+      "detail": "未找到",
+      "timestamp": "2026-09-05T17:42:15.402966"
+    },
+    {
+      "name": "历史任务面板",
+      "status": "PASS",
+      "detail": "存在",
+      "timestamp": "2026-09-05T17:42:15.409070"
+    },
+    {
+      "name": "loadHistory函数",
+      "status": "PASS",
+      "detail": "存在",
+      "timestamp": "2026-09-05T17:42:15.413961"
+    },
+    {
+      "name": "任务列表显示",
+      "status": "PASS",
+      "detail": "显示3个任务",
+      "timestamp": "2026-09-05T17:42:16.510115"
+    },
+    {
+      "name": "任务列表API",
+      "status": "PASS",
+      "detail": "共155个任务",
+      "timestamp": "2026-09-05T17:42:16.565314"
+    },
+    {
+      "name": "任务字段完整性",
+      "status": "PASS",
+      "detail": "字段完整",
+      "timestamp": "2026-09-05T17:42:16.565390"
+    },
+    {
+      "name": "独立对话文件",
+      "status": "PASS",
+      "detail": "共177个独立文件",
+      "timestamp": "2026-09-05T17:42:16.569295"
+    },
+    {
+      "name": "对话独立性验证",
+      "status": "WARN",
+      "detail": "发现1个重复",
+      "timestamp": "2026-09-05T17:42:16.575787"
+    },
+    {
+      "name": "历史任务加载",
+      "status": "PASS",
+      "detail": "显示2条消息",
+      "timestamp": "2026-09-05T17:42:17.792249"
+    },
+    {
+      "name": "恢复功能:restoreTask",
+      "status": "WARN",
+      "detail": "未找到",
+      "timestamp": "2026-09-05T17:42:17.807182"
+    },
+    {
+      "name": "恢复功能:恢复对话",
+      "status": "WARN",
+      "detail": "未找到",
+      "timestamp": "2026-09-05T17:42:17.822105"
+    },
+    {
+      "name": "session.restore_conversation",
+      "status": "PASS",
+      "detail": "存在",
+      "timestamp": "2026-09-05T17:42:17.824043"
+    },
+    {
+      "name": "URL追溯恢复",
+      "status": "PASS",
+      "detail": "存在",
+      "timestamp": "2026-09-05T17:42:17.824104"
+    },
+    {
+      "name": "JSON文件回退",
+      "status": "PASS",
+      "detail": "存在",
+      "timestamp": "2026-09-05T17:42:17.824122"
+    },
+    {
+      "name": "恢复命令发送",
+      "status": "PASS",
+      "detail": "插话消息已入队",
+      "timestamp": "2026-09-05T17:42:17.847433"
+    },
+    {
+      "name": "deleteTask函数",
+      "status": "PASS",
+      "detail": "存在",
+      "timestamp": "2026-09-05T17:42:17.859679"
+    },
+    {
+      "name": "删除按钮",
+      "status": "INFO",
+      "detail": "找到0个删除按钮",
+      "timestamp": "2026-09-05T17:42:17.880543"
+    },
+    {
+      "name": "tasks.json权限",
+      "status": "PASS",
+      "detail": "666 (期望666)",
+      "timestamp": "2026-09-05T17:42:17.880950"
+    },
+    {
+      "name": "创建测试任务",
+      "status": "PASS",
+      "detail": "ID: deepseek_20260905_174217_36293",
+      "timestamp": "2026-09-05T17:42:17.937363"
+    },
+    {
+      "name": "delete_task函数",
+      "status": "PASS",
+      "detail": "删除成功",
+      "timestamp": "2026-09-05T17:42:18.623985"
+    },
+    {
+      "name": "删除验证",
+      "status": "PASS",
+      "detail": "任务已移除",
+      "timestamp": "2026-09-05T17:42:18.638117"
+    },
+    {
+      "name": "DELETE API响应",
+      "status": "PASS",
+      "detail": "HTTP 200 且任务已从索引移除",
+      "timestamp": "2026-09-05T17:42:19.061774"
+    },
+    {
+      "name": "build_pptx函数",
+      "status": "PASS",
+      "detail": "存在",
+      "timestamp": "2026-09-05T17:42:19.062455"
+    },
+    {
+      "name": "parse_to_slides函数",
+      "status": "PASS",
+      "detail": "存在",
+      "timestamp": "2026-09-05T17:42:19.062472"
+    },
+    {
+      "name": "已生成PPT",
+      "status": "PASS",
+      "detail": "共7个PPT文件",
+      "timestamp": "2026-09-05T17:42:19.063059"
+    },
+    {
+      "name": "PPT: demo.pptx",
+      "status": "PASS",
+      "detail": "32986 bytes, 24个XML文件",
+      "timestamp": "2026-09-05T17:42:19.078704"
+    },
+    {
+      "name": "PPT: demo2.pptx",
+      "status": "PASS",
+      "detail": "36875 bytes, 27个XML文件",
+      "timestamp": "2026-09-05T17:42:19.079926"
+    },
+    {
+      "name": "PPT: demo3.pptx",
+      "status": "PASS",
+      "detail": "34157 bytes, 25个XML文件",
+      "timestamp": "2026-09-05T17:42:19.081081"
+    },
+    {
+      "name": "PPT生成命令",
+      "status": "PASS",
+      "detail": "插话消息已入队",
+      "timestamp": "2026-09-05T17:42:19.083750"
+    },
+    {
+      "name": "interruptTask函数",
+      "status": "PASS",
+      "detail": "存在",
+      "timestamp": "2026-09-05T17:42:19.091064"
+    },
+    {
+      "name": "停止按钮",
+      "status": "PASS",
+      "detail": "找到1个停止按钮",
+      "timestamp": "2026-09-05T17:42:19.105287"
+    },
+    {
+      "name": "中断API",
+      "status": "PASS",
+      "detail": "已发送中断信号",
+      "timestamp": "2026-09-05T17:42:19.108777"
+    },
+    {
+      "name": "中断代码实现",
+      "status": "PASS",
+      "detail": "存在",
+      "timestamp": "2026-09-05T17:42:19.113384"
+    },
+    {
+      "name": "loadAttachments函数",
+      "status": "PASS",
+      "detail": "存在",
+      "timestamp": "2026-09-05T17:42:19.119168"
+    },
+    {
+      "name": "附件侧边栏",
+      "status": "PASS",
+      "detail": "存在",
+      "timestamp": "2026-09-05T17:42:19.125711"
+    },
+    {
+      "name": "附件列表含PPT",
+      "status": "PASS",
+      "detail": "共8个PPT",
+      "timestamp": "2026-09-05T17:42:19.143332"
+    },
+    {
+      "name": "PPT: 2fc8b7fa373c4cbc9983ef78260c29df.pptx",
+      "status": "INFO",
+      "detail": "28348 bytes",
+      "timestamp": "2026-09-05T17:42:19.143365"
+    },
+    {
+      "name": "PPT: 414b1b9bf40c4f7ca21869bbee8c2329.pptx",
+      "status": "INFO",
+      "detail": "28348 bytes",
+      "timestamp": "2026-09-05T17:42:19.143378"
+    },
+    {
+      "name": "PPT: 41b8927e0c844ad98e2e0b1dfe34025b.pptx",
+      "status": "INFO",
+      "detail": "28348 bytes",
+      "timestamp": "2026-09-05T17:42:19.143385"
+    },
+    {
+      "name": "自动刷新附件",
+      "status": "WARN",
+      "detail": "可能未实现（需进一步验证）",
+      "timestamp": "2026-09-05T17:42:19.149263"
+    },
+    {
+      "name": "平台配置",
+      "status": "PASS",
+      "detail": "配置平台: deepseek, tongyi, doubao, yuanbao",
+      "timestamp": "2026-09-05T17:42:19.149981"
+    },
+    {
+      "name": "平台选择器",
+      "status": "WARN",
+      "detail": "未找到",
+      "timestamp": "2026-09-05T17:42:19.159862"
+    },
+    {
+      "name": "模型选择器",
+      "status": "PASS",
+      "detail": "存在",
+      "timestamp": "2026-09-05T17:42:19.175405"
+    },
+    {
+      "name": "模型切换函数",
+      "status": "PASS",
+      "detail": "存在",
+      "timestamp": "2026-09-05T17:42:19.181131"
+    },
+    {
+      "name": "当前模型状态",
+      "status": "INFO",
+      "detail": "当前: quick",
+      "timestamp": "2026-09-05T17:42:19.188734"
+    },
+    {
+      "name": "消息输入框",
+      "status": "PASS",
+      "detail": "存在",
+      "timestamp": "2026-09-05T17:42:19.200131"
+    },
+    {
+      "name": "发送按钮",
+      "status": "PASS",
+      "detail": "存在",
+      "timestamp": "2026-09-05T17:42:19.213353"
+    },
+    {
+      "name": "发送命令函数",
+      "status": "PASS",
+      "detail": "存在",
+      "timestamp": "2026-09-05T17:42:19.219399"
+    },
+    {
+      "name": "SSE连接支持",
+      "status": "PASS",
+      "detail": "支持",
+      "timestamp": "2026-09-05T17:42:19.227600"
+    },
+    {
+      "name": "主题切换",
+      "status": "INFO",
+      "detail": "未找到（可能通过命令控制）",
+      "timestamp": "2026-09-05T17:42:19.235319"
+    },
+    {
+      "name": "状态指示器",
+      "status": "PASS",
+      "detail": "存在",
+      "timestamp": "2026-09-05T17:42:19.249380"
+    },
+    {
+      "name": "日志面板",
+      "status": "PASS",
+      "detail": "存在",
+      "timestamp": "2026-09-05T17:42:19.262693"
+    }
+  ],
+  "summary": {
+    "total": 64,
+    "passed": 47,
+    "failed": 0,
+    "warnings": 9,
+    "info": 8
+  },
+  "categories": {
+    "文件上传控件": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "附件显示区域": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "pendingAtt": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "文件上传操作": {
+      "PASS": 0,
+      "FAIL": 0,
+      "WARN": 1,
+      "INFO": 0
+    },
+    "前端附件列表": {
+      "PASS": 0,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 1
+    },
+    "后端附件API": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "AI感知附件标记": {
+      "PASS": 0,
+      "FAIL": 0,
+      "WARN": 1,
+      "INFO": 0
+    },
+    "思考控制按钮": {
+      "PASS": 0,
+      "FAIL": 0,
+      "WARN": 1,
+      "INFO": 0
+    },
+    "showThinki": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "appendThin": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "endThinkin": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "思考模式状态": {
+      "PASS": 0,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 1
+    },
+    "SSE思考事件处理": {
+      "PASS": 0,
+      "FAIL": 0,
+      "WARN": 1,
+      "INFO": 0
+    },
+    "历史任务面板": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "loadHistor": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "任务列表显示": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "任务列表API": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "任务字段完整性": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "独立对话文件": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "对话独立性验证": {
+      "PASS": 0,
+      "FAIL": 0,
+      "WARN": 1,
+      "INFO": 0
+    },
+    "历史任务加载": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "恢复功能:resto": {
+      "PASS": 0,
+      "FAIL": 0,
+      "WARN": 1,
+      "INFO": 0
+    },
+    "恢复功能:恢复对话": {
+      "PASS": 0,
+      "FAIL": 0,
+      "WARN": 1,
+      "INFO": 0
+    },
+    "session.re": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "URL追溯恢复": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "JSON文件回退": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "恢复命令发送": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "deleteTask": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "删除按钮": {
+      "PASS": 0,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 1
+    },
+    "tasks.json": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "创建测试任务": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "delete_tas": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "删除验证": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "DELETE": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "build_pptx": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "parse_to_s": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "已生成PPT": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "PPT:": {
+      "PASS": 3,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 3
+    },
+    "PPT生成命令": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "interruptT": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "停止按钮": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "中断API": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "中断代码实现": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "loadAttach": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "附件侧边栏": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "附件列表含PPT": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "自动刷新附件": {
+      "PASS": 0,
+      "FAIL": 0,
+      "WARN": 1,
+      "INFO": 0
+    },
+    "平台配置": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "平台选择器": {
+      "PASS": 0,
+      "FAIL": 0,
+      "WARN": 1,
+      "INFO": 0
+    },
+    "模型选择器": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "模型切换函数": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "当前模型状态": {
+      "PASS": 0,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 1
+    },
+    "消息输入框": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "发送按钮": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "发送命令函数": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "SSE连接支持": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "主题切换": {
+      "PASS": 0,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 1
+    },
+    "状态指示器": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    },
+    "日志面板": {
+      "PASS": 1,
+      "FAIL": 0,
+      "WARN": 0,
+      "INFO": 0
+    }
+  },
+  "timestamp": "2026-09-05T17:42:19.510700"
+}

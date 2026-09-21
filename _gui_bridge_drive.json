@@ -1,0 +1,13 @@
+{
+ "steps": [
+  "desktop_app_pid: 22024",
+  "bridge_up: True",
+  "panel_state: initialized",
+  "panel_ready: True",
+  "frontend_fns: {\"hasNewConv\":true,\"hasReset\":true,\"hasOnboard\":true,\"msgLen\":437}",
+  "screenshot_saved: True",
+  "newConversation_fired: fired",
+  "messages_after_newconv: 已开启全新对话\n✅ 已开一个全新对话，之前的对话已存进「📚 历史记录」。现在可以发新任务了。\n已开启一个全新的独立对话（此前的对话已作为独立任务保留在历史中）",
+  "sse_events_during: [('task_started', ''), ('task_started', ''), ('ai_final_reply', '已开启一个全新的独立对话（此前的对话已作为独立任务保留在历史中）'), ('ai_final_reply', '[错误] AI 调用失败: 消息发送失败'), ('task_started', ''), ('ai_final_reply', '[错误] AI 调用失败: 浏览器重启失败：页面未初始化'), ('task_started', ''), ('ai_final_reply', '已开启一个全新的独立对话（此前的对话已作为独立任务保留在历史中）'), ('task_started', ''), ('ai_final_reply', '已开启一个全新的独立对话（此前的对话已作为独立任务保留在历史中）'), ('task_started', ''), ('ai_final_reply', '已开启一个全新的独立对话（此前的对话已作为独立任务保留在历史中）')]"
+ ]
+}
