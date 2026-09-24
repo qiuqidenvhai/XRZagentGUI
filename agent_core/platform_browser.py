@@ -29,6 +29,10 @@ from dataclasses import dataclass, field
 
 logger = logging.getLogger("platform_browser")
 
+# 当前会话正挂在哪个平台上（由 PlatformSession.__init__ 每次刷新）。
+# 登录态保活用它跳过「用户正在用的平台」，绝不刷新活跃对话的浏览器。
+_ACTIVE_PLATFORM_KEY: Optional[str] = None
+
 # ── 同平台绝不双开的进程内互斥（核心防护）──
 # 同一个 user_data_dir（同一平台 profile）绝不能被两个持久化上下文同时占用——
 # 后开的会杀掉先开的活浏览器 / 抢 SingletonLock，导致「一个 deepseek 掉登」。
@@ -638,6 +642,13 @@ class PlatformBrowserManager:
             "--no-service-autorun",
             "--window-size=1280,860",
         ]
+        # 【2026-09-21 代理故障自愈】同 browser.py：WPAD 拿到死代理时所有跳转
+        # 都报 ERR_PROXY_CONNECTION_FAILED（本机直连实测是通的）。类级标记一旦
+        # 置位，重启浏览器改用 --no-proxy-server 直连。
+        if getattr(PlatformBrowserManager, "_no_proxy_mode", False):
+            launch_args.append("--no-proxy-server")
+            logger.warning(f"[{self.profile.name}] 检测到历史代理故障，"
+                           f"本次以 --no-proxy-server 直连启动")
 
         # 3. 创建持久化上下文
         try:
@@ -685,7 +696,117 @@ class PlatformBrowserManager:
         # 5. 加载 cookies
         await self._load_cookies()
 
+        # 6. 启动空闲登录态保活（防「元宝天天掉登录」：平台几天不被切换/发任务，
+        #    服务端会话因长期无心跳而过期，再打开就是扫码墙 —— 扫码只能用户本人做）
+        #    同时登记：浏览器 launch 的时机 = 该平台成为活跃平台的时机（启动默认/切换），
+        #    保活据此跳过它，绝不刷新用户正在用的浏览器。
+        global _ACTIVE_PLATFORM_KEY
+        _ACTIVE_PLATFORM_KEY = self.platform_key
+        self._start_login_keepalive()
+
         logger.info(f"[{self.profile.name}] 浏览器启动完成")
+
+    # ---- 登录态保活（2026-09-21）----
+    _KA_INTERVAL_SEC = 4 * 3600        # 每 4 小时轻触一次
+    _KA_BUSY_WINDOW = 30 * 60          # 任务结束后 30 分钟内视为「刚用过」，不刷新
+
+    def _start_login_keepalive(self):
+        """幂等启动保活协程（子代理/接管窗口绝不启动）。"""
+        if getattr(self, "_is_child", False) or getattr(self, "_adopted", False):
+            return
+        if getattr(self, "_keepalive_task", None) and not self._keepalive_task.done():
+            return
+        try:
+            self._keepalive_task = asyncio.get_event_loop().create_task(
+                self._login_keepalive_loop())
+        except Exception as e:
+            logger.warning(f"[{self.profile.name}] 保活协程启动失败（不影响任务）: {e}")
+
+    async def _login_keepalive_loop(self):
+        """空闲平台登录态保活：定期把页面刷新一遍（让服务端看到心跳、续会话 TTL），
+        确认仍登录后【强制】落盘最新 cookies（会话句柄/轮换后的 token 都保住）。
+
+        只跳过三类窗口：正在跑任务的（_busy_until）、当前会话正挂在用的平台
+        （_ACTIVE_PLATFORM_KEY，避免打扰活跃对话）、子代理窗口。
+        后端一旦重启，浏览器本来就全没了 —— 保活只保证「后端活着期间」登录态不秃然过期；
+        配合 _load_cookies 的补载 + 每次任务预检的落盘，重启后也能把最新会话句柄补回去。"""
+        first = True
+        while True:
+            await asyncio.sleep(self._KA_INTERVAL_SEC if not first else 300)
+            first = False
+            try:
+                if self._browser is None or self._page is None:
+                    continue          # 浏览器没在跑：无从保活（下次切到该平台会走补载）
+                _dead, _r = self._is_zombie()
+                if _dead:
+                    continue          # 僵尸/已关闭：跳过，等下次 launch 重建
+                if getattr(self, "_is_child", False) or getattr(self, "_adopted", False):
+                    continue
+                if self.platform_key == _ACTIVE_PLATFORM_KEY:
+                    continue          # 当前会话正在用的平台不动它
+                if time.time() < getattr(self, "_busy_until", 0.0) + self._KA_BUSY_WINDOW:
+                    logger.info(f"[{self.profile.name}] 最近有任务在跑，本轮保活跳过")
+                    continue
+                logger.info(f"[{self.profile.name}] 空闲保活：刷新页面续登录态…")
+                await self.navigate_to_chat()
+                if await self.check_login():
+                    await self._persist_cookies_throttled(force=True)
+                    logger.info(f"[{self.profile.name}] 保活成功：登录态已续期，cookies 已落盘")
+                else:
+                    logger.warning(f"[{self.profile.name}] 保活检查：登录已失效"
+                                   f"（服务端会话过期，需要重新扫码）")
+            except asyncio.CancelledError:
+                raise
+            except Exception as e:
+                logger.warning(f"[{self.profile.name}] 保活失败（不影响任务）: {e}")
+
+    # ---- 登录墙守望（2026-09-21）----
+    def _start_login_watch(self):
+        """幂等启动「扫码守望」：检测到登录墙后，等用户扫码，一成功立刻强制落盘。"""
+        if getattr(self, "_is_child", False) or getattr(self, "_adopted", False):
+            return
+        if getattr(self, "_login_watch_task", None) and not self._login_watch_task.done():
+            return
+        try:
+            self._login_watch_task = asyncio.get_event_loop().create_task(
+                self._login_watch_loop())
+        except Exception as e:
+            logger.warning(f"[{self.profile.name}] 登录守望启动失败（不影响任务）: {e}")
+
+    async def _login_watch_loop(self):
+        """守望用户扫码：每 15s 复查一次（最长 30 分钟）。
+        扫码成功 → check_login 内部走已登录路径 + 这里再 force 落盘一次，
+        确保最新会话句柄（含非持久会话 cookie）第一时间进 cookies.json。
+        以前缺这一环：用户扫完码没马上发任务 → 后端一关 → 句柄丢失 → 再扫，
+        表现就是「元宝天天掉登录 / 每次打开都要重新登录」。"""
+        logger.info(f"[{self.profile.name}] 检测到登录墙，开始守望扫码（最多 30 分钟，"
+                    f"扫码成功会自动保存登录态）…")
+        deadline = time.time() + 30 * 60
+        while time.time() < deadline:
+            await asyncio.sleep(15)
+            try:
+                # 浏览器已死（被手动关掉/崩溃/僵尸）→ 立即停止守望，
+                # 别对着死上下文每 15s 刷一遍异常（下一任务/切平台会自动重新布防）
+                if self._browser is None or self._page is None:
+                    logger.info(f"[{self.profile.name}] 登录守望：浏览器引用已清空，停止守望")
+                    return
+                dead, _reason = self._is_zombie()
+                if dead:
+                    logger.info(f"[{self.profile.name}] 登录守望：浏览器已关闭"
+                                f"（{_reason}），停止守望")
+                    return
+                if time.time() < getattr(self, "_busy_until", 0.0):
+                    continue          # 任务在跑，别抢页面
+                if await self.check_login():
+                    await self._persist_cookies_throttled(force=True)
+                    logger.info(f"[{self.profile.name}] ✅ 捕捉到登录成功，最新 cookies "
+                                f"已强制落盘 —— 以后重启/冷启动会自动补载，不用再扫码")
+                    return
+            except asyncio.CancelledError:
+                raise
+            except Exception as e:
+                logger.warning(f"[{self.profile.name}] 登录守望复查异常（继续守望）: {e}")
+        logger.info(f"[{self.profile.name}] 登录守望超时退出（30 分钟内未检测到登录）")
 
     def _win_apply_cactus_icon(self) -> int:
         """实例方法包装：委托给模块级 _win_apply_cactus_icon()"""
@@ -745,17 +866,35 @@ class PlatformBrowserManager:
                     pass
     
     async def _load_cookies(self):
-        """加载 cookies"""
+        """加载 cookies。
+
+        【2026-09-21 修复：补载不覆盖】旧实现把 cookies.json 全量 add_cookies，
+        同名(name/domain/path) cookie 会被【陈旧快照】直接顶掉 —— Chromium profile
+        自带 cookie 库里存着最后一次真实会话的 cookie（往往比快照新，比如服务端
+        轮换过 token / 用户后来又登录过），一被旧快照覆盖就可能把本来还有效的
+        登录态冲坏。改为：只补 profile 库里【缺】的 cookie（主要是重启后必然
+        丢失的非持久会话 cookie），已有的（更可能更新）一律跳过不动。"""
         cookie_file = self.user_data_dir / "cookies.json"
         if not cookie_file.exists():
             logger.info(f"[{self.profile.name}] 首次启动，无 cookies")
             return
-        
+
         try:
             cookies = json.loads(cookie_file.read_text(encoding="utf-8"))
             if self._browser and cookies:
-                await self._browser.add_cookies(cookies)
-                logger.info(f"[{self.profile.name}] 已加载 {len(cookies)} 条 cookies")
+                try:
+                    existing = await self._browser.cookies()
+                    have = {(c.get("name"), c.get("domain"), c.get("path"))
+                            for c in existing}
+                except Exception:
+                    have = set()
+                fresh = [c for c in cookies
+                         if (c.get("name"), c.get("domain"), c.get("path")) not in have]
+                if fresh:
+                    await self._browser.add_cookies(fresh)
+                logger.info(f"[{self.profile.name}] 已补载 {len(fresh)} 条 cookies"
+                            f"（跳过 profile 已有 {len(cookies) - len(fresh)} 条，"
+                            f"防旧快照覆盖新登录态）")
         except Exception as e:
             logger.warning(f"[{self.profile.name}] 加载 cookies 失败: {e}")
     
@@ -867,8 +1006,15 @@ class PlatformBrowserManager:
             except Exception as e:
                 last_err = e
                 err = str(e)
+                # 【代理故障自愈】WPAD 死代理 → 所有跳转 ERR_PROXY_CONNECTION_FAILED。
+                # 置类级标记后走下面的重启循环，launch 会带 --no-proxy-server 直连。
+                if "ERR_PROXY_CONNECTION_FAILED" in err:
+                    PlatformBrowserManager._no_proxy_mode = True
+                    logger.warning(f"[{self.profile.name}] 检测到代理连接失败，"
+                                   f"标记直连模式并重启浏览器")
                 # 浏览器被关类错误 → 自愈重试
-                if "has been closed" in err or "TargetClosed" in err or "Target page" in err:
+                if ("has been closed" in err or "TargetClosed" in err
+                        or "Target page" in err or "ERR_PROXY_CONNECTION_FAILED" in err):
                     logger.warning(
                         f"[{self.profile.name}] 导航时浏览器被杀，自愈重试 "
                         f"({_attempt + 1}/3)..."
@@ -886,7 +1032,21 @@ class PlatformBrowserManager:
             raise last_err
 
     async def check_login(self) -> bool:
-        """检查登录状态（平台差异化处理）"""
+        """登录检查 + 登录墙守望钩子。
+
+        【2026-09-21 修复「元宝天天掉登录」的关键一环】一旦判「未登录」，自动开始
+        守望用户扫码（后台每 15s 复查一次，最长 30 分钟）；扫码成功的那一刻立刻把
+        最新 cookies 【强制】落盘。以前只在发任务/切平台时的 check_login 成功路径
+        顺手保存 —— 用户扫完码若不马上发任务，会话句柄只存在浏览器内存里，
+        后端一关就丢，下次打开又是扫码墙，等于白扫。
+        """
+        ok = await self.check_login_impl()
+        if not ok:
+            self._start_login_watch()
+        return ok
+
+    async def check_login_impl(self) -> bool:
+        """检查登录状态（平台差异化处理）—— 原实现，check_login 包装它并挂守望。"""
         if not self._page:
             return False
 
@@ -1063,6 +1223,9 @@ class PlatformBrowserManager:
         """
         if not self._page:
             raise RuntimeError("页面未初始化")
+
+        # 忙碌标记：登录态保活看到这个就跳过，绝不在这块浏览器上刷新页面
+        self._busy_until = time.time() + 6 * 60
 
         # 确保已登录（关非登录弹窗 + 遇登录弹窗则等待用户登录）
         await self._ensure_logged_in_or_wait()
@@ -2057,7 +2220,6 @@ class PlatformBrowserManager:
         """等待 AI 回复（可选实时抓取「思考过程」并通过 on_thinking 回调上报）
 
         核心修复（解决「靠等待时间判断 → qwen 交互提前结束」）：
-
         旧逻辑用「文本连续 N 秒不变 = 稳定」+ 10s 冷却期判定完成，导致 qwen 在
         「先文字后 @@@@ 工具调用」的间隔里被误判完成而提前返回。
 
@@ -2073,6 +2235,9 @@ class PlatformBrowserManager:
         """
         if not self._page:
             return None
+
+        # 忙碌标记：等待回复期间（最长 timeout+余量）登录态保活绝不刷新本浏览器
+        self._busy_until = time.time() + max(timeout, 60) + 120
 
         last_thinking = ""
         best_text = ""
@@ -2428,19 +2593,58 @@ class PlatformBrowserManager:
         return False
     
     async def new_conversation(self):
-        """新建对话"""
+        """新建对话：在同一浏览器上下文里【新开一个标签页】作为全新独立对话，
+        旧对话页收起（仍保留在平台里），后续发送/看界面都走新标签页。"""
         if not self._page:
             raise RuntimeError("页面未初始化")
-        
+
         try:
-            # 尝试多种新对话按钮选择器
+            ctx = getattr(self._page, "context", None)
+            if ctx is not None:
+                new_page = await ctx.new_page()
+                target = getattr(self.profile, "chat_url", None) or getattr(self.profile, "url", None) or "https://chat.deepseek.com"
+                await new_page.goto(target, wait_until="domcontentloaded", timeout=60000)
+                for sel in ("a:has-text('新对话')", "button:has-text('新对话')",
+                            "a:has-text('新建对话')", "button:has-text('新建对话')",
+                            "button:has-text('New Chat')", "a:has-text('New Chat')",
+                            "[data-testid='new-chat']", "[aria-label*='新对话']",
+                            "a[href='/']"):
+                    try:
+                        btn = new_page.locator(sel).first
+                        if await btn.count() > 0:
+                            await btn.click()
+                            await new_page.wait_for_timeout(1500)
+                            break
+                    except Exception:
+                        continue
+                # 清空输入框，避免旧草稿残留
+                for sel in ("textarea", "div[contenteditable='true']"):
+                    try:
+                        el = await new_page.query_selector(sel)
+                        if el:
+                            await el.fill("")
+                    except Exception:
+                        continue
+                old_page = self._page
+                self._page = new_page
+                if old_page is not None:
+                    try:
+                        await old_page.close()
+                    except Exception:
+                        pass
+                logger.info(f"[{self.profile.name}] 新对话已创建（新标签页）")
+                return
+        except Exception as e:
+            logger.warning(f"[{self.profile.name}] 新标签页失败，回退同页点击: {e}")
+
+        # 回退：同页点击新对话按钮（旧行为）
+        try:
             selectors = [
                 "a:has-text('新对话')",
                 "button:has-text('New Chat')",
                 "[data-testid='new-chat']",
                 "a[href='/']",
             ]
-            
             for sel in selectors:
                 try:
                     btn = self._page.locator(sel).first
@@ -2451,10 +2655,12 @@ class PlatformBrowserManager:
                         return
                 except:
                     continue
-            
             logger.warning(f"[{self.profile.name}] 未找到新对话按钮")
         except Exception as e:
             logger.error(f"[{self.profile.name}] 新建对话失败: {e}")
+
+    # 别名：让 auto_recover_from_exhaustion 里 guarded 的 new_session 也能命中本方法
+    new_session = new_conversation
     
     async def screenshot(self, path: str):
         """截图"""
@@ -2501,6 +2707,20 @@ class PlatformBrowserManager:
                 self._page = None
             logger.info(f"[{self.platform_key}] 子/接管窗口已关闭（owner 浏览器保持运行）")
             return
+
+        # 停掉登录态保活协程（浏览器都要关了，别让它在后台空转）
+        _ka = getattr(self, "_keepalive_task", None)
+        if _ka and not _ka.done():
+            _ka.cancel()
+            try:
+                await _ka
+            except asyncio.CancelledError:
+                pass          # 【2026-09-21 修复】CancelledError 不是 Exception 子类，
+                              # except Exception 接不住 → 曾向上炸穿 close()/自愈重试，
+                              # 表现为任务报「中断（CancelledError）」
+            except Exception:
+                pass
+        self._keepalive_task = None
 
         if self._browser:
             try:
@@ -2834,6 +3054,13 @@ class PlatformSession:
 
     def __init__(self, platform_bm: "PlatformBrowserManager"):
         self._bm = platform_bm
+        # 登记「当前活跃平台」：GUI 每条用户消息都会 new 一个 PlatformSession，
+        # 这里永远反映最新在用的平台 → 登录态保活据此跳过活跃平台。
+        try:
+            global _ACTIVE_PLATFORM_KEY
+            _ACTIVE_PLATFORM_KEY = getattr(platform_bm, "platform_key", None)
+        except Exception:
+            pass
         self._messages: list = []          # [{"role":..,"content":..}]
         # 【修复】整个会话只用一个会话 JSON 文件。以前每次保存都按时间戳新建文件，
         # 于是「一次任务 = 几十条历史记录」，历史抽屉被刷屏（实测 442 条里绝大多数是同
@@ -3462,9 +3689,22 @@ class PlatformSession:
         - task_id 给定：恢复该指定任务；- 为 None：恢复最新任务。
         """
         if task_id:
-            from .session import _get_task
+            from .session import _get_task, set_current_task_id
             t = _get_task(task_id)
             if t and t.get("file") and self.load_conversation(t["file"]):
+                # 【两重方案 2026-09-24】恢复 = ①后端上下文载入 ②浏览器跳回该任务页
+                #   ③登记为当前活动任务（后续消息/产物挂回该任务）
+                url = str(t.get("url") or "")
+                if url and ("http" in url) and self._bm and getattr(self._bm, "navigate", None):
+                    try:
+                        await self._bm.navigate(url)
+                        logger.info(f"[{self._bm.profile.name}] 历史恢复：浏览器已跳回任务页 {url}")
+                    except Exception as e:
+                        logger.warning(f"[{self._bm.profile.name}] 历史恢复：浏览器跳转 {url} 失败（上下文仍已恢复）: {e}")
+                try:
+                    set_current_task_id(task_id)
+                except Exception:
+                    pass
                 logger.info(f"[{self._bm.profile.name}] 历史恢复：指定任务 {task_id} 成功")
                 return True
             logger.warning(f"未找到任务 {task_id}，回退到最新任务")
@@ -3513,8 +3753,8 @@ class PlatformSession:
         if not keep_user_task:
             self._conv_file_path = ""   # 用户主动开新会话 → 下一个新文件
         try:
-            if self._bm and getattr(self._bm, "navigate_to_chat", None):
-                await self._bm.navigate_to_chat()
+            if self._bm and getattr(self._bm, "new_session", None):
+                await self._bm.new_session()
         except Exception as e:
             logger.warning(f"[{self._bm.profile.name}] 新建对话（浏览器侧）失败: {e}")
 

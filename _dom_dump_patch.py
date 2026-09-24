@@ -22,7 +22,14 @@ _LOCK = threading.Lock()
 
 
 def _find_live_page(main_module):
-    """从 main_module 里找出第一个活着的 Playwright page。"""
+    """从 main_module 里找出第一个活着的 Playwright page（优先当前活动平台）。
+
+    【2026-09-21 修复】多平台浏览器共存时（例如启动时起了 deepseek，后又切到元宝），
+    候选里会有多个 manager 的 page 都活着。旧逻辑只返回「dir() 里第一个」，
+    往往会抓到 deepseek 的 page，导致 /new_conversation、/dom、/probe 都作用在
+    错误的平台页上（在元宝界面点新建对话却给 deepseek 开了个标签页）。
+    现在优先选「platform_key == 当前活动平台」的那个 manager。
+    """
     seen = set()
     # 1) 显式收集模块里所有带 _browser/_page 的对象（manager 类实例）
     candidates = []
@@ -44,23 +51,70 @@ def _find_live_page(main_module):
         except Exception:
             pass
 
-    for obj in candidates:
+    def _alive(obj):
         page = getattr(obj, "_page", None)
         if page is None or id(page) in seen:
-            continue
-        seen.add(id(page))
+            return None
         try:
             if page.is_closed():
-                continue
+                return None
         except Exception:
-            continue
+            return None
         try:
             browser = getattr(obj, "_browser", None)
             if browser is not None and hasattr(browser, "is_closed") and browser.is_closed():
-                continue
+                return None
         except Exception:
             pass
-        return obj, page
+        return page
+
+    # 优先 0：commander 当前真正在用的浏览器管理器（最权威，发送/接收走的就是它）。
+    #   注意：commander._bm 在任意平台都指向「默认 deepseek 管理器」，并不随平台切换变化；
+    #   真正随平台切换的是 commander._session._bm（PlatformSession/DeepSeekSession 的 _bm）。
+    #   之前只取 commander._bm，导致在元宝/通义等平台永远拿到 deepseek 的 page。
+    pref = None
+    try:
+        _comm = getattr(main_module, "commander", None) or getattr(main_module, "COMMANDER", None)
+        if _comm is not None:
+            _sess = getattr(_comm, "_session", None)
+            if _sess is not None:
+                pref = getattr(_sess, "_bm", None)
+            if pref is None:
+                pref = getattr(_comm, "_bm", None)
+    except Exception:
+        pref = None
+    if pref is not None:
+        page = _alive(pref)
+        if page is not None:
+            seen.add(id(page))
+            return pref, page
+
+    # 优先 1：与「当前活动平台」匹配的 manager
+    active = None
+    try:
+        import agent_core.platform_browser as _pb
+        active = _pb._ACTIVE_PLATFORM_KEY
+    except Exception:
+        active = None
+
+    if active:
+        for obj in candidates:
+            pk = getattr(obj, "platform_key", None)
+            if pk is None:
+                _prof = getattr(obj, "profile", None)
+                pk = getattr(_prof, "platform", None)
+            if pk == active:
+                page = _alive(obj)
+                if page is not None:
+                    seen.add(id(page))
+                    return obj, page
+
+    # 兜底：第一个活着的 page
+    for obj in candidates:
+        page = _alive(obj)
+        if page is not None:
+            seen.add(id(page))
+            return obj, page
     return None, None
 
 

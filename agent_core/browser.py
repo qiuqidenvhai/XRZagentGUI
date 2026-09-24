@@ -216,6 +216,12 @@ class BrowserManager:
             "--disable-gpu",
             "--disable-dev-shm-usage",
         ]
+        # 【2026-09-21 代理故障自愈】Windows 的 WPAD/自动代理探测可能拿到一个
+        # 已死的代理（ERR_PROXY_CONNECTION_FAILED，实测本机直连是通的）。
+        # 一旦进程内检测到代理故障（类级标记），重启浏览器时改用直连。
+        if getattr(BrowserManager, "_no_proxy_mode", False):
+            _launch_args.append("--no-proxy-server")
+            logger.warning("[BrowserManager] 检测到历史代理故障，本次以 --no-proxy-server 直连启动")
         try:
             # 尝试持久化上下文
             self._browser = await self._playwright.chromium.launch_persistent_context(
@@ -680,6 +686,37 @@ class BrowserManager:
         try:
             await self._page.goto(url, wait_until="domcontentloaded", timeout=30000)
         except Exception as nav_err:
+            err = str(nav_err)
+            # 【代理故障自愈】WPAD 死代理 → 全部跳转 ERR_PROXY_CONNECTION_FAILED。
+            # 与 platform_browser.py 一致：置类级直连标记后【彻底关闭旧浏览器】，
+            # 再 launch() 起重带 --no-proxy-server 的干净进程。
+            # ⚠️ 关键（2026-09-24 修复「已连接但发不出消息」根因）：
+            # 绝不能只在新进程上"复用"页面——launch() 见 _browser 非空会直接
+            # return「复用」，旧进程仍走死代理 → 页面级重启失败 → 抛
+            # RuntimeError("浏览器已关闭且重启失败") → 后端 Agent 启动失败 →
+            # commander 永远 not ready → 所有平台（含已登录的元宝）都发不出消息。
+            # 必须先 close() 把 _browser 置空，launch() 才会走完整重建并应用直连。
+            if "ERR_PROXY_CONNECTION_FAILED" in err:
+                BrowserManager._no_proxy_mode = True
+                logger.warning("检测到代理连接失败（ERR_PROXY_CONNECTION_FAILED），"
+                               "标记直连模式并彻底重建浏览器")
+                try:
+                    await self.close()
+                except Exception:
+                    pass
+                self._browser = None
+                self._page = None
+                try:
+                    await self.launch()
+                    if self._page is None:
+                        raise RuntimeError(f"代理自愈后浏览器重启失败: {nav_err}")
+                    await self._page.goto(url, wait_until="domcontentloaded", timeout=30000)
+                    logger.info(f"已导航（直连自愈后）：{url}")
+                    return
+                except Exception as _e2:
+                    logger.warning(f"代理自愈重建失败: {_e2}")
+                    raise RuntimeError(f"代理自愈失败: {nav_err}") from _e2
+            # 其它导航错误（浏览器被关/僵尸等）→ 页面级重建
             logger.warning(f"页面跳转失败: {nav_err}，重建页面...")
             if self._browser:
                 # 检查浏览器是否还活着（用多种方式验证）
@@ -792,7 +829,43 @@ class BrowserManager:
         return False
 
     async def new_session(self):
-        """新建对话"""
+        """新建对话：在同一浏览器上下文里【新开一个标签页】作为全新独立对话，
+        旧对话页收起（仍保留在平台里），后续发送/看界面都走新标签页。"""
+        try:
+            ctx = getattr(self._page, "context", None) if self._page is not None else None
+            if ctx is None and self._browser is not None:
+                try:
+                    _ctxs = getattr(self._browser, "contexts", None)
+                    ctx = _ctxs[0] if _ctxs else None
+                except Exception:
+                    ctx = None
+            if ctx is not None:
+                new_page = await ctx.new_page()
+                await new_page.goto(DEEPSEEK_URL, wait_until="domcontentloaded", timeout=60000)
+                for sel in ("a:has-text('新对话')", "button:has-text('新对话')",
+                            "a:has-text('新建对话')", "button:has-text('新建对话')",
+                            "button:has-text('New Chat')", "a[href='/']"):
+                    try:
+                        btn = new_page.locator(sel).first
+                        if await btn.count() > 0:
+                            await btn.click()
+                            await new_page.wait_for_timeout(1200)
+                            break
+                    except Exception:
+                        continue
+                old_page = self._page
+                self._page = new_page
+                if old_page is not None:
+                    try:
+                        await old_page.close()
+                    except Exception:
+                        pass
+                logger.info("新对话已创建（新标签页）")
+                return
+        except Exception as e:
+            logger.warning(f"新建会话（新标签页）失败，回退同页: {e}")
+
+        # 回退：同页点击新对话按钮（旧行为）
         if self._page is None:
             await self.navigate()
         try:

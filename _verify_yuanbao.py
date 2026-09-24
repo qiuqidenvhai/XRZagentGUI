@@ -1,69 +1,80 @@
-"""元宝专项验证（09-14）：验证 check_login 误报"未登录"修复是否生效。
-切到元宝 → 发一条 chat（最轻）→ 发一条 file_write 工具调用。
-看 final 是否真回答（而非「平台未登录」），tools 里是否有 file_write。
-同时读后端日志里 元宝 的 check_login 结果。
-"""
-import sys, time, json, re
-sys.path.insert(0, ".")
-import _xrz_harness as H
+# -*- coding: utf-8 -*-
+"""切到 yuanbao（带重试，绕过偶发 ERR_CONNECTION_CLOSED），再验证新建对话开的是 yuanbao 自己的标签页。"""
+import json
+import urllib.request
+import urllib.error
+import sys
+import time
+import re
 
-ROOT = r"D:\软件\XianRenZhangAgent"
+API = "http://127.0.0.1:8888"
 
 
-def log_grep():
-    """抓后端日志里最近元宝的 check_login / 启动记录。"""
-    import os
-    p = os.path.join(ROOT, "_backend_v15.log")
-    hits = []
+def post(path, payload, timeout=200):
+    req = urllib.request.Request(API + path,
+                                 data=json.dumps(payload).encode("utf-8"),
+                                 headers={"Content-Type": "application/json"})
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+        return json.loads(r.read().decode("utf-8"))
+
+
+def get(path, timeout=30):
+    with urllib.request.urlopen(API + path, timeout=timeout) as r:
+        return json.loads(r.read().decode("utf-8"))
+
+
+def dom_url():
     try:
-        with open(p, encoding="utf-8", errors="ignore") as f:
-            for line in f:
-                if "元宝" in line and ("check_login" in line or "登录" in line or "启动" in line):
-                    hits.append(line.rstrip())
+        return (get("/dom", timeout=30) or {}).get("url") or ""
     except Exception as e:
-        hits.append(f"(读日志失败: {e})")
-    return hits[-15:]
+        return "<err:%s>" % e
 
 
-def main():
-    print("===== 切到元宝 =====", flush=True)
-    r = H.switch_platform("yuanbao", timeout=150)
-    print(f"[switch] {r}", flush=True)
+def parse_tabs(text):
+    m = re.search(r"标签页\s*(\d+)\s*→\s*(\d+)", text)
+    return (int(m.group(1)), int(m.group(2))) if m else (None, None)
 
-    print("\n===== 元宝 chat（最轻） =====", flush=True)
-    c = H.run("你好，请只回答：1加1等于几？不要调用任何工具", timeout=150)
-    print(f"[chat]  ok={c['ok']}  posted={c['posted']}", flush=True)
-    print(f"[chat]  tools={sorted(c['tools'])}", flush=True)
-    print(f"[chat]  errs={c['errs'][:3]}", flush=True)
-    print(f"[chat]  final={c['final'][:300]!r}", flush=True)
 
-    still_login_block = ("未登录" in (c["final"] or "")) or ("需要登录" in (c["final"] or ""))
-    print(f"\n[判定] chat 仍报未登录？{still_login_block}", flush=True)
-
-    print("\n===== 元宝 file_write 工具调用 =====", flush=True)
-    import os
-    txt = os.path.join(ROOT, "xrz_data", "XianRenZhang_tasks", "gui_session", "mp2_yuanbao_v15.txt")
+# 1) 重试切到 yuanbao
+ready = False
+for attempt in range(8):
     try:
-        if os.path.exists(txt):
-            os.replace(txt, txt + ".old")
-    except Exception:
-        pass
-    f = H.run(f"请用 file_write 工具创建文件 mp2_yuanbao_v15.txt，内容为「yuanbao v15 修复验证成功」",
-              timeout=300)
-    print(f"[file_write]  ok={f['ok']}  posted={f['posted']}", flush=True)
-    print(f"[file_write]  tools={sorted(f['tools'])}", flush=True)
-    print(f"[file_write]  final={f['final'][:200]!r}", flush=True)
-    ftools = "file_write" in f["tools"]
-    print(f"[判定] file_write 工具真的被调用？{ftools}", flush=True)
+        rp = post("/platform", {"platform": "yuanbao"}, timeout=90)
+        print("  /platform 尝试%d: %s" % (attempt + 1, json.dumps(rp, ensure_ascii=False)[:140]))
+    except Exception as e:
+        print("  /platform 尝试%d 异常: %s" % (attempt + 1, e))
+    for _ in range(12):
+        try:
+            hh = get("/health", timeout=5)
+            if hh.get("agent_ready") and hh.get("platform") == "yuanbao":
+                ready = True
+                break
+        except Exception:
+            pass
+        time.sleep(5)
+    if ready:
+        break
+    time.sleep(3)
 
-    print("\n===== 后端日志 元宝 登录相关记录 =====", flush=True)
-    for line in log_grep():
-        print("  " + line, flush=True)
+print("yuanbao 就绪:", ready)
+if not ready:
+    print("仍无法切到 yuanbao（疑似网络/代理偶发问题），结束。")
+    sys.exit(2)
 
-    print("\n========== 结论 ==========", flush=True)
-    print(f"  chat 不再是未登录:  {not still_login_block}", flush=True)
-    print(f"  file_write 工具可用: {ftools}", flush=True)
+# 2) 验证新建对话在 yuanbao 上下文开新标签页
+print("\n[yuanbao] /new_conversation x2")
+allok = True
+for k in (1, 2):
+    before = dom_url()
+    r = post("/new_conversation", {}, timeout=200)
+    text = str(r.get("text") or "")
+    after = dom_url()
+    o, n = parse_tabs(text)
+    ok_tab = (o is not None and n is not None and n > o)
+    ok_host = ("yuanbao.tencent.com" in after)
+    print("  第%d次: 标签页=%s 新标签页=%s 新页主机正确=%s 调前=%s 调后=%s" % (
+        k, (o, n), ok_tab, ok_host, before[:50], after[:60]))
+    allok = allok and ok_tab and ok_host
 
-
-if __name__ == "__main__":
-    main()
+print("\nyuanbao 验证:", "PASS ✅" if allok else "FAIL ❌")
+sys.exit(0 if allok else 1)

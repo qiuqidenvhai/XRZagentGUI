@@ -864,7 +864,7 @@ body {
         <div id="platformList" style="display:flex;flex-direction:column;gap:4px;"><button id="pl-deepseek" class="active">💭 DeepSeek</button><button id="pl-tongyi">💬 通义千问</button><button id="pl-doubao">🤖 豆包</button><button id="pl-yuanbao">✨ 元宝</button></div>
 
         <div class="section">💬 会话管理</div>
-        <button onclick="createSession()" title="创建新会话">➕ 新建会话</button>
+        <button onclick="newConversation()" title="开一个全新的独立对话（清界面 + 清后端上下文 + 浏览器新开对话页）">➕ 新建会话</button>
         <button onclick="toggleHistory()" title="查看历史对话">📚 历史记录</button>
         <div id="sessionList" style="display:flex;flex-direction:column;gap:2px;margin-top:4px;"></div>
 
@@ -1098,17 +1098,27 @@ async function removeTask(id) {
     if (CURRENT_TASK_ID === id) CURRENT_TASK_ID = null;
     // 【核心修复】旧实现只从前端数组里删（刷新/重启就复活），是「假删除」。
     // 真正调后端 DELETE /conversations/<id>，把后端对话索引 + 文件一起删掉。
+    // 【2026-09-24 修复】删除的反馈不再用 addMsg 塞进主对话消息流（把整个对话
+    //   刷屏搞乱），改为一次性轻提示；「任务不存在」= 陈旧条目/已删过 → 静默
+    //   刷新列表即可，绝不弹红色报错。
     try {
         const resp = await fetch(API + '/conversations/' + encodeURIComponent(id), { method: 'DELETE' });
         const data = await safeJson(resp);
         if (data.type === 'ok') {
-            addMsg('🗑 已删除任务 ' + id, 'system');
+            addLocalCard('🗑 已删除任务 ' + id, 6000);
             setTimeout(() => { try { loadHistory(); } catch (e) {} }, 300);
         } else {
-            addMsg('删除任务: ' + ((data.text) || '未知错误'), 'error');
+            const msg = String(data.text || '未知错误');
+            if (/(不存在|未找到|没有|not\s*found)/i.test(msg)) {
+                // 陈旧条目（早已被删）：静默同步前端，不给红色报错
+                setTimeout(() => { try { loadHistory(); } catch (e) {} }, 200);
+                addLocalCard('🗑 该任务已不存在，列表已刷新', 4000);
+            } else {
+                addLocalCard('❌ 删除任务失败：' + msg, 12000);
+            }
         }
     } catch (e) {
-        addMsg('删除任务失败: ' + e.message, 'error');
+        addLocalCard('❌ 删除任务失败: ' + e.message, 12000);
     }
 }
 
@@ -1851,7 +1861,8 @@ async function showLocalPanel(kind) {
 }
 
 // 把本地信息渲染成一张「软件自己的」卡片 —— 不进消息流、不参与发送。
-function addLocalCard(text) {
+// hideMs: 卡片显示时长（默认 8000ms），传 0 则常驻。
+function addLocalCard(text, hideMs) {
     const box = document.getElementById('messages');
     if (!box) return;
     const node = document.createElement('div');
@@ -1860,8 +1871,11 @@ function addLocalCard(text) {
     node.querySelector('.local-card-body').textContent = text;
     box.appendChild(node);
     box.scrollTop = box.scrollHeight;
-    // 本地卡片是瞬时的软件反馈，3 秒后自动淡出，不污染对话记录。
-    setTimeout(() => { try { node.remove(); } catch (e) {} }, 8000);
+    // 本地卡片是瞬时的软件反馈，默认 3 秒后自动淡出，不污染对话记录。
+    if (hideMs === undefined || hideMs === null || hideMs === true) hideMs = 8000;
+    if (hideMs > 0) {
+        setTimeout(() => { try { node.remove(); } catch (e) {} }, hideMs);
+    }
 }
 
 // sendCmd 已移除：它会把命令当普通消息经 sendInput 发给 AI。
@@ -1932,7 +1946,12 @@ async function resumeTask(taskId, fallbackTitle) {
         if (typeof hideTyping === 'function') hideTyping();
         sendBtn.disabled = false;
         if (ok) {
-            addMsg('✅ 已切回任务「' + (fallbackTitle || taskId) + '」，其上下文已还原为当前会话。\n'
+            // 【两重方案 2026-09-24】GUI 侧同步切换：当前任务 ID 指向被恢复的任务，
+            // 后续发消息继续这个任务（产物栏绑定、任务高亮都挂回它），
+            // 否则恢复完下一条消息又另开新任务，「怎么继续执行任务」就断了。
+            try { CURRENT_TASK_ID = taskId; } catch (e) {}
+            try { activeTaskId = taskId; if (typeof bindFileScope === 'function') bindFileScope(taskId); } catch (e) {}
+            addMsg('✅ 已切回任务「' + (fallbackTitle || taskId) + '」，其上下文已还原为当前会话（浏览器已同步跳回该对话页）。\n'
                  + '直接在下面输入框发新消息即可继续这个任务；点「➕ 新建对话」可随时开全新上下文。', 'system');
         } else {
             addMsg('⚠️ 恢复任务：' + ((d && d.text) ? d.text : '后端未确认') + '\n可点「📚 历史记录」回看该任务内容。', 'system');
@@ -2036,13 +2055,20 @@ async function deleteTask(taskId) {
         const resp = await fetch(API + '/conversations/' + taskId, { method: 'DELETE' });
         const data = await safeJson(resp);
         if (data.type === 'ok') {
-            addMsg('已删除对话', 'system');
+            addLocalCard('🗑 已删除任务 ' + taskId, 6000);
             loadHistory();
         } else {
-            addMsg('删除失败: ' + (data.text || '未知错误'), 'error');
+            const msg = String(data.text || '未知错误');
+            if (/(不存在|未找到|没有|not\s*found)/i.test(msg)) {
+                // 陈旧条目（早已被删）：静默刷新，不刷红色报错
+                addLocalCard('🗑 该任务已不存在，列表已刷新', 4000);
+            } else {
+                addLocalCard('❌ 删除任务失败：' + msg, 12000);
+            }
+            loadHistory();
         }
     } catch (e) {
-        addMsg('删除失败: ' + e.message, 'error');
+        addLocalCard('❌ 删除任务失败: ' + e.message, 12000);
     }
 }
 
@@ -2052,13 +2078,14 @@ async function deleteFile(filename) {
         const resp = await fetch(API + '/files/' + encodeURIComponent(filename), { method: 'DELETE' });
         const data = await safeJson(resp);
         if (data.type === 'ok') {
+            addLocalCard('🗑 已删除文件 ' + filename, 5000);
             renderFileSidebar();
             renderAttachments();
         } else {
-            addMsg('删除失败: ' + (data.text || '未知错误'), 'error');
+            addLocalCard('❌ 删除文件失败：' + (data.text || '未知错误'), 12000);
         }
     } catch (e) {
-        addMsg('删除失败: ' + e.message, 'error');
+        addLocalCard('❌ 删除文件失败: ' + e.message, 12000);
     }
 }
 
@@ -2308,6 +2335,7 @@ function renderFileSidebar() {
                 <div class="file-name">${escapeHtml(f.name)}</div>
                 <div class="file-size">${formatSize(f.size)}</div>
             </div>
+            <div class="file-close" onclick="event.stopPropagation(); revealFile(${JSON.stringify(f.path).replace(/"/g,'&quot;')})" title="在资源管理器中显示位置">📂</div>
             <div class="file-close" onclick="event.stopPropagation(); deleteFile('${escapeHtml(f.name)}')" title="删除">✕</div>
         `;
         container.appendChild(item);
@@ -2345,6 +2373,7 @@ async function previewFile(path) {
                         <span class="file-name">📝 ${escapeHtml(data.path ? data.path.split(/[\\/]/).pop() : '文件')}</span>
                         <button class="btn" style="padding:4px 10px;font-size:11px;" onclick="toggleEditView(this)">👁️ 预览</button>
                         <button class="btn btn-primary" style="padding:4px 10px;font-size:11px;" onclick="saveFile('${escapeHtml(path)}', this)">💾 保存</button>
+                        <button class="btn" style="padding:4px 10px;font-size:11px;" onclick="revealFile('${escapeHtml(path)}')" title="在资源管理器中显示位置">📂 打开位置</button>
                     </div>
                     <textarea id="editTextarea">${escapeHtml(data.raw)}</textarea>
                 </div>`;
@@ -2404,6 +2433,23 @@ function toggleEditView(btn) {
             btn.textContent = '👁️ 预览';
             btn.onclick = () => toggleEditView(btn);
         };
+    }
+}
+
+// 在 Windows 资源管理器中定位到文件（select 该文件本身）。
+// 走后端 /reveal 端点：explorer /select "path"，文件不存在/路径非法则回 400。
+async function revealFile(path) {
+    if (!path) return;
+    try {
+        const r = await fetch(API + '/reveal?path=' + encodeURIComponent(path), {
+            signal: AbortSignal.timeout(8000)
+        });
+        const data = await safeJson(r);
+        if (data && (data.type === 'error' || data.ok === false)) {
+            addMsg('⚠️ 无法定位文件位置：' + (data.text || data.error || '路径无效或文件不存在'), 'system');
+        }
+    } catch (e) {
+        addMsg('⚠️ 定位文件位置失败：' + escapeHtml(e.message), 'system');
     }
 }
 

@@ -1,0 +1,5 @@
+{
+  "subagent_card_rendered": true,
+  "card_text": "🤖 子代理\n查一下北京天气\n已完成\nstart\nlog 正在检索气象数据...\ndone\nstart\nlog 正在检索气象数据...\ndone",
+  "screenshot": "D:\\软件\\XianRenZhangAgent\\_gui_subagent_proof.png"
+}

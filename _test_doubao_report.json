@@ -1,0 +1,60 @@
+{
+ "report": {
+  "token": "DOUBAO_SA_1789987364",
+  "command_accepted": true,
+  "event_counts_post_command": {
+   "task_started": 1,
+   "ai_final_reply": 1
+  },
+  "subagent_ids_post_command": [],
+  "subagent_card_in_gui": null,
+  "final_reply_head": "[需要手动过验证] [豆包] 平台弹出反自动化图形验证（图片拖拽/滑块类 CAPTCHA）。这是平台风控把本程序的高频自动操作判定为机器人所致，网页端需要【手动】在打开的浏览器窗口里完成一次验证后才能继续。请勿反复重发，越刷验证墙越频繁。请去浏览器窗口里手动过一遍图片验证，过完再重新发任务。",
+  "screenshots": [
+   "D:\\软件\\XianRenZhangAgent\\_doubao_final.png"
+  ],
+  "timeline_len": 10,
+  "page_reloaded": false
+ },
+ "timeline": [
+  {
+   "t": 5.0,
+   "snap": "{\"cards\":[],\"msgs\":2,\"marker\":\"DOUBAO_SA_1789987364\"}"
+  },
+  {
+   "t": 10.0,
+   "snap": "{\"cards\":[],\"msgs\":2,\"marker\":\"DOUBAO_SA_1789987364\"}"
+  },
+  {
+   "t": 15.1,
+   "snap": "{\"cards\":[],\"msgs\":2,\"marker\":\"DOUBAO_SA_1789987364\"}"
+  },
+  {
+   "t": 20.1,
+   "snap": "{\"cards\":[],\"msgs\":2,\"marker\":\"DOUBAO_SA_1789987364\"}"
+  },
+  {
+   "t": 25.2,
+   "snap": "{\"cards\":[],\"msgs\":2,\"marker\":\"DOUBAO_SA_1789987364\"}"
+  },
+  {
+   "t": 30.2,
+   "snap": "{\"cards\":[],\"msgs\":2,\"marker\":\"DOUBAO_SA_1789987364\"}"
+  },
+  {
+   "t": 35.2,
+   "snap": "{\"cards\":[],\"msgs\":2,\"marker\":\"DOUBAO_SA_1789987364\"}"
+  },
+  {
+   "t": 40.3,
+   "snap": "{\"cards\":[],\"msgs\":2,\"marker\":\"DOUBAO_SA_1789987364\"}"
+  },
+  {
+   "t": 45.6,
+   "snap": "{\"cards\":[],\"msgs\":2,\"marker\":\"DOUBAO_SA_1789987364\"}"
+  },
+  {
+   "t": 50.6,
+   "snap": "{\"cards\":[],\"msgs\":3,\"marker\":\"DOUBAO_SA_1789987364\"}"
+  }
+ ]
+}

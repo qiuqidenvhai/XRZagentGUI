@@ -359,7 +359,8 @@ def build_edits_json(
                 if "目录" in role and "英文" not in role:
                     edits.append({"slide": agenda_s, "slot_id": sid, "new_text": "目录"})
                 elif "英文" in role and "目录" in role:
-                    edits.append({"slide": agenda_s, "slot_id": sid, "new_text": "Contents"})
+                    # 中文 PPT 不写英文副标，留空（残留英文由 build_pptx 清扫兜底）
+                    edits.append({"slide": agenda_s, "slot_id": sid, "new_text": ""})
             # 填充章节名
             ch_names = [sd.get("heading", "") for sd in slides[:4]]
             for i, ch in enumerate(ch_names, start=1):
@@ -399,8 +400,9 @@ def build_edits_json(
                         edits.append({"slide": sec_s, "slot_id": sid,
                                       "new_text": heading[: slot.get("max_chars", 8)]})
                     elif sid.endswith("_en"):
+                        # 中文 PPT 不写英文副标，留空（残留英文由 build_pptx 清扫兜底）
                         edits.append({"slide": sec_s, "slot_id": sid,
-                                      "new_text": heading[: slot.get("max_chars", 14)]})
+                                      "new_text": ""})
                 section_idx += 1
 
         # 为当前章节分配 content slides

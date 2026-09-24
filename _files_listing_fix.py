@@ -815,6 +815,14 @@ def _sync_new_conversation(main_module):
         reset_n, reset_detail = _reset_backend_context(main_module)
     except Exception as e:
         reset_detail = "清上下文异常: %s" % e
+    # 【两重方案 2026-09-24】新建对话除了换浏览器窗口，GUI/后端的「当前任务」
+    # 也必须换成全新的：不清的话下一条消息的产物/记忆还挂在上一个任务名下，
+    # 用户感知就是「新建对话还是没有、还是老任务」。
+    try:
+        from agent_core.session import set_current_task_id as _set_tid
+        _set_tid(None)
+    except Exception:
+        pass
     pruned = []
     try:
         pruned = _prune_orphan_browser_session(main_module)
@@ -856,55 +864,124 @@ def _sync_new_conversation(main_module):
     m = _re.search(r"/a/chat/s/([0-9a-fA-F\-]{8,})", old_url)
     old_id = m.group(1) if m else None
 
-    # 4) 导航到新对话页
-    async def _navigate():
-        await page.goto(target, wait_until="commit", timeout=60000)
-
+    # 4) 开一个【真正的新标签页】= 字面意义上的「新的上下文窗口」
+    #    —— 关键修复：旧实现只在「同一个」页面上 page.goto 跳走，用户感知就是
+    #       「没有新开窗口、上下文没换」。现在改成在【同一浏览器上下文里新开一个
+    #       标签页】(page.context.new_page())：旧对话页原样新建一轮，新对话在新标签页
+    #       里真正新建，后续所有发送/看界面都走新页，旧页随后收起（已存进历史记录）。
+    _ctx = None
     try:
-        _run_async_on_backend_loop(_navigate(), timeout=120)
-    except Exception as e:
-        if reset_n:
-            return True, ("已清空对话上下文（%d 个会话对象），但页面跳转失败：%s" % (reset_n, e))
-        return False, "新建对话失败（导航）：%s" % e
-
-    # 5) 验证：URL 必须已经离开旧会话
-    deadline = _time.time() + 25
-    while _time.time() < deadline:
-        _time.sleep(0.6)
-        try:
-            now_url = page.url or ""
-        except Exception:
-            now_url = ""
-        if not old_id or old_id not in now_url:
-            break
-
-    try:
-        now_url = page.url or ""
+        _ctx = getattr(page, "context", None)
     except Exception:
-        now_url = ""
+        _ctx = None
+    old_pages = 1
+    if _ctx is not None:
+        try:
+            old_pages = len(_ctx.pages)
+        except Exception:
+            old_pages = 1
 
-    if old_id and old_id in now_url:
+    async def _open_new_tab():
+        if _ctx is None:
+            return None
+        return await _ctx.new_page()
+
+    new_page = None
+    try:
+        new_page = _run_async_on_backend_loop(_open_new_tab(), timeout=60)
+    except Exception as _e:
+        print("[new_conv] 开新标签页失败，回退同页跳转: %s" % _e, flush=True)
+        new_page = None
+
+    if new_page is None:
+        # 回退：同页 goto（保持旧行为兜底）
+        async def _nav():
+            await page.goto(target, wait_until="commit", timeout=60000)
+        try:
+            _run_async_on_backend_loop(_nav(), timeout=120)
+        except Exception as _e:
+            if reset_n:
+                return True, ("已清空对话上下文（%d 个会话对象），但页面跳转失败：%s" % (reset_n, _e))
+            return False, "新建对话失败（导航）：%s" % _e
+        active_page = page
+    else:
+        active_page = new_page
+
+    # 5) 在新标签页里导航到「新对话」并点开平台自带的新建对话按钮，确保是真正全新的一轮
+    async def _init_new_tab():
+        await active_page.goto(target, wait_until="domcontentloaded", timeout=60000)
+        selectors = [
+            "a:has-text('新对话')", "button:has-text('新对话')",
+            "a:has-text('新建对话')", "button:has-text('新建对话')",
+            "button:has-text('New Chat')", "a:has-text('New Chat')",
+            "[data-testid='new-chat']", "[aria-label*='新对话']",
+            "a[href='/']",
+        ]
+        for sel in selectors:
+            try:
+                btn = active_page.locator(sel).first
+                if await btn.count() > 0:
+                    await btn.click()
+                    await active_page.wait_for_timeout(1500)
+                    break
+            except Exception:
+                continue
+        # 清空输入框，避免旧草稿残留
+        for sel in ("textarea", "div[contenteditable='true']"):
+            try:
+                el = await active_page.query_selector(sel)
+                if el:
+                    await el.fill("")
+            except Exception:
+                continue
+
+    try:
+        _run_async_on_backend_loop(_init_new_tab(), timeout=120)
+    except Exception as _e:
+        print("[new_conv] 初始化新标签页部分步骤失败: %s" % _e, flush=True)
+
+    # 6) 把活动页面切到新标签页（后续 /dom、发送、截图都走新页）
+    if obj is not None and new_page is not None:
+        try:
+            setattr(obj, "_page", new_page)
+        except Exception:
+            pass
+
+    # 7) 收尾校验：确认确实多了一个标签页、且已离开旧会话
+    new_url = ""
+    try:
+        new_url = (new_page or page).url or ""
+    except Exception:
+        new_url = ""
+    new_pages = old_pages
+    try:
+        _ctx1 = getattr(new_page or page, "context", None)
+        if _ctx1 is not None:
+            new_pages = len(_ctx1.pages)
+    except Exception:
+        new_pages = old_pages
+
+    if old_id and old_id in new_url and new_page is None:
         return False, ("新建对话未生效：页面仍停留在旧会话（%s…）。"
                        "请确认该平台已登录后重试。" % old_id[:8])
 
-    # 6) 收尾：清空页面输入框，避免旧草稿残留
-    try:
-        async def _clear_input():
-            for sel in ("textarea", "div[contenteditable='true']"):
-                try:
-                    el = await page.query_selector(sel)
-                    if el:
-                        await el.fill("")
-                except Exception:
-                    continue
-        _run_async_on_backend_loop(_clear_input(), timeout=15)
-    except Exception:
-        pass
+    # 8) 收起旧对话页（之前的对话已存进「历史记录」，避免标签页越开越多）
+    if new_page is not None:
+        try:
+            async def _close_old():
+                await page.close()
+            _run_async_on_backend_loop(_close_old(), timeout=15)
+        except Exception:
+            pass
 
     tail = "并已清空后端对话上下文（%d 个：%s）" % (reset_n, reset_detail)
     if pruned:
         tail += "；同时清理了浏览器缓存回复字段 %s" % ",".join(pruned)
-    return True, "已开启一个全新的独立对话（已跳到平台的新对话页，" + tail + "）"
+    if new_page is not None:
+        note = "，并在浏览器里新开了一个标签页作为独立上下文窗口（标签页 %d→%d，原对话页已收起）" % (old_pages, new_pages)
+    else:
+        note = ""
+    return True, ("已开启一个全新的独立对话（新标签页" + note + "，" + tail + "）")
 
 
 
@@ -976,11 +1053,59 @@ def _local_gui_answer(path):
     return {"type": "system", "text": text}
 
 
+def _reveal_in_explorer(self, path):
+    """GET /reveal?path=... → 在 Windows 资源管理器中定位（选中）该文件。
+
+    路径不存在 / 目录 → 打开所在目录；文件存在 → explorer /select。
+    返回 True 表示已处理（命中本路由），False 表示让调用方继续走原 do_GET。
+    """
+    from urllib.parse import urlparse, parse_qs, unquote
+    parsed = urlparse(getattr(self, "path", "") or "")
+    if parsed.path != "/reveal":
+        return False
+    qs = parse_qs(parsed.query)
+    target = unquote((qs.get("path") or [""])[0])
+    ok, msg = False, ""
+    try:
+        import subprocess
+        import sys
+        if not target:
+            ok, msg = False, "缺少 path 参数"
+        elif not os.path.exists(target):
+            parent = os.path.dirname(target)
+            if parent and os.path.isdir(parent):
+                target = parent
+                subprocess.Popen(['explorer', '/root,0', target],
+                                 creationflags=0x08000000)  # CREATE_NO_WINDOW
+                ok, msg = True, "文件不存在，已打开所在目录"
+            else:
+                ok, msg = False, "路径不存在或不可访问"
+        else:
+            # explorer /select 选中文件本身；后台拉进程、立即返回。
+            # CREATE_NO_WINDOW 让 explorer 不在黑框里闪一下。
+            subprocess.Popen(['explorer', '/select,', os.path.abspath(target)],
+                             creationflags=0x08000000)  # CREATE_NO_WINDOW
+            ok, msg = True, "已定位"
+    except Exception as e:
+        ok, msg = False, str(e)
+    try:
+        self._send_json(200 if ok else 400,
+                        {"type": "ok" if ok else "error",
+                         "ok": ok, "text": msg, "path": target})
+    except Exception:
+        pass
+    return True
+
+
 def _patched_do_GET(self, main_module, orig_do_get, app_dir):
     """增强 /files、/attachments（按会话列产物）与 /preview（docx 正文）。"""
     from urllib.parse import urlparse, parse_qs
     path = getattr(self, "path", "") or ""
     parsed = urlparse(path)
+
+    # 0) GET /reveal → 在资源管理器中定位文件（软件本地即时行为，不走 AI）
+    if _reveal_in_explorer(self, path):
+        return
 
     # 1) 文件列表：严格按「当前会话」过滤（无会话 → 空）
     if parsed.path in ("/files", "/attachments"):

@@ -1,0 +1,16 @@
+{
+ "command_resp": "{\"type\": \"accepted\", \"text\": \"命令已接收，正在处理...\", \"async_task\": true}",
+ "busy_buttons_visible": true,
+ "insert_queued_msg": "· message_queued(message/queue_size)",
+ "insert_ok": false,
+ "interrupt_msg": "· interrupt用户已中断，等待后续指令",
+ "interrupt_ok": true,
+ "task_ended_after_interrupt": true,
+ "final_state": {
+  "busy": false,
+  "insertVisible": false,
+  "nMsgs": 24,
+  "lastMsg": "· interrupt用户已中断，等待后续指令",
+  "marker": "P2_1789988159"
+ }
+}

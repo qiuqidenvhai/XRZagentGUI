@@ -789,6 +789,21 @@ class DeepSeekSession:
         if task_id:
             t = _get_task(task_id)
             if t and t.get("file") and self.load_conversation(t["file"]):
+                # 【两重方案 2026-09-24】恢复 = ①后端上下文载入（load_conversation 已做）
+                #   ②浏览器同步跳回该任务的实际对话页（用户点历史任务必须看到浏览器
+                #     真的回到那轮对话，否则「没同步浏览器、没法继续执行任务」）
+                #   ③登记为当前活动任务（后续消息/产物挂回该任务，而不是另开新任务）
+                url = str(t.get("url") or "")
+                if url and ("http" in url) and self._bm and getattr(self._bm, "navigate", None):
+                    try:
+                        await self._bm.navigate(url)
+                        logger.info(f"历史恢复：浏览器已跳回任务页 {url}")
+                    except Exception as e:
+                        logger.warning(f"历史恢复：浏览器跳转 {url} 失败（上下文仍已恢复）: {e}")
+                try:
+                    set_current_task_id(task_id)
+                except Exception:
+                    pass
                 logger.info(f"历史恢复：指定任务 {task_id} 成功")
                 return True
             logger.warning(f"未找到任务 {task_id}，回退到最新任务")

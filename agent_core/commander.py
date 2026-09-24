@@ -1286,7 +1286,7 @@ class Commander:
                     [sys.executable, str(script_path), query, str(max_pages), output_file],
                     capture_output=True,
                     text=True,
-                    timeout=60
+                    timeout=150   # 【2026-09-21 提额】候选池重试（抓满 N 页正文）需要余量，60s 常常不够
                 )
                 
                 if result.returncode == 0:
@@ -1301,7 +1301,7 @@ class Commander:
                     return f"[搜索错误] {result.stderr}"
                     
             except subprocess.TimeoutExpired:
-                return "[错误] 搜索超时（60秒）"
+                return "[错误] 搜索超时（150秒）"
             except Exception as e:
                 return f"[错误] {str(e)}"
         self._tools.register("browser_click", "点击元素", browser_click)
@@ -1316,6 +1316,12 @@ class Commander:
             sam = get_subagent_manager(self._work_dir)
             # 把母代理的浏览器管理器注入，子代理将在同一浏览器里开新窗口
             sam.set_browser_manager(self._bm)
+            # 关键修复：把母代理的事件回调（最终接到 GUI 的 SSE 流）注入子代理管理器，
+            # 否则子代理内部多轮工具调用事件不会被转发，GUI 永远看不到子代理卡片/进度。
+            try:
+                sam.set_event_forwarder(self._on_event)
+            except Exception:
+                pass
 
             query = params.get("query", "")
             max_pages = params.get("max_pages", 5)
@@ -1358,6 +1364,11 @@ class Commander:
             sam = get_subagent_manager(self._work_dir)
             # 把母代理的浏览器管理器注入，子代理将在同一浏览器里开新窗口
             sam.set_browser_manager(self._bm)
+            # 关键修复：同 _browser_research，注入母代理事件回调，子代理事件才能冒泡到 GUI。
+            try:
+                sam.set_event_forwarder(self._on_event)
+            except Exception:
+                pass
 
             url = params.get("url", "")
             timeout = params.get("timeout", 300)
