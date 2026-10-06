@@ -314,8 +314,32 @@ def _list_tasks(platform: str = None) -> list:
 
 
 def _get_task(task_id: str) -> dict:
-    for t in _load_tasks_index().get("tasks", []):
-        if t.get("id") == task_id:
+    """按 id 查任务。带 id 变体容忍（2026-09-25 真机实证）：
+
+    GUI/热补丁层用的会话 id 是 `deepseek_20260925_223100`（会话文件
+    conv_<id>.json 风格，无随机尾），而任务索引里的 id 是
+    `deepseek_20260925_222458_62771`（带 5 位随机尾）。旧实现只做精确
+    匹配 → 恢复旧任务时必 miss → 静默「回退到最新任务」，用户点历史
+    任务恢复会载错会话。现在双向前后缀 + conv 文件名兜底匹配。
+    """
+    tid = str(task_id or "").strip()
+    if not tid:
+        return None
+    tasks = _load_tasks_index().get("tasks", [])
+    # 1) 精确匹配
+    for t in tasks:
+        if t.get("id") == tid:
+            return t
+    # 2) 前后缀变体：tid 是索引 id 去掉随机尾（或反过来）
+    for t in tasks:
+        i = str(t.get("id") or "")
+        if i.startswith(tid + "_") or tid.startswith(i + "_"):
+            return t
+    # 3) conv 文件名兜底：任务 file 是 conv_<平台id>.json，比对 basename
+    for t in tasks:
+        f = str(t.get("file") or "")
+        base = f.replace("\\", "/").rsplit("/", 1)[-1]
+        if base in (f"conv_{tid}.json", f"{tid}.json"):
             return t
     return None
 
@@ -459,6 +483,70 @@ class SessionConfig:
 # DeepSeek 会话管理
 # ============================================================
 
+async def wait_conversation_loaded(bm, url: str = "") -> bool:
+    """跳回原对话网址后，等网页【真正把该会话动态渲染出来】。
+
+    【用户要求：按动态渲染判定，不自己掐表放弃】
+    - wait_for_load_state：等主文档就绪（Playwright 原生，随页面实际加载推进）
+    - wait_for_function：轮询真实 DOM，直到「URL 到位 + 出现输入框/消息节点」
+      返回真才继续；网页每渲染一帧都会重新判定，慢网/慢渲染就多等，不做固定秒数截断。
+    旧实现 navigate 完立刻 check_login，SPA 还没渲染出 textarea → has_textarea=False
+    → 误判未登录 → 白白放弃网址路线，直接掉进本地日志。
+    """
+    page = getattr(bm, "_page", None)
+    if page is None:
+        return False
+    key = (str(url or "").split("?")[0].rstrip("/").rsplit("/", 1)[-1] or "")
+    # ① 等主文档就绪（动态，由页面加载状态驱动）
+    try:
+        await page.wait_for_load_state("domcontentloaded")
+    except Exception:
+        pass
+    # ② 等 SPA 把会话渲染出来（动态轮询真实 DOM）
+    js = """(key) => {
+        const sels = ["textarea", "[contenteditable='true']",
+                      "[class*='message']", "[class*='msg']", "[class*='bubble']"];
+        let n = 0;
+        for (const s of sels) n += document.querySelectorAll(s).length;
+        const u = location.href || '';
+        return (!key || u.indexOf(key) >= 0) && n > 0;
+    }"""
+    try:
+        await page.wait_for_function(js, arg=key)
+        return True
+    except Exception:
+        return False
+
+
+async def restore_via_url(bm, url: str, read_msgs):
+    """方案一：跳回该任务的原始对话网址 → 等网页动态渲染 → 从页面读回消息。
+
+    【用户明确要求】恢复对话必须「先找回原来的对话网址」，只有这条路走不通
+    （页面确实渲染不出来 / 读不到消息 / 未登录）才回退方案二发本地对话日志。
+    返回读回的消息列表；失败返回 False/[]。
+    """
+    try:
+        await bm.navigate(url)
+    except Exception as e:
+        logger.warning(f"URL 追溯：导航失败: {e}")
+        return False
+    if not await wait_conversation_loaded(bm, url):
+        logger.warning("URL 追溯：网页未渲染出该会话，回退方案二(本地日志)")
+        return False
+    try:
+        if not await bm.check_login():
+            logger.warning("URL 追溯：渲染后仍未登录，回退方案二(本地日志)")
+            return False
+    except Exception as e:
+        logger.warning(f"URL 追溯：登录检查异常: {e}")
+        return False
+    try:
+        msgs = await read_msgs()
+    except Exception as e:
+        logger.warning(f"URL 追溯：读回页面消息失败: {e}")
+        return False
+    return msgs or False
+
 class DeepSeekSession:
     """管理多轮对话上下文，支持会话历史自动持久化"""
 
@@ -480,6 +568,12 @@ class DeepSeekSession:
         # 绝不把 agent 自己的原话再发回给模型（避免回声/污染/上下文膨胀）。
         # agent 若需回顾自身历史，调用 recall 工具从记忆里取。
         self._action_log: List[str] = []
+        # 【修复·原生多轮（2026-09-24）】照 platform_browser.py 的 _native_multi_turn_seeded
+        # 修法：系统提示词只在【首轮】完整播种一次，后续轮只发几百字的轻量格式提醒，
+        # 靠 DeepSeek 网页在同一会话里的原生多轮记忆续上下文。旧实现每轮都无条件把
+        # 6~7KB [系统指令] 重塞进 user 文本 → ①网页限流「发送过于频繁」②模型把指令
+        # 复读回当回复（污染子代理 output）③conv 里系统指令堆 6 次。故加此播种开关。
+        self._proto_seeded = False
         # 【修复】整个会话复用同一个会话 JSON：以前每次保存都新建时间戳文件，
         # 一次任务会在历史里刷出几十条重复记录。
         self._conv_file_path = ""
@@ -544,11 +638,13 @@ class DeepSeekSession:
         logger.info("系统提示词已设置")
 
     async def send(self, text: str, attachments: list = None,
-                   internal: bool = False) -> str:
+                   internal: bool = False, stop_check=None) -> str:
         """发送消息并获取回复（含自动历史持久化，支持 attachments 附件上传）
 
         internal=True 表示 Agent 内部控制轮（工具结果回传 / 协议纠正 / 继续指令），
         不写进对话历史文件，避免历史记录被 [系统] 工具…执行结果 这类噪音淹没。
+        stop_check：可调用（无参），返回 True 时中止等待 AI 回复（让「⏹ 中断 / 💬 插话」
+        在等待期间立即生效，不用等到下一轮循环顶部才检测）。
         """
         if not self._logged_in:
             await self.initialize()
@@ -558,7 +654,9 @@ class DeepSeekSession:
             sent = await self._bm._send_internal(text)
             if not sent:
                 raise RuntimeError("内部消息发送失败")
-            response = await self._bm.wait_response() or "（未收到回复）"
+            response = await self._bm.wait_response(
+                stop_check=stop_check,
+            ) or "（未收到回复）"
             self._messages.append(Message(role="assistant", content=response))
             return response
 
@@ -604,6 +702,7 @@ class DeepSeekSession:
         response = await self._bm.wait_response(
             on_thinking=self._emit_thinking,
             thinking_selector=_think_sel,
+            stop_check=stop_check,
         )
         if response:
             self._messages.append(Message(role="assistant", content=response))
@@ -704,37 +803,67 @@ class DeepSeekSession:
         self._session_id = hashlib.md5(f"{ts}_{snippet}".encode()).hexdigest()[:12]
         return self._session_id
 
+    _COMPACT_PROTOCOL_CARD = (
+        "【格式提醒】本会话继续：你只能用 @@@@ JSON 协议回复，格式 "
+        "@@@@{\"tool\":\"工具名\",\"params\":{...},\"id\":\"1\"}@@@；"
+        "从首轮已列出的工具集里选（file_write / file_edit / file_read / "
+        "docx_create / pptx_create / browser_search / shell_exec / done 等），"
+        "不要用网页内建功能生成文件。需要直接执行系统命令用 "
+        "<<<RAW>>> 命令 <<<RAW>>>。全部做完后调用 done 收尾。"
+    )
+
+    def _compact_protocol_card(self) -> str:
+        """首轮随完整协议一起发的「格式提醒」（紧贴任务前，弱模型也看得到）。"""
+        return (
+            "[格式提醒·必须遵守] 你只能用下面这种 @@@@ JSON 格式回复，"
+            "不要用自然语言描述你要做什么：\n"
+            "@@@@\n"
+            '{"tool":"工具名","params":{...},"id":"1"}\n'
+            "@@@@\n"
+            "例如写文件：@@@@\n"
+            '{"tool":"file_write","params":{"path":"a.txt","content":"你好"},"id":"1"}\n'
+            "@@@@\n"
+            "任务全部做完后，用：@@@@\n"
+            '{"tool":"done","params":{},"id":"9"}\n'
+            "@@@@"
+        )
+
     def _build_context_for_send(self) -> str:
-        """构建完整上下文用于发送到浏览器
+        """构建完整上下文用于发送到浏览器。
 
-        【关键】系统提示词（===核心指令=== / @@@@ 协议 / 工具列表）必须随每轮
-        『反复』发送给模型——这是操作协议正常运作的前提。
+        【原生多轮修复·2026-09-24，照 platform_browser.py 的 _native_multi_turn_seeded 修法】
+        区分首轮 vs 后续轮：
+          - 首轮（_proto_seeded 为 False）：完整播种 [系统指令]（工具列表+核心协议）
+            + 本轮用户消息 + 格式提醒 + 执行进度。这是把协议一次性喂进网页。
+          - 后续轮（_proto_seeded 为 True）：只发「轻量格式提醒 + 本轮用户消息 + 执行进度」，
+            靠 DeepSeek 网页在同一会话里的原生多轮记忆续上下文，【绝不】再重打包
+            ~6.8KB 系统指令。
 
-        【关键·去回声】agent 自己的自然语言回复【绝不】回灌给模型：
-        - 不发送任何 role=="assistant" 的原话（避免回声 / 污染 / 上下文膨胀，
-          也杜绝了「agent 读到自己的 UI 噪音后又混乱」这类问题）。
-        - 改为发送一份紧凑的「执行进度」（来自 self._action_log），让模型把握
-          全局动作-结果，而不被自己的长篇大论淹没。
-        - 若 agent 需要回顾自己的判断/历史，应主动调用 recall 工具从记忆里取。
+        旧实现每轮都无条件整段重发 [系统指令]（725 行旧代码），导致：①网页限流
+        「任务发送过于频繁」；②模型把 6.8KB 指令复读回来当回复（污染子代理 output，
+        母代理读不到结论）；③conv 里 [系统指令] 堆 6 次。改用原生多轮后，短轮就是短输入，
+        多轮才真正续得上，且不会再触发网页限流。
         """
         lines = []
-        # 【关键修复】系统提示词（==== 协议 / 工具列表 / @@@@ 用法）必须每轮随消息发送。
-        # 之前依赖 self._messages 里是否存在 role=="system" 的消息，但 DeepSeek 网页会话
-        # 在 restore/reset 后 system 消息会丢失，导致模型完全收不到工具说明，于是坚称
-        # 「我无法操作你的电脑」。这里改用缓存的 self._system_prompt 无条件前置，确保投递。
-        if self._system_prompt:
-            lines.append(f"[系统指令-你必须严格遵守]\n{self._system_prompt}")
-        for msg in self._messages:
-            if msg.role == "system":
-                # 若消息列表里也有 system（重复），跳过避免冗余
-                continue
-            elif msg.role == "user":
-                # 用户指令 + 系统回传的工具结果（这些是「外部输入」，需要保留）
-                lines.append(f"[用户] {msg.content}")
-            elif msg.role == "assistant":
-                # 【去回声】agent 原话不回灌，本轮回馈内容整体跳过
-                continue
-        # 追加紧凑执行进度（动作-结果摘要），便于模型把握全局
+        user_msgs = [m for m in self._messages if m.role == "user"]
+        # send() 已把本轮新消息 append 到 _messages 末尾，最后一条 user 即本轮新增
+        last_user = user_msgs[-1].content if user_msgs else ""
+
+        if not self._proto_seeded:
+            # ── 首轮：完整播种 ──
+            if self._system_prompt:
+                lines.append(f"[系统指令]\n{self._system_prompt}")
+            if last_user:
+                lines.append(f"[用户] {last_user}")
+            lines.append(self._compact_protocol_card())
+            self._proto_seeded = True
+        else:
+            # ── 后续轮：轻量提醒，吃网页原生多轮记忆，不再重发系统指令 ──
+            lines.append(self._COMPACT_PROTOCOL_CARD)
+            if last_user:
+                lines.append(f"[用户] {last_user}")
+
+        # 追加紧凑执行进度（动作-结果摘要），让模型把握全局（短，不膨胀）
         if self._action_log:
             lines.append("[执行进度]\n" + "\n".join(f"  - {a}" for a in self._action_log))
         return "\n\n".join(lines)
@@ -768,6 +897,8 @@ class DeepSeekSession:
                 self._messages.append(Message(role=m["role"], content=m["content"]))
             # 恢复的是哪个文件，后续就继续写回这个文件（否则恢复后一保存又建新文件）
             self._conv_file_path = file_path
+            # 【原生多轮】恢复历史任务 = 浏览器侧重新加载该会话，系统指令需重新完整播种一次
+            self._proto_seeded = False
             # restore 后 commander.start 会用 set_system_prompt 重新插入协议
             logger.info(f"对话已从 {file_path} 加载，共 {len(self._messages)} 条消息")
             return True
@@ -786,27 +917,43 @@ class DeepSeekSession:
         方案一(URL 追溯) 优先，失败自动回退方案二(消息 JSON)。
         返回是否成功恢复。
         """
+        # 【原生多轮】恢复 = 浏览器侧重新载入该会话，系统指令需重新完整播种一次
+        # （load_conversation 已重置，这里统一兜底方案一 URL 追溯路径）。
+        self._proto_seeded = False
         if task_id:
             t = _get_task(task_id)
-            if t and t.get("file") and self.load_conversation(t["file"]):
-                # 【两重方案 2026-09-24】恢复 = ①后端上下文载入（load_conversation 已做）
-                #   ②浏览器同步跳回该任务的实际对话页（用户点历史任务必须看到浏览器
-                #     真的回到那轮对话，否则「没同步浏览器、没法继续执行任务」）
-                #   ③登记为当前活动任务（后续消息/产物挂回该任务，而不是另开新任务）
+            if not t:
+                logger.warning(f"未找到任务 {task_id}，回退到最新任务")
+            else:
                 url = str(t.get("url") or "")
+
+                # ── 方案一（优先，用户明确要求）：跳回该任务的原始对话网址，
+                #    让网页自己把那轮对话渲染回来，再从页面读回消息 ────────────
                 if url and ("http" in url) and self._bm and getattr(self._bm, "navigate", None):
                     try:
-                        await self._bm.navigate(url)
-                        logger.info(f"历史恢复：浏览器已跳回任务页 {url}")
+                        msgs = await restore_via_url(self._bm, url, self._read_existing_messages)
+                        if msgs:
+                            self._messages = msgs
+                            # 恢复的是哪个任务，后续就继续写回该任务文件
+                            self._conv_file_path = str(t.get("file") or "")
+                            self._proto_seeded = False
+                            set_current_task_id(task_id)
+                            logger.info(
+                                f"历史恢复：方案一(URL 追溯) 成功 {task_id} "
+                                f"（网页已跳回并读回 {len(msgs)} 条消息）{url}")
+                            return True
+                        logger.warning("URL 追溯未取到消息，回退方案二(本地日志)")
                     except Exception as e:
-                        logger.warning(f"历史恢复：浏览器跳转 {url} 失败（上下文仍已恢复）: {e}")
-                try:
+                        logger.warning(f"URL 追溯失败，回退方案二(本地日志): {e}")
+
+                # ── 方案二（兜底）：只有网址路线失败，才发本地对话日志 ──────────
+                if t.get("file") and self.load_conversation(t["file"]):
                     set_current_task_id(task_id)
-                except Exception:
-                    pass
-                logger.info(f"历史恢复：指定任务 {task_id} 成功")
-                return True
-            logger.warning(f"未找到任务 {task_id}，回退到最新任务")
+                    logger.info(
+                        f"历史恢复：回退方案二(本地日志) 成功 {task_id} "
+                        f"（本地日志已载入当前会话，网页未跳回原网址）")
+                    return True
+                logger.warning(f"任务 {task_id} 的本地日志文件也不可用，回退到最新任务")
         # 方案一优先
         if await self._restore_from_url():
             logger.info("历史恢复：方案一(URL 追溯) 成功")
@@ -831,11 +978,7 @@ class DeepSeekSession:
         if not rec or not rec.url:
             return False
         try:
-            await self._bm.navigate(rec.url)
-            if not await self._bm.check_login():
-                logger.warning("URL 追溯：导航后未登录，回退方案二")
-                return False
-            msgs = await self._read_existing_messages()
+            msgs = await restore_via_url(self._bm, rec.url, self._read_existing_messages)
             if msgs:
                 self._messages = msgs
                 return True
@@ -890,6 +1033,8 @@ class DeepSeekSession:
         """清空当前会话历史"""
         self._messages.clear()
         self._session_id = ""
+        # 【原生多轮】开全新会话：网页侧无历史记忆，必须重新完整播种系统指令。
+        self._proto_seeded = False
 
     async def start_new_conversation(self):
         """开一个全新的独立对话：清空本地上下文 + 在浏览器里点「新对话」。

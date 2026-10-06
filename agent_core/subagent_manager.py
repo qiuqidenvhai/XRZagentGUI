@@ -8,6 +8,7 @@ subagent_manager.py - 子代理管理器
 """
 import asyncio
 import json
+import re
 import time
 from pathlib import Path
 from typing import List, Dict, Optional, Callable
@@ -57,6 +58,31 @@ def get_subagent_manager(work_dir: str = None) -> "SubAgentManager":
     if _global_manager is None:
         _global_manager = SubAgentManager(work_dir)
     return _global_manager
+
+
+# 【双保险·子代理结果清洗 2026-09-24】
+# 即使 session.py 已改成「原生多轮（首轮播种+后续轻量）」，个别弱模型仍可能把
+# 首轮喂进去的 [系统指令] 头复读回当"回复"（实测子代理 output 整段是 14K 系统指令）。
+# 母代理拿到这种 reply 会以为子代理在输出协议噪音而非结论。这里剥掉「开头整段被
+# 复读的系统指令块」，保留其后真正的内容；若剥完为空，返回空串（由调用方判"无有效
+# 内容"→ 子代理记失败，findings 来自产物文件不受影响）。
+#
+# 锚定 \A（只有开头那段才是被复读的指令块，正文中间出现的"系统指令"字样不碰）；
+# 终止边界 = 遇到结论分隔（\n=== ）或结构标记（\n[用户]/\n[执行进度]...）或结尾。
+_SYS_INSTR_BLOCK = re.compile(
+    r"\A\s*\[?系统指令[^\n]*\][\s\S]*?(?=\n===\s|\n\[(用户|执行进度|格式提醒|助手)\]|\Z)"
+)
+
+
+def _clean_subagent_reply(text: str) -> str:
+    """剥掉子代理 reply 开头被模型复读回来的 [系统指令] 块，保留真实结论/发现。
+
+    剥完为空时返回 ''（而非原文），让上层把"纯复读"判为无效回复。
+    """
+    if not text:
+        return text
+    cleaned = _SYS_INSTR_BLOCK.sub("", text).strip()
+    return cleaned
 
 
 class TaskStatus(Enum):
@@ -431,7 +457,13 @@ class SubAgentManager:
             # DeepSeekSession，平台浏览器传进去会话类型不匹配（spawn_child 也只在
             # DeepSeek BrowserManager 上有），子代理在非 DeepSeek 平台根本起不来。
             _bm_type = type(child_bm).__name__
-            if _bm_type == "PlatformBrowserManager":
+            # 【2026-09-25 防御性修复】按「子窗口浏览器管理器是否带 profile 属性」判定会话类型，
+            # 而不是仅看类名。平台浏览器（PlatformBrowserManager）带 .profile；DeepSeek 的
+            # BrowserManager 不带。这样可以 100% 避免「BrowserManager 被误包成 PlatformSession
+            # 导致 'object has no attribute profile'」的间歇崩溃（无论 spawn_child 返回的子窗口
+            # 类型怎么命名，只要它不带 profile 就一定走 DeepSeekSession，DeepSeekSession 本就为
+            # BrowserManager 设计）。
+            if hasattr(child_bm, "profile"):
                 from .platform_browser import PlatformSession
                 session = PlatformSession(child_bm)
             else:
@@ -541,9 +573,11 @@ class SubAgentManager:
             # 否则会把「什么都没做」的子代理记成 success 并把空 findings 交给母代理。
             is_error = False
             error_msg = None
+            # 先清洗：剥掉模型复读回来的 [系统指令] 块，避免把 6.8KB 协议头当结论回传母代理
+            reply = _clean_subagent_reply(reply)
             if not (reply or "").strip():
                 is_error = True
-                error_msg = "子代理未返回任何内容（模型无回复或抓取失败）"
+                error_msg = "子代理未返回任何有效内容（无回复 / 抓取失败 / 仅复读系统指令）"
             else:
                 stripped = reply.strip()
                 first_line = stripped.split("\n")[0] if stripped else ""

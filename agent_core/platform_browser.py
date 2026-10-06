@@ -2216,8 +2216,11 @@ class PlatformBrowserManager:
         )
 
     async def wait_response(self, timeout: int = 60, on_thinking=None,
-                            thinking_selector: str = "") -> Optional[str]:
+                            thinking_selector: str = "", stop_check=None) -> Optional[str]:
         """等待 AI 回复（可选实时抓取「思考过程」并通过 on_thinking 回调上报）
+        stop_check：可调用（无参），每 tick 调用；返回 True 则立即中止等待
+        并返回已抓到的部分文本（让用户「⏹ 中断」在等待 AI 期间也真正生效，
+        而不是要等到下一轮循环顶部才检测 _interrupted）。
 
         核心修复（解决「靠等待时间判断 → qwen 交互提前结束」）：
         旧逻辑用「文本连续 N 秒不变 = 稳定」+ 10s 冷却期判定完成，导致 qwen 在
@@ -2301,6 +2304,15 @@ class PlatformBrowserManager:
         for _ in range(n_ticks):
             await asyncio.sleep(interval)
             _diag_tick += 1
+            # 【#85 2026-09-24】用户中断立即生效：每个 tick 查 stop_check，
+            # 命中就中止等待、返回已抓到的部分文本，不再傻等到 timeout/下一轮。
+            if stop_check is not None:
+                try:
+                    if stop_check():
+                        logger.info(f"[{self.profile.name}] 等待回复中被 stop_check 中止（中断/插话）")
+                        return best_text or None
+                except Exception:
+                    pass
             # ── 会话静默失效看门狗（按墙钟计时，放在 try 之外，任何异常都挡不住它）──
             # 实测豆包会话过长后：不报错、不产生新气泡、也不进入「生成中」状态，
             # 老逻辑会白等满 210s。这里只要 75s 仍一个字都没抓到就提前收工，
@@ -3243,7 +3255,7 @@ class PlatformSession:
     _RESET_TURNS = 10
 
     async def send(self, text: str, attachments: List[str] = None,
-                   internal: bool = False) -> str:
+                   internal: bool = False, stop_check=None) -> str:
         """发送并等待回复（接口与 DeepSeekSession.send 一致）
 
         internal=True 表示这是 Agent 的内部轮（工具结果回传、协议纠正、
@@ -3354,6 +3366,7 @@ class PlatformSession:
             timeout=210,
             on_thinking=self._emit_thinking,
             thinking_selector=self._bm.profile.thinking_selector,
+            stop_check=stop_check,
         )
         # ── 网页交互留痕：把这一轮的页面整页截图存下来，方便事后核对 ──
         # 出问题（空回复/被豆包办公劫持/渲染成状态行）时，光看日志是猜，
@@ -3689,25 +3702,39 @@ class PlatformSession:
         - task_id 给定：恢复该指定任务；- 为 None：恢复最新任务。
         """
         if task_id:
-            from .session import _get_task, set_current_task_id
+            from .session import _get_task, set_current_task_id, restore_via_url
             t = _get_task(task_id)
-            if t and t.get("file") and self.load_conversation(t["file"]):
-                # 【两重方案 2026-09-24】恢复 = ①后端上下文载入 ②浏览器跳回该任务页
-                #   ③登记为当前活动任务（后续消息/产物挂回该任务）
+            if not t:
+                logger.warning(f"未找到任务 {task_id}，回退到最新任务")
+            else:
                 url = str(t.get("url") or "")
+                # ── 方案一（优先，用户明确要求）：先跳回该任务的原始对话网址 ──
+                #   失败才走方案二（发本地对话日志）
                 if url and ("http" in url) and self._bm and getattr(self._bm, "navigate", None):
                     try:
-                        await self._bm.navigate(url)
-                        logger.info(f"[{self._bm.profile.name}] 历史恢复：浏览器已跳回任务页 {url}")
+                        msgs = await restore_via_url(self._bm, url, self._read_existing_messages)
+                        if msgs:
+                            self._messages = msgs
+                            self._conv_file_path = str(t.get("file") or "")
+                            self._proto_seeded = False
+                            set_current_task_id(task_id)
+                            logger.info(
+                                f"[{self._bm.profile.name}] 历史恢复：方案一(URL 追溯) 成功 "
+                                f"{task_id}（网页已跳回并读回 {len(msgs)} 条消息）{url}")
+                            return True
+                        logger.warning(
+                            f"[{self._bm.profile.name}] URL 追溯未取到消息，回退方案二(本地日志)")
                     except Exception as e:
-                        logger.warning(f"[{self._bm.profile.name}] 历史恢复：浏览器跳转 {url} 失败（上下文仍已恢复）: {e}")
-                try:
+                        logger.warning(
+                            f"[{self._bm.profile.name}] URL 追溯失败，回退方案二(本地日志): {e}")
+
+                # ── 方案二（兜底）：只有网址路线失败，才发本地对话日志 ────────
+                if t.get("file") and self.load_conversation(t["file"]):
                     set_current_task_id(task_id)
-                except Exception:
-                    pass
-                logger.info(f"[{self._bm.profile.name}] 历史恢复：指定任务 {task_id} 成功")
-                return True
-            logger.warning(f"未找到任务 {task_id}，回退到最新任务")
+                    logger.info(
+                        f"[{self._bm.profile.name}] 历史恢复：回退方案二(本地日志) 成功 {task_id}")
+                    return True
+                logger.warning(f"任务 {task_id} 的本地日志文件也不可用，回退到最新任务")
         if await self._restore_from_url():
             logger.info(f"[{self._bm.profile.name}] 历史恢复：方案一(URL 追溯) 成功")
             return True

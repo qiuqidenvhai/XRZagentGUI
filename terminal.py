@@ -166,5 +166,13 @@ try:
 except Exception as _e:  # 补丁失败不影响后端正常启动
     print("[XRZ-Parallel] 热补丁安装线程启动失败（不影响后端）:", _e, flush=True)
 
+# ── 2.9.4) 自动更新：给 pyc 后端补 /check_update、/version 端点 ──
+# pyc 是编译产物改不了源码，用热补丁给 GUIHandler 挂新路由（见 _auto_update_patch.py）。
+try:
+    import _auto_update_patch as _xrz_upd
+    _xrz_upd.install(_mod, _HERE)
+except Exception as _e:  # 补丁失败不影响后端正常启动
+    print("[XRZ-AutoUpdate] 热补丁安装线程启动失败（不影响后端）:", _e, flush=True)
+
 exec(_code, _mod.__dict__)
 

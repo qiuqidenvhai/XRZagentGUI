@@ -1,0 +1,5 @@
+﻿backend_24976_start=2026-09-26 07:55:09
+_files_listing_fix.py_mtime=2026-09-26 08:59:14
+build_pptx.py_mtime=2026-09-26 08:44:11
+commander.py_mtime=2026-09-26 08:46:31
+pptx_builder.py_mtime=2026-09-26 08:46:51

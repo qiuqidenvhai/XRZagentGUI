@@ -158,6 +158,12 @@ def run_task(name, platform, command, attachments=None, check_fn=None, wait=EVEN
     # 的瞬时错误不代表任务失败，最终产物/回复才是硬指标。
     ok = (final is not None)
     extra = ""
+    # 诚实判定（防假 PASS）：最终回复本身就是错误串（任务中断 / AI 调用失败），
+    # 即使 check_fn 的长度判定能通过，也必须判 FAIL，否则真 bug 被掩盖。
+    _ERR_PAT = ("[错误]", "[AI 调用失败]", "任务中断（", "AI 调用失败:", "调用失败:")
+    if final_text and any(p in final_text for p in _ERR_PAT):
+        ok = False
+        extra = (extra + " | " if extra else "") + "最终回复为错误串，判 FAIL"
     if check_fn:
         try:
             cok, extra = check_fn(final_text)

@@ -1,0 +1,12 @@
+2026/09/24-18:39:33.462 43c8 Reusing MANIFEST D:\软件\XianRenZhangAgent\xrz_data\.xianrenzhang_agent\browser_profiles\yuanbao\Default\IndexedDB\https_yuanbao.tencent.com_0.indexeddb.leveldb/MANIFEST-000001
+2026/09/24-18:39:33.464 43c8 Recovering log #79
+2026/09/24-18:39:33.613 43c8 Reusing old log D:\软件\XianRenZhangAgent\xrz_data\.xianrenzhang_agent\browser_profiles\yuanbao\Default\IndexedDB\https_yuanbao.tencent.com_0.indexeddb.leveldb/000079.log 
+2026/09/24-18:40:21.639 43c8 Level-0 table #84: started
+2026/09/24-18:40:21.722 43c8 Level-0 table #84: 1385103 bytes OK
+2026/09/24-18:40:21.728 43c8 Delete type=0 #79
+2026/09/24-18:40:23.404 43c8 Compacting 1@1 + 1@2 files
+2026/09/24-18:40:23.588 43c8 Generated table #85@1: 33975 keys, 772478 bytes
+2026/09/24-18:40:23.589 43c8 Compacted 1@1 + 1@2 files => 772478 bytes
+2026/09/24-18:40:23.591 43c8 compacted to: files[ 0 0 1 0 0 0 0 ]
+2026/09/24-18:40:23.593 43c8 Delete type=2 #81
+2026/09/24-18:40:23.593 43c8 Delete type=2 #84

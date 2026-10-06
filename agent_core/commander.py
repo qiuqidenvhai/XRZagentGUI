@@ -12,6 +12,7 @@ import re
 import os
 import sys
 import json
+import random
 from dataclasses import dataclass
 from enum import Enum
 from typing import Optional, Callable
@@ -287,8 +288,9 @@ class Commander:
                 try:
                     import pypdf as reader_mod
                 except ImportError:
+                    import sys as _sys
                     return ("[错误] 读取 PDF 需要 PyPDF2 / pypdf，"
-                            "请用项目解释器安装：\"D:/软件/Python/python.exe\" -m pip install PyPDF2")
+                            f"请用项目解释器安装：\"{_sys.executable}\" -m pip install PyPDF2")
             try:
                 with open(path, 'rb') as f:
                     reader = reader_mod.PdfReader(f)
@@ -1485,6 +1487,89 @@ class Commander:
         self._tools.register("check_task", "检查子代理任务状态", _check_task)
         self._tools.register("wait_task", "等待子代理任务完成", _wait_task)
 
+        # ─── tool_info：分步调取工具详情（2026-09-25 用户要求）───
+        # 每条指令的系统提示都内嵌完整工具清单，但长任务里模型会「忘」参数怎么填；
+        # 且复杂工具（PPT 的 19 套模板、字段）一次性全塞会稀释重点 —— 用户明确要求
+        # 「先给大概指令，需要时再分步给详细指令集」。tool_info 就是按需调取入口。
+        async def tool_info(**params):
+            name = str(params.get("name") or params.get("tool") or "").strip()
+            all_names = "、".join(self._tools._tools.keys())
+            if not name:
+                return ("tool_info 用法：调 @@@@{\"tool\":\"tool_info\","
+                        "\"params\":{\"name\":\"工具名\"},\"id\":\"n\"}@@@@ "
+                        f"返回该工具的完整指令集。\n当前可用工具：{all_names}")
+            info = self._tools._tools.get(name)
+            if info is None:
+                _low = name.lower()
+                for k in self._tools._tools:
+                    if _low in k.lower() or k.lower() in _low:
+                        info = self._tools._tools.get(k)
+                        name = k
+                        break
+            if info is None:
+                return f"错误：没有名为 {name} 的工具。可用工具：{all_names}"
+            doc = f"【{name}】{info['description']}\n"
+            if name.startswith("pptx"):
+                from agent_core.pptx_builder import TEMPLATE_CATALOG as _C
+                # 【#84 2026-09-26】每次调用都把 19 套模板随机打乱顺序发给 AI，
+                # 并注明「风格/页数/场景」，避免 AI 永远点第一个或永远落默认模板。
+                _items = list(_C.items())
+                random.shuffle(_items)
+                # 【验证日志】把本次实际发给 AI 的模板顺序打印出来，便于确认
+                # 「每次随机打乱顺序 + 风格」确实生效（终端日志可查）。
+                try:
+                    print("[commander][pptx模板] 本次发给AI的顺序: "
+                          + " > ".join(slug for slug, _ in _items), flush=True)
+                except Exception:
+                    pass
+                doc += (
+                    "\n=== 可选模板（共 %d 套，params.template 直接填 slug；"
+                    "下面顺序每次随机打乱，请按内容风格挑选，不要永远用同一套）===\n" % len(_C)
+                    + "\n".join(
+                        f"- {slug}：{m['name']}（{m['slides']}页｜风格：{m['style']}｜"
+                        f"场景：{'、'.join(m.get('scenes') or [])}）"
+                        for slug, m in _items)
+                    + "\n\n=== 参数说明 ===\n"
+                    "- content（必填）：逐页给出，格式 第1页「标题」\\n第2页「标题」…"
+                    "每页可另起行写要点；或 Markdown（# 一级标题分段）；或结构化 "
+                    "{\"title\":\"…\",\"slides\":[{\"heading\":\"…\",\"items\":[…]}]}\n"
+                    "- path（强烈建议）：输出绝对路径，如 C:\\Users\\<用户名>\\Desktop\\xx.pptx\n"
+                    "- filename：文件名（可与 path 配合）\n"
+                    "- template：模板 slug（见上表，强烈建议每轮换一套不同风格的模板）\n"
+                    "- theme：主题模糊映射（blue/green/purple/架构图…），不指定 template 时生效\n"
+                    "- subtitle：封面副标题\n"
+                )
+            elif name.startswith("docx"):
+                doc += (
+                    "\n=== 参数说明 ===\n"
+                    "- content（必填）：Markdown（# / ## / ### 标题、- 列表）或结构化 "
+                    "{\"title\":\"…\",\"sections\":[{\"heading\":\"…\",\"content\":\"…\"}]}\n"
+                    "- path（强烈建议）：输出绝对路径\n- filename：文件名\n"
+                )
+            elif name in ("file_write", "write"):
+                doc += "\n=== 参数说明 ===\n- path（必填）\n- content（必填，全文覆盖写入）\n"
+            elif name in ("file_edit", "edit"):
+                doc += ("\n=== 参数说明 ===\n- path（必填）\n"
+                        "- mode：replace | append | insert | delete\n"
+                        "- replace 模式：old+new，或 pattern+repl（正则）\n")
+            elif name == "browser_search":
+                doc += "\n=== 参数说明 ===\n- query（必填）\n- max_results（可选，默认 8）\n"
+            elif name == "task":
+                doc += ("\n=== 参数说明 ===\n- query（必填，子代理要做的任务描述）\n"
+                        "- platform（可选，指定平台）\n"
+                        "返回 task_id；用 check_task(task_id) 查进度、wait_task(task_id) 等结果。\n")
+            else:
+                doc += "\n（该工具的参数见上面描述；params 以 JSON 键值传入）\n"
+            doc += ("\n调用格式：@@@@{\"tool\":\"" + name
+                    + "\",\"params\":{…},\"id\":\"n\"}@@@@")
+            return doc
+
+        self._tools.register(
+            "tool_info",
+            "查询某工具的完整指令集/参数/模板清单（忘了参数怎么填就调它；"
+            "例：tool_info(name='pptx_create') 返回全部模板与必填字段说明）",
+            tool_info)
+
         # ─── Word 文档生成工具（母代理直接执行）───
         async def docx_tool_fn(**params):
             import os
@@ -1593,6 +1678,24 @@ class Commander:
                     add_content(raw_content)
 
                 doc.save(str(out_path))
+                # 【#83】docx 同 PPT：生成成功后【服务端】主动登记到当前任务名下，
+                # 保证 Word 文档一定出现在右侧「文件产物」栏（不依赖前端 activeTaskId）。
+                try:
+                    from agent_core.session import get_current_task_id as _get_tid
+                    _tid = _get_tid()
+                    if _tid:
+                        _reg_path = str(out_path)
+                        try:
+                            import _files_listing_fix as _flf
+                            _flf.record_artifacts(_tid, [_reg_path])
+                        except Exception:
+                            try:
+                                import agent_core.session as _sess
+                                _sess._update_task_field(_tid, "artifacts", _reg_path)
+                            except Exception:
+                                pass
+                except Exception:
+                    pass  # 登记失败不影响文档本身已生成
                 return f"✅ Word 文档已生成: {out_path}"
             except ImportError as ie:
                 raise ImportError("❌ python-docx 未安装。请运行：pip install python-docx") from ie
@@ -1653,7 +1756,7 @@ class Commander:
                 #  - 统一配色/版式主题，自动生成封面页 + 内容页 + 章节页
                 #  - 智能分页：结构化 dict / Markdown / 纯文本都能拆成多页，
                 #    杜绝旧实现「所有内容塞进 1 页」和「首行被当标题吞掉」的问题
-                from agent_core.pptx_builder import build_pptx
+                from agent_core.pptx_builder import build_pptx, TEMPLATE_CATALOG_BRIEF
 
                 structured = isinstance(raw_content, dict) and isinstance(raw_content.get("slides"), list)
                 deck_title = (
@@ -1663,6 +1766,9 @@ class Commander:
                 # 主题：允许 AI 通过 theme 指定，默认蓝色
                 theme_name = str(params.get("theme") or "blue").lower()
                 subtitle = str(params.get("subtitle") or "")
+                # 【#82 2026-09-24】允许 AI 直接指定模板 slug（10 套模板任选），
+                # 优先于 theme 模糊映射。不传则退回 theme→template 默认。
+                template_slug = str(params.get("template") or "").strip()
 
                 info = build_pptx(
                     out_path,
@@ -1670,17 +1776,41 @@ class Commander:
                     deck_title=deck_title,
                     theme_name=theme_name,
                     subtitle=subtitle,
+                    template=template_slug,
                 )
                 # 把实际生成的页标题回传：模型能一眼核对「我要的 3 页在不在」，
                 # 避免它拿到一句「已生成」就以为万事大吉（实测过：模型用更差的
                 # 内容重复调用，把已经生成好的 3 页覆盖成标题是文件名的空壳）。
                 _titles = info.get("titles") or []
                 _titles_s = " / ".join(_titles) if _titles else "（标题为空，请检查 content）"
+                _tpl = info.get("template_name") or info.get("theme") or "?"
+                # 【#83 2026-09-24】PPT 生成成功后【服务端】主动把产物登记到当前任务名下。
+                # 前端 recordArtifactsFromTool 依赖 activeTaskId（有时为空/过期），靠它登记
+                # 不可靠；这里直接用 session 的当前任务 id 写 registry，保证 PPT 一定出现在
+                # 右侧「文件产物」栏。无当前任务时静默跳过（不落全局桶）。
+                try:
+                    from agent_core.session import get_current_task_id as _get_tid
+                    _tid = _get_tid()
+                    if _tid:
+                        _reg_path = str(info.get("path") or out_path)
+                        try:
+                            import _files_listing_fix as _flf
+                            _flf.record_artifacts(_tid, [_reg_path])
+                        except Exception:
+                            # 热补丁未挂载时走 session 自带的产物登记（若有）
+                            try:
+                                import agent_core.session as _sess
+                                _sess._update_task_field(_tid, "artifacts", _reg_path)
+                            except Exception:
+                                pass
+                except Exception:
+                    pass  # 登记失败不影响 PPT 本身已生成
                 return (
                     f"✅ PPT 已生成: {info['path']}\n"
-                    f"   共 {info['slides']} 页（含封面），主题: {info['theme']}，16:9 宽屏\n"
+                    f"   共 {info['slides']} 页（含封面），模板: {_tpl}，16:9 宽屏\n"
                     f"   各页标题: {_titles_s}\n"
-                    f"   若页数或标题与要求不符，请带上完整内容重新调用（不要只传 path）。"
+                    f"   若页数或标题与要求不符，请带上完整内容重新调用（不要只传 path）。\n"
+                    f"   可选模板(下轮可用 template 参数指定): {TEMPLATE_CATALOG_BRIEF}"
                 )
             except ImportError as ie:
                 msg = str(ie)
@@ -1690,12 +1820,23 @@ class Commander:
             except Exception as e:
                 raise Exception(f"❌ PPT 生成失败 ({type(e).__name__}): {e}") from e
 
+        # 【#84 2026-09-26】把模板库列进工具描述，AI 才知道能挑，而不是永远落默认。
+        # 列表随机打乱顺序（每次进程启动换一套顺序），并标注「风格」；
+        # 同时让 AI 养成「每轮换不同风格模板」的习惯（详见 tool_info 的完整随机列表）。
+        from agent_core.pptx_builder import TEMPLATE_CATALOG as _PPT_TPLS
+        _ppt_items = list(_PPT_TPLS.items())
+        random.shuffle(_ppt_items)
+        _ppt_tpl_list = "、".join(
+            f"{slug}({m['style']})" for slug, m in _ppt_items)
         self._tools.register(
             "pptx_create",
             "生成 PPT（python-pptx）。content 必须【逐页】给出，格式："
             "第1页「标题一」\\n第2页「标题二」\\n第3页「谢谢」，每页可另起行写要点；"
             "这样页数和标题才会与要求一一对应。只传 path 或传无分页的一大段文字，"
-            "会导致页数对不上或被压成一页。",
+            "会导致页数对不上或被压成一页。"
+            f" 可选参数 template：从 {len(_PPT_TPLS)} 套专业模板里挑一套（每轮换不同风格！"
+            "不指定则系统按内容随机选一套，避免每次都用同一套）："
+            + _ppt_tpl_list,
             pptx_tool_fn)
 
         # ─── PDF 生成工具（reportlab）───
@@ -1814,7 +1955,8 @@ class Commander:
                 return (f"✅ PDF 已生成: {out_path}（{_size_kb} KB，共 {doc.page} 页）\n"
                         f"   若内容与要求不符，请带上完整内容重新调用。")
             except ImportError as ie:
-                raise ImportError("❌ reportlab 未安装。请运行：\"D:/软件/Python/python.exe\" -m pip install reportlab") from ie
+                import sys as _sys
+                raise ImportError(f"❌ reportlab 未安装。请运行：\"{_sys.executable}\" -m pip install reportlab") from ie
             except Exception as e:
                 raise Exception(f"❌ PDF 生成失败 ({type(e).__name__}): {e}") from e
 
@@ -1995,6 +2137,12 @@ class Commander:
 - 任务编排：todowrite/todoread(任务列表与进度) / task(委派子代理并行执行) / session_manager(多会话并行管理)。
 - 权限：permission_check/permission_list/permission_set（allow/deny/ask + 通配符，如 mcp_*、git *）。
 - 扩展：mcp_client 可对接任意 MCP server（stdio，配置见 DATA_ROOT/mcp.json）。
+
+【工具详情按需调取·重要】本指令已内嵌全部工具名单。长任务里哪个工具的参数/模板
+记不清了，先调 tool_info 工具拉取该工具的【完整指令集】再调用，不要凭记忆瞎猜参数：
+@@@@{{"tool":"tool_info","params":{{"name":"工具名"}},"id":"n"}}@@@@
+例：PPT 有多套专业模板，tool_info(name='pptx_create') 会列出全部模板（slug/页数/风格/
+适用场景）与必填字段 —— 生成 PPT 前先调它看一遍再动手。
 
 === 多平台 LLM 支持 ===
 你可以使用以下平台（需要登录或本地运行）：
@@ -2313,6 +2461,7 @@ class Commander:
         # 安全阀：MAX_NO_PROTOCOL 防止 AI 永远不回协议导致纯纠正死循环（独立于轮数）。
         max_turns, turn = 99999999999, 0
         no_protocol_retries = 0  # 防止通用平台（通义/豆包等）不遵守协议时无限循环
+        _send_retries = 0        # 瞬时「消息发送失败」（页面未就绪）的重发计数
         empty_reply_retries = 0  # 防止「一次没抓到回复」就把整个任务判死
         # 通用平台（豆包等）首轮可能因为页面还在渲染而抓不到正文，允许有限次重发同一请求。
         MAX_EMPTY_REPLY = 3
@@ -2332,11 +2481,13 @@ class Commander:
         self._tool_result_log = []   # [(工具名, 结果摘要)] 用于 done() 空文案时生成真实总结
         self._fake_done_retries = 0
         self._empty_done_retries = 0
+        self._reasoning_leak_retries = 0   # 推理泄漏打回计数（本 run 内重置）
         self._no_progress_retries = 0      # 无进展循环守卫打回计数（本 run 内）
         self._cmd_sigs = []                # 本 run 内已执行工具调用签名（tool+参数）
         self._no_progress_baseline = None  # 无进展守卫触发时的 _cmd_sigs 长度基线
         MAX_FAKE_DONE = 2
-        MAX_EMPTY_DONE = 1
+        MAX_EMPTY_DONE = 2   # 弱模型首轮常只回裸 done()，多给一次补写机会（实测通义 T4）
+        MAX_REASONING_LEAK = 2   # 检测到 done() 前是推理过程时最多打回 2 次，超限退化工具真实结论
         # 本轮是否为「用户真实输入」（用户插话）→ 决定 internal 标记
         _queued_user_turn = False
 
@@ -2369,6 +2520,8 @@ class Commander:
             # internal 标记：本次 run() 的第一轮（真实用户指令）以及用户插话算"用户说的"，
             # 其余所有轮都是 Agent 内部控制轮（工具结果回传 / 协议纠正 / 继续指令）
             # → 不写进对话历史，历史记录里只留用户真实对话。
+            # _user_turn 先算好：发送失败重发时 turn 已 +1，靠它恢复「这是用户真实输入」的标记。
+            _user_turn = (turn == 1) or _queued_user_turn
             try:
                 if self._pending_attachments:
                     _att_note = ("\n[系统] 本轮附带以下本地文件（如果网页输入框没有出现附件预览，"
@@ -2378,7 +2531,10 @@ class Commander:
                 response = await self._session.send(
                     current_input,
                     attachments=self._pending_attachments if self._pending_attachments else None,
-                    internal=not (turn == 1 or _queued_user_turn),
+                    internal=not _user_turn,
+                    # 【#85】中断/插话即时生效：等待 AI 期间每个 tick 都查一次，
+                    # 命中就中止等待、回到循环顶部处理（否则要等回复自然结束才停 → 假暂停）
+                    stop_check=lambda: bool(self._interrupted) or bool(self._message_queue),
                 )
                 # 【噪音清洗】网页平台会把「Tool xxx does not exists.」这类平台原生
                 # 工具报错混进回复正文（实测通义），不做处理会原样出现在最终回复开头。
@@ -2394,7 +2550,8 @@ class Commander:
                 self._pending_attachments = []  # 发送后清空
                 _queued_user_turn = False
             except Exception as e:
-                logger.error(f"AI 调用失败: {e}")
+                import traceback as _tb
+                logger.error(f"AI 调用失败: {e}\n{_tb.format_exc()}")
                 try:
                     from .platform_browser import LoginRequiredError as _LRE
                     if isinstance(e, _LRE):
@@ -2409,6 +2566,26 @@ class Commander:
                         return f"[需要手动过验证] {e}"
                 except Exception:
                     pass
+                # 【2026-09-25 真机修复】瞬时发送失败必须重试，不许直接判死整个任务。
+                # 实测（DeepSeek 连跑 T1→T2）：T1 刚结束页面重新导航，T2 立刻发消息 →
+                # 「未找到输入框」→ RuntimeError("消息发送失败")，任务 3.5s 就被误杀。
+                # 页面渲染是毫秒~秒级的事，等几秒原样重发即可。附件在发送成功前不清空，
+                # 重发会自动带上。仅限「发送失败/未找到输入框」这类瞬时错误；登录墙/
+                # 验证墙已在上面直接返回，不受影响。
+                _msg = str(e)
+                _transient_send = isinstance(e, RuntimeError) and (
+                    "发送失败" in _msg or "未找到输入框" in _msg)
+                if _transient_send and _send_retries < 2:
+                    _send_retries += 1
+                    logger.warning("[Commander] 平台页面暂未就绪（%s），8s 后第 %d 次重发",
+                                   _msg, _send_retries)
+                    self._emit(EventType.CORRECTION_SENT, {
+                        "text": f"平台页面暂未就绪（{_msg[:60]}），已自动重试发送 #{_send_retries}"
+                    })
+                    await asyncio.sleep(8)
+                    # turn 已 +1，恢复「用户真实输入」标记，保证重发仍写入对话历史
+                    _queued_user_turn = _user_turn
+                    continue  # current_input / _pending_attachments 均未动，原样重发
                 return f"[错误] AI 调用失败: {e}"
 
             # 诊断日志：记录收到的回复长度和是否包含协议标记
@@ -2457,7 +2634,7 @@ class Commander:
                         _warn_text = "模型一直没用显式 done() 协议收尾，已按最后回复结束任务"
                         _warn_evt = getattr(EventType, "WARNING", None) or getattr(EventType, "ERROR")
                         self._emit(_warn_evt, {"text": _warn_text})
-                        final_reply = response
+                        final_reply = self._strip_protocol(response) or last_ai_text or "[完成]"
                         break
                     logger.info("[Commander] 检测到自然语言收尾但无显式 done() 协议，警告打回 %d/%d",
                                 no_protocol_retries, _budget_imp)
@@ -2505,7 +2682,9 @@ class Commander:
                     )
                     break
                 if ai_text:
-                    last_ai_text = ai_text  # 记住最近一次真实回答，兜底用
+                    # 剥掉协议块（极少数情况下 ai_text 里混着裸 @@@@ 协议），避免裸协议
+                    # 被当成「真实回答」回灌成最终回复。
+                    last_ai_text = self._strip_protocol(ai_text) or ai_text
                     # 【放弃语句一律打回】模型说「我做不到 / 请你自己…」不算完成任务
                     if self._looks_like_giving_up(ai_text) and not self._file_tools_used:
                         logger.warning(f"[Commander] 检测到放弃/甩锅话术，打回重做: {ai_text[:80]!r}")
@@ -2530,7 +2709,7 @@ class Commander:
                     _budget = 20 if _demands_file else max(_max_no_protocol, 2)
                     if no_protocol_retries > _budget:
                         logger.info("连续 %d 次未遵循协议，按最终回复处理", no_protocol_retries)
-                        final_reply = response
+                        final_reply = self._strip_protocol(response) or last_ai_text or "[完成]"
                         break
                     _forced = self._forced_tool_hint(original_task) \
                         if (_demands_file and not self._file_tools_used) else ""
@@ -2686,13 +2865,23 @@ class Commander:
             # done() = AI 自己声明任务完成 → 循环正常结束。
             # 是否完成由 AI 自行判断，脚本不替它决定、也不强制 done()。
             if _tool_name == "done":
-                final_reply = self._strip_protocol(response) or last_ai_text or "[完成]"
+                # 【2026-09-25 真机修复】必须同时 strip response 与 last_ai_text：
+                # 弱模型（通义）在「调了 task 子代理却报错」后直接发一个光秃秃的
+                # @@@@{"tool":"done"}@@@@，此时 response 剥协议后是空、last_ai_text 还停留在
+                # 上一轮的「思考面板折叠条」噪音（"已经完成思考"）。若只回退到 last_ai_text，
+                # final_reply 非空 → 下面的「空 done 打回」守卫永不触发 → 用户看到裸协议。
+                # 两处都剥协议，确保兜底到真正的自然语言或占位符。
+                final_reply = self._strip_protocol(response) or self._strip_protocol(last_ai_text) or "[完成]"
                 # 【实测问题】豆包等弱平台经常 done() 里一个字都不写，用户侧就看到一条
                 # 空回复，明明文件已经生成好了却像没干活。这里用真实执行过的工具结果
                 # 生成一句实话总结，绝不让它显示空白。
                 _from_summary = False
                 _fr = (final_reply or "").strip()
-                if (not _fr) or _fr in ("[完成]", "完成", "done", "Done", "done()", "[done]"):
+                # 【2026-09-25 修复】不仅判定空壳/占位符，还要判定「是否真的写了给用户看的
+                # 内容」：纯思考面板噪音（"已经完成思考"）、过短的废话、剥协议后啥也不剩，
+                # 都视为没写答复，强制走 _summarize_done + 打回补写，杜绝裸协议泄漏。
+                if (not _fr) or _fr in ("[完成]", "完成", "done", "Done", "done()", "[done]") \
+                        or not self._is_substantive_reply(final_reply):
                     final_reply = self._summarize_done()
                     _from_summary = True
                 # 【实测缺陷·用户看不到答案】网页端弱模型（通义/豆包）常常只回一个
@@ -2717,7 +2906,11 @@ class Commander:
                         "2) 然后再输出 done() 协议收尾。\n"
                         f"用户的原始要求是：{(original_task or '')[:200]}\n"
                         "注意：答案要直接给结论（例如用户问链接标题，就写出那个标题和网址），"
-                        "不要复述工具返回的原始抓取内容。"
+                        "不要复述工具返回的原始抓取内容。\n"
+                        "【重要】这是一个纯知识/对话问题，你本就可以直接用自然语言回答，"
+                        "【不要】调用 task 子代理、也不要调用任何工具——把你自己的答案写出来即可。"
+                        "如果你上一轮调了 task 子代理却没给 goal 导致报错，请忽略它，"
+                        "直接在此用文字回答用户的问题。"
                     )
                     continue
                 # 【实测缺陷·推理泄漏】推理型模型（DeepSeek-R1 系）会把思维链写进正文，
@@ -2763,17 +2956,27 @@ class Commander:
                         final_reply = self._summarize_done()
                         _from_summary = True
                 _missing = self._claimed_but_missing_files(final_reply, original_task)
-                if _missing and self._fake_done_retries < MAX_FAKE_DONE:
+                # 【便携版修复 2026-09-25】补第二道闸：最近一次文件工具实际【失败】
+                # （如别人电脑上 pptx 子进程超时/编码炸了）→ 不管 done 文本写没写路径
+                # 都打回，杜绝「显示生成实则没有」。
+                _file_fail = self._last_file_tool_failed()
+                if (_missing or _file_fail) and self._fake_done_retries < MAX_FAKE_DONE:
                     self._fake_done_retries += 1
-                    _gap = ("本任务要求产出文件，但你还没有真正调用工具创建它"
-                            if not self._file_tools_used else
-                            "工具报告成功，但磁盘上并不存在你声称的文件")
+                    if _missing:
+                        _gap = ("本任务要求产出文件，但你还没有真正调用工具创建它"
+                                if not self._file_tools_used else
+                                "工具报告成功，但磁盘上并不存在你声称的文件")
+                        _detail = f"缺失的文件：{', '.join(_missing[:3])}"
+                    else:
+                        _gap = "你上一次调用文件工具实际【失败】了，文件并没有生成到磁盘"
+                        _detail = f"工具失败原因：{_file_fail}"
                     _hint = (
                         f"[系统·假完成拦截] 你刚才调用了 done()，但校验不通过：{_gap}。\n"
-                        f"缺失的文件：{', '.join(_missing[:3])}\n"
+                        f"{_detail}\n"
                         f"你上一条回复的原文：{final_reply[:200]}\n"
                         "请【真正调用工具】完成它（file_write / docx_create / pptx_create，"
-                        "参数里给出完整绝对路径），并确认工具返回成功。\n"
+                        "参数里给出完整绝对路径），并确认工具返回成功（返回文本含「✅…已生成/已写入」"
+                        "且不是 ❌ 开头的错误）。\n"
                         "绝对不要只用自然语言宣称「已生成/已创建」。"
                         "文件确实写好后，再调用 done()。"
                     )
@@ -3037,6 +3240,23 @@ class Commander:
         body = "\n".join(lines)
         return "已完成。执行记录：\n" + body
 
+    def _last_tool_text(self, original_task=None) -> str:
+        """推理泄漏打回超限时的兜底：返回最近一次真实工具结果文本，作为给用户的答复。
+
+        当 done() 前始终是一段「自言自语」、打回 N 次仍无改善时，与其把盘算文字当成
+        最终答复展示给用户，不如直接拿工具里跑出来的真实结论（如搜索抓到的正文摘要）
+        回填成答复，至少用户能看到实质内容。
+        """
+        try:
+            _log = getattr(self, "_tool_result_log", []) or []
+            if not _log:
+                return ""
+            # 取最近的有内容的工具结果（最多 5 条），倒序拼接
+            _picked = [t for (_, t) in _log if t and t.strip()][-5:]
+            return "\n".join(_picked).strip()
+        except Exception:
+            return ""
+
     @staticmethod
     def _looks_like_reasoning(text: str) -> bool:
         """判断 done() 前面那段自然语言【是模型的自言自语】而不是给用户的答复。
@@ -3187,6 +3407,34 @@ class Commander:
         t = _re.sub(r"(?:已完成|已深度|已|完成)?(?:深度)?思考[（(]用时[^）)]{0,20}[）)]", "", t)
         return t.strip()
 
+    @staticmethod
+    def _is_substantive_reply(text: str) -> bool:
+        """判断一段文字是否真的包含「给用户看的内容」，而非协议/思考面板噪音/空壳。
+
+        用于 done() 收尾守卫：弱模型（通义/豆包）经常只回一个光秃秃的
+        @@@@{"tool":"done"}@@@@、或把网页「思考面板折叠条」（"已经完成思考"）当成回复，
+        此时若直接把这段文字当作最终答复展示，用户看到的就是一串协议或一句废话。
+        命中非实质 → 调用方应走 _summarize_done() + 打回补写答案。
+        """
+        import re as _re
+        t = (text or "").strip()
+        if not t:
+            return False
+        # 先剥协议（双重保险，调用方通常已剥，但裸协议字符串本身也该判 False）
+        t = _re.sub(r"@@@@.*?@@@@", "", t, flags=_re.DOTALL).strip()
+        if not t:
+            return False
+        # 思考面板折叠条 / 平台 UI 噪音（剥完协议后仅剩这些）
+        if _re.fullmatch(r"(已完成?思考|已深度思考|深度思考|思考中|正在思考|已完成思考|思考完成)\s*", t):
+            return False
+        # 去掉空白与中英文标点后，剩余「实质字符」太少 → 视为废话
+        _content = _re.sub(
+            r"[\s，。、；：！？．…,;:!?\"'\(\)\[\]\(\)（）\[\]《》\"\"''\u3000-\u303f\uff00-\uffef]",
+            "", t)
+        if len(_content) < 8:
+            return False
+        return True
+
     # 中文/ASCII 混排路径被网页渲染或弱模型插空格的修复。
     # 实测案例（豆包）：模型给出 "D:\ 软件 \XianRenZhangAgent\..."，
     # 中文字符两侧被插入空格 → 工具报 [WinError 3] 系统找不到指定的路径。
@@ -3264,6 +3512,63 @@ class Commander:
             except (OSError, ValueError):
                 continue
         return first
+
+    def _locate_actual_file(self, claimed: str) -> str:
+        """声称的产物路径不存在时，在产物工作目录附近找同 basename 的实际文件。
+
+        【2026-09-25 真机实证】弱模型在 done() 回复里手抄路径常把斜杠抄丢：
+        要求产物 test_output/_映射验证.pptx（实际已正确落盘），模型回复里写成
+        test_output_映射验证.pptx → 旧守卫按字面查 → 不存在 → 连打回 2 轮
+        （MAX_FAKE_DONE 烧光），模型还被整糊涂了。其实文件就在旁边，
+        只是路径被写歪。这里就近找同 basename（含拍平变体 dir_x.ext）的实际文件，
+        找到即视为产物真实存在，不再误伤。
+
+        返回实际路径（找不到返回空串）。带 3 秒时限 + 巨目录剪枝，绝不拖慢 done。
+        """
+        import os as _os
+        import time as _t
+        from pathlib import Path as _P
+        try:
+            q = _P(str(claimed or ""))
+        except (OSError, ValueError):
+            return ""
+        name = q.name
+        if not name or name in (".", ".."):
+            return ""
+        # 拍平变体：test_output/_x.pptx → test_output_x.pptx（父目录名+文件名粘连）
+        flat = (q.parent.name + name) if q.parent.name and not q.parent.name.lower().endswith(":") else ""
+        roots = []
+        try:
+            wd = _P(self._work_dir)
+            roots = [wd, wd.parent]
+        except Exception:
+            roots = []
+        deadline = _t.time() + 3.0
+        _PRUNE = {"browser_profiles", "playwright_browsers", "__pycache__",
+                  "node_modules", ".git", "runtime", "templates", "cache"}
+        for root in roots:
+            if not root.exists():
+                continue
+            try:
+                for dirpath, dirnames, filenames in _os.walk(root):
+                    if _t.time() > deadline:
+                        return ""
+                    if name in filenames:
+                        return str(_P(dirpath) / name)
+                    if flat and flat in filenames:
+                        return str(_P(dirpath) / flat)
+                    # 拍平逆变换（真机实证）：产物 test_output\_守卫.pptx 被模型
+                    # 抄成 test_output_守卫.pptx —— 斜杠丢在「子目录名与文件名」
+                    # 之间。遍历到该子目录时用 目录名+文件名 逆向拼回声称名。
+                    _dn = _P(dirpath).name
+                    if _dn and name.startswith(_dn) and len(name) > len(_dn):
+                        _rest = name[len(_dn):]
+                        if _rest in filenames:
+                            return str(_P(dirpath) / _rest)
+                    dirnames[:] = [d for d in dirnames if d not in _PRUNE]
+            except (OSError, ValueError):
+                continue
+        return ""
 
     # ── 假完成 / 未执行守卫 ──
     _FILE_TOOLS = {"file_write", "file_edit", "docx_create", "pptx_create",
@@ -3369,6 +3674,14 @@ class Commander:
             try:
                 q = _P(raw.strip().strip("`\"'"))
                 if not q.exists():
+                    # 【2026-09-25】路径被模型手抄写歪（斜杠丢失/目录错位）但同名产物
+                    # 实际就在工作目录附近 → 视为真实存在，不再误打回（真机实证 2 轮浪费）
+                    _actual = self._locate_actual_file(str(q))
+                    if _actual:
+                        logger.info(
+                            f"[假完成守卫·放行] 声称路径不存在但同名产物实际存在: "
+                            f"{q} → {_actual}")
+                        continue
                     missing.append(str(q))
             except (OSError, ValueError):
                 continue
@@ -3395,6 +3708,29 @@ class Commander:
                             text, _re.I)
             return [_m.group(0) if _m else "(未给出具体路径的产物)"]
         return []
+
+    def _last_file_tool_failed(self) -> str:
+        """最近一次文件工具调用是否【失败】。返回失败摘要，空串=没有失败。
+
+        【便携版实测 2026-09-25】别人电脑上 pptx_create 子进程超时/解码失败 →
+        工具返回 ❌ → 模型却照样口头 done()「已生成」。旧守卫
+        _claimed_but_missing_files 只校验 done 文本里【写出的路径】——
+        模型说「已生成」却没写路径时直接漏网。这里补上工具失败状态：
+        最近一次文件工具的结果是失败摘要 → done 一律打回。
+        """
+        try:
+            log = getattr(self, "_tool_result_log", []) or []
+            ftools = getattr(self, "_FILE_TOOLS", set()) or set()
+            for _tool, _ro in reversed(log):
+                if _tool not in ftools:
+                    continue
+                s = str(_ro or "")
+                if s.startswith(("❌", "错误", "失败", "[错误", "Exception", "Traceback")):
+                    return f"{_tool}: {s[:120]}"
+                return ""   # 最近一次文件工具是成功的 → 不拦截
+        except Exception:
+            return ""
+        return ""
 
     def _latest_artifact_path(self) -> str:
         """本 run 内最近一次【真实写入且文件存在】的产物绝对路径（无则空）。

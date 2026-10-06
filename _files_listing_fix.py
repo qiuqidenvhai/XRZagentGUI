@@ -197,9 +197,24 @@ def rebuild_registry_from_disk(force=False):
 def _current_conversation_id():
     """从 pyc 后端的全局状态里取「当前会话 id」。
 
-    terminal.pyc 把 session 对象挂在模块/全局上，命名不固定，
-    所以这里按多个候选名逐个探测，取到第一个非空字符串。
+    【#83 真机根因 2026-09-25】实测：登记的 key 与查询的 key 不是同一套 id ——
+    服务端生成产物时用 session.get_current_task_id()（形如
+    deepseek_20260925_071419_73751）写 registry，而这里从 pyc 全局探测到的却是
+    session 内部 id（形如 d5ef80293bf1，12 位 md5）。结果 registry 里明明有产物
+    （显式传任务 id 能查到），/attachments 却按另一个 key 去查 → 返回空 →
+    GUI 产物栏永远不显示刚生成的 PPT。
+    修法：查询端【优先】用与登记端同一个 key（get_current_task_id），没有任务时
+    才回退原来的探测逻辑。
     """
+    # 1) 与登记端同源：session 模块里的当前任务 id（最优先）
+    try:
+        from agent_core.session import get_current_task_id as _cur_tid
+        _v = _cur_tid()
+        if isinstance(_v, str) and _v.strip():
+            return _v.strip()
+    except Exception:
+        pass
+
     try:
         import sys as _sys
         cands = []
@@ -421,6 +436,70 @@ def _registry_buckets(idx, cid):
     return out
 
 
+def _resolve_task_style_ids(cid):
+    """把 SSE 的 task_<毫秒> id **精确**映射到 registry 里的真实会话 id。
+
+    【真机回归抓到 2026-09-25】pyc 后端 SSE 事件里的 task_id 形如
+    task_1790346290871，而 commander 服务端登记产物用的 key 是
+    get_current_task_id() 的 <平台>_<日期>_<时分秒>（如 deepseek_20260925_113400）。
+    GUI completeTask 拿 SSE 的 task_ id 查 /attachments → registry 前缀完全不匹配
+    → 返回空 → 预览栏对新任务不显示产物。
+
+    【2026-10-05 修"产物栏显示历史所有文件"】旧实现映射到「当前活跃任务 +
+    最近更新的 3 个任务」，_conversation_scoped_files 遍历这些 id 把每个 bucket
+    都并进结果 → 产物栏显示最近 4 个任务的文件（用户看到"历史所有文件"）。
+    现在改成：用 task_ 里的毫秒时间戳在 registry key 的时间部分里找**时间最接近
+    的那一个**会话，精确返回单个 id；找不到才回退当前活跃任务（仍只返回 1 个）。
+    """
+    cid = str(cid or "").strip()
+    if not cid.startswith("task_"):
+        return [cid] if cid else []
+
+    import json as _json
+    import re as _re
+
+    # 1) 首选：用毫秒时间戳在 registry key 里找时间最接近的会话（精确到单个）
+    try:
+        ms = int(cid[5:])
+        import datetime as _dt
+        target = _dt.datetime.fromtimestamp(ms / 1000.0)
+        try:
+            from agent_core import xrz_paths as _XP
+            reg = Path(_XP.XRZ_AGENT_DIR) / "conversation_artifacts.json"
+        except Exception:
+            reg = None
+        if reg is not None and reg.exists():
+            data = _json.loads(reg.read_text(encoding="utf-8"))
+            best_id, best_delta = None, None
+            for key in (data if isinstance(data, dict) else {}):
+                m = _re.search(r"(\d{8})_(\d{6})", str(key))
+                if not m:
+                    continue
+                try:
+                    kt = _dt.datetime.strptime(m.group(1) + m.group(2), "%Y%m%d%H%M%S")
+                except Exception:
+                    continue
+                delta = abs((kt - target).total_seconds())
+                if best_delta is None or delta < best_delta:
+                    best_id, best_delta = key, delta
+            # 容差 6 小时：超出说明这个 task_ 跟任何会话都不对应，别乱认
+            if best_id is not None and best_delta is not None and best_delta <= 6 * 3600:
+                return [best_id]
+    except Exception:
+        pass
+
+    # 2) 兜底：当前活跃任务（只返回 1 个，绝不再并「最近 N 个任务」——
+    #    那正是"产物栏显示历史所有文件"的根因）
+    try:
+        from agent_core.session import get_current_task_id as _cur
+        v = _cur()
+        if v:
+            return [str(v)]
+    except Exception:
+        pass
+    return [cid]
+
+
 def _conversation_scoped_files(conversation_id):
     """按会话范围产出文件列表。
 
@@ -430,6 +509,8 @@ def _conversation_scoped_files(conversation_id):
         任务目录里的散落文件。
       - 没有 conversation_id（新对话 / 未选任务）：返回空列表 ——
         「没有任务的时候就不能有任务产物」。
+      - conversation_id 是 SSE 的 task_<毫秒> id：先映射到真实会话 id 再查
+        （见 _resolve_task_style_ids，修复新任务预览栏空）。
     """
     try:
         from agent_core import xrz_paths
@@ -454,23 +535,26 @@ def _conversation_scoped_files(conversation_id):
         except Exception:
             pass
 
-    # 1) 该会话登记的产物（权威来源）
+    idx = _load_artifact_index()
+    # 1) 该会话登记的产物（权威来源）；task_ 风格 id 先做映射
     # registry 的每个 bucket 既可能是裸路径列表（record_artifacts 写入），
     # 也可能是 {"paths": [...], "updated_at": ...} 包装（早期版本 / 手工写入）。
     # 两种都要吃得下，否则换一种写法就静默丢产物。
-    for raw in _registry_buckets(_load_artifact_index(), conversation_id):
-        _push(raw)
-
-    # 2) 该会话的会话 JSON 里引用到的产物（兜底：registry 尚未覆盖的历史任务）
-    try:
-        conv = _load_conversation_json(xrz_paths, conversation_id)
-        if conv:
-            for item in _paths_from_conversation(conv, xrz_paths):
-                if item["path"] not in seen:
-                    seen.add(item["path"])
-                    out.append(item)
-    except Exception:
-        pass
+    for rid in _resolve_task_style_ids(conversation_id):
+        for raw in _registry_buckets(idx, rid):
+            _push(raw)
+        # 2) 该会话的会话 JSON 里引用到的产物（兜底：registry 尚未覆盖的历史任务）
+        if out:
+            continue
+        try:
+            conv = _load_conversation_json(xrz_paths, rid)
+            if conv:
+                for item in _paths_from_conversation(conv, xrz_paths):
+                    if item["path"] not in seen:
+                        seen.add(item["path"])
+                        out.append(item)
+        except Exception:
+            pass
 
     return out
 
@@ -1195,6 +1279,19 @@ def _patched_do_POST(self, main_module, orig_do_post, app_dir):
             payload = _json.loads(raw.decode("utf-8") or "{}")
             cid = payload.get("conversation_id")
             paths = payload.get("paths") or []
+            # 【2026-10-05 修"新对话产物不进产物栏"】前端 recordArtifactsFromTool
+            # 用 SSE 的 activeTaskId（task_<毫秒> 形式）当 conversation_id，而
+            # /attachments 查的是后端真会话 id（<平台>_<日期>_<时分秒>_<尾数>）——
+            # 两套 id 不一致 → 产物登记进了 task_ 桶，真会话 bucket 空 →
+            # 产物栏永远查不到刚生成的文件（/status 也显示"本次任务产物：0 个"）。
+            # 修法：id 缺失或形如 task_<毫秒> 时，后端用自己认的【真当前会话 id】
+            # 兜底（_current_conversation_id 与 /status 同一个来源，保证登记与查询
+            # 用同一个 key），前端不用改。
+            _cid_str = str(cid or "").strip()
+            if (not _cid_str) or _cid_str.startswith("task_"):
+                _real = _current_conversation_id()
+                if _real:
+                    cid = _real
             record_artifacts(cid, paths)
             self._send_json(200, {"type": "ok", "conversation_id": cid,
                                   "count": len(paths)})
@@ -1225,6 +1322,136 @@ def _patched_do_POST(self, main_module, orig_do_post, app_dir):
         return
 
     orig_do_post(self)
+
+
+def _remove_artifact(path):
+    """从产物索引里删掉某个路径（所有会话桶都清一遍），保持索引干净。"""
+    import json
+    p = _conversation_artifacts_path()
+    if not p or not Path(p).exists():
+        return
+    try:
+        idx = _load_artifact_index()
+        changed = False
+        norm = str(path).replace("\\", "/")
+        for cid, bucket in idx.items():
+            if isinstance(bucket, list):
+                if norm in bucket:
+                    bucket.remove(norm)
+                    changed = True
+            elif isinstance(bucket, dict) and isinstance(bucket.get("paths"), list):
+                if norm in bucket["paths"]:
+                    bucket["paths"].remove(norm)
+                    changed = True
+        if changed:
+            tmp = str(p) + ".tmp"
+            Path(tmp).write_text(json.dumps(idx, ensure_ascii=False, indent=1),
+                                 encoding="utf-8")
+            os.replace(tmp, p)
+    except Exception:
+        pass
+
+
+# 允许被删除的根目录（只删应用自己的产物/输出，绝不碰用户系统文件）
+_DELETE_ROOT_KEYS = ("TASKS_DIR", "SUBAGENT_OUTPUT_DIR", "GUI_SESSION_DIR", "BUFFERS_DIR")
+
+
+def _delete_allowed_roots():
+    try:
+        from agent_core import xrz_paths as XP
+        roots = []
+        for k in _DELETE_ROOT_KEYS:
+            v = getattr(XP, k, None)
+            if v:
+                roots.append(str(Path(v).resolve()))
+        return roots
+    except Exception:
+        return []
+
+
+def _patched_do_DELETE(self, main_module, orig, app_dir):
+    """DELETE /files/<filename>（或 ?path=<绝对路径>）：删除应用产物文件。
+
+    【2026-09-26 修复】GUI 的「删除文件」按钮此前发 DELETE /files/<文件名>，
+    但后端（terminal.pyc）根本没有 /files 的 DELETE 处理 → 404/无响应 → 删除按钮
+    点完没反应。这里补上真正的删除：
+      1) 优先用 ?path= 显式绝对路径（前端若改传）；
+      2) 否则按「当前会话作用域文件列表」把 basename 解析成精确路径（删的就是
+         用户正在看的那个文件，避免同名误删）；
+      3) 兜底：在允许的根目录里按 basename 找最新匹配。
+    安全：解析出的目标必须落在应用产物目录（TASKS_DIR / 子代理输出 / GUI 会话 /
+    缓冲区）内，否则拒绝（403），绝不删任意系统文件。
+    """
+    import os
+    import shutil
+    from urllib.parse import urlparse, parse_qs, unquote
+
+    path = getattr(self, "path", "") or ""
+    parsed = urlparse(path)
+    fname = unquote(parsed.path[len("/files/"):]) if parsed.path.startswith("/files/") else ""
+    qs = parse_qs(parsed.query)
+    explicit = unquote((qs.get("path") or [""])[0]).strip()
+
+    roots = _delete_allowed_roots()
+
+    def _within(p):
+        try:
+            p = str(Path(p).resolve())
+            for r in roots:
+                if p == r or p.startswith(r + os.sep):
+                    return True
+        except Exception:
+            pass
+        return False
+
+    target = None
+    if explicit and _within(explicit):
+        target = explicit
+    elif fname:
+        # 优先：当前会话作用域文件里 basename 命中 → 精确路径
+        try:
+            cid = _current_conversation_id()
+            for item in _conversation_scoped_files(cid):
+                if item.get("name") == fname and _within(item.get("path")):
+                    target = item.get("path")
+                    break
+        except Exception:
+            pass
+        # 兜底：在允许根目录里按 basename 找最新匹配
+        if not target:
+            cands = []
+            for r in roots:
+                rp = Path(r)
+                if not rp.exists():
+                    continue
+                for m in rp.rglob(fname):
+                    if m.is_file() and _within(m):
+                        cands.append(m)
+            if cands:
+                cands.sort(key=lambda p: p.stat().st_mtime, reverse=True)
+                target = str(cands[0])
+
+    if not target or not _within(target):
+        self._send_json(403, {"type": "error",
+                              "text": "文件名无法定位到允许删除的应用产物目录内"})
+        return
+
+    try:
+        tp = Path(target)
+        if tp.is_file():
+            tp.unlink()
+        elif tp.is_dir():
+            shutil.rmtree(str(tp), ignore_errors=True)
+        else:
+            self._send_json(404, {"type": "error", "text": "文件不存在"})
+            return
+        try:
+            _remove_artifact(target)
+        except Exception:
+            pass
+        self._send_json(200, {"type": "ok", "deleted": str(tp).replace("\\", "/")})
+    except Exception as e:
+        self._send_json(500, {"type": "error", "text": str(e)})
 
 
 def _do_patch_once(main_module, app_dir):
@@ -1258,6 +1485,16 @@ def _do_patch_once(main_module, app_dir):
                 _new_do_post._xrz_patched = True
                 _new_do_post.__name__ = "do_POST"
                 handler.do_POST = _new_do_post
+
+            # DELETE /files/<filename>：删除应用产物文件（GUI 删除按钮）
+            orig_del = getattr(handler, "do_DELETE", None)
+            if orig_del is None or not getattr(orig_del, "_xrz_patched", False):
+                def _new_do_delete(self):
+                    _patched_do_DELETE(self, main_module, orig_del, app_dir)
+
+                _new_do_delete._xrz_patched = True
+                _new_do_delete.__name__ = "do_DELETE"
+                handler.do_DELETE = _new_do_delete
 
             handler._xrz_scan_roots = _scan_roots  # 供诊断/测试引用
             handler._xrz_record_artifacts = record_artifacts

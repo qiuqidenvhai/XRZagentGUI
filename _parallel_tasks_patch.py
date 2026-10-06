@@ -107,6 +107,25 @@ def _clone_session_for_task(old_session, child_bm):
       · _bm 指向子标签页。
     """
     import copy as _copy
+    # 【2026-09-25 真机修复·防错配】会话类型必须与子标签页浏览器类型匹配，
+    # 绝不允许硬凑出「PlatformSession + DeepSeek BrowserManager」这种组合
+    # （实测崩溃：BrowserManager.send_message 不收 attachments → TypeError，
+    #  错误处理路径再访问 .profile → AttributeError，整个任务 1s 内被误杀）。
+    # PlatformSession 只配 PlatformBrowserManager（带 .profile）；
+    # DeepSeekSession 只配 BrowserManager（不带 .profile）。不匹配返回 None，
+    # 由调用方退回「排队等共享 page 空闲」的安全路径。
+    try:
+        _old_is_platform = (type(old_session).__name__ == "PlatformSession")
+        _child_is_platform = hasattr(child_bm, "profile")
+        if _old_is_platform != _child_is_platform:
+            import logging as _log
+            _log.getLogger(__name__).warning(
+                "[ParallelPatch] 会话/浏览器类型不匹配（session=%s, child_bm=%s），"
+                "拒绝克隆，退回共享 page 排队", type(old_session).__name__,
+                type(child_bm).__name__)
+            return None
+    except Exception:
+        pass
     try:
         new_sess = _copy.copy(old_session)      # 浅拷贝：不重跑 __init__ 的副作用
     except Exception:
@@ -162,6 +181,7 @@ def _make_patched_run(orig_run):
         # ── 共享 page 忙：派生一张新标签页 + 一份独立会话，本任务独立跑 ──
         # 这正是「一个浏览器里开两个标签」，也让多任务真正并行且不串台。
         child_bm = None
+        new_session = None
         old_bm = self._bm
         old_session = getattr(self, "_session", None)
         try:
@@ -183,6 +203,29 @@ def _make_patched_run(orig_run):
             self._bm = child_bm
             if old_session is not None:
                 new_session = _clone_session_for_task(old_session, child_bm)
+                if new_session is None:
+                    # 【2026-09-25 真机修复】会话与子标签页类型不匹配（如 commander 的
+                    # _bm/_session 已被并发期间的平台切换弄成错配组合）→ 绝不硬跑。
+                    # 关掉子标签页，排队等共享 page 空闲后再原逻辑执行。
+                    import asyncio as _aio
+                    try:
+                        await child_bm.close()
+                    except Exception:
+                        pass
+                    _BUSY_PAGES.discard(id(child_page))
+                    _SPAWNED[:] = [x for x in _SPAWNED if x[1] is not child_bm]
+                    child_bm = None
+                    self._bm = old_bm
+                    import logging as _log2
+                    _log2.getLogger(__name__).warning(
+                        "[ParallelPatch] 共享 page 忙且无法安全克隆会话 → 排队等待空闲")
+                    while _page_busy(page):
+                        await _aio.sleep(2)
+                    _BUSY_PAGES.add(id(page))
+                    try:
+                        return await orig_run(self, user_instruction, file_path, context_hints)
+                    finally:
+                        _BUSY_PAGES.discard(id(page))
                 self._session = new_session
                 try:
                     new_session.set_on_event(getattr(old_session, "_on_event", None))
@@ -194,9 +237,19 @@ def _make_patched_run(orig_run):
             finally:
                 _BUSY_PAGES.discard(id(child_page))
         finally:
-            # 还原 commander 的驱动目标，并回收标签页
-            self._bm = old_bm
-            self._session = old_session
+            # 【2026-09-25 真机修复】只还原【本任务自己设置】的对象。
+            # 旧版无条件 self._bm = old_bm / self._session = old_session：
+            # 若本任务运行期间用户切换了平台（commander._bm/_session 已被换成
+            # 新平台的对象），收尾时会把新平台的配置踩回旧平台的——实测造成
+            # 「_bm=DeepSeek BrowserManager + _session=通义 PlatformSession」错配，
+            # 下一个任务一发送就 AttributeError 崩溃。按身份比较，别人换过就不动。
+            try:
+                if child_bm is not None and getattr(self, "_bm", None) is child_bm:
+                    self._bm = old_bm
+                if new_session is not None and getattr(self, "_session", None) is new_session:
+                    self._session = old_session
+            except Exception:
+                pass
             if child_bm is not None:
                 try:
                     await child_bm.close()

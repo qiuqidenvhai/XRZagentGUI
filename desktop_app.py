@@ -142,16 +142,24 @@ def _apply_win_class_icon(win):
 
 
 def _detect_pythonw():
-    """找到带 playwright + PySide6 的 pythonw.exe（无黑窗）。"""
-    candidates = []
-    # 1) 同目录的 pythonw
+    """找到带 playwright + PySide6 的 pythonw.exe（无黑窗）。
+
+    【#86 可迁移 2026-09-24】优先用「软件目录内 runtime\\pythonw.exe」
+    （PyInstaller / 便携目录自带的解释器），这样整个软件文件夹拷到任意盘符
+    / 任意电脑都能直接跑，绝不依赖 D:\\软件\\Python 这种写死路径。
+    """
     here = dirname(abspath(__file__))
-    candidates.append(os.path.join(here, "pythonw.exe"))
-    # 2) 常见安装路径
-    candidates.append(r"D:\软件\Python\pythonw.exe")
-    candidates.append(r"D:\软件\Python\python.exe")
-    # 3) 当前解释器
-    candidates.append(sys.executable)
+    candidates = [
+        # 1) 便携目录自带解释器（最高优先级，保证可迁移）
+        os.path.join(here, "runtime", "pythonw.exe"),
+        os.path.join(here, "runtime", "python.exe"),
+        os.path.join(here, "pythonw.exe"),
+        # 2) 开发环境常见安装路径（回退）
+        r"D:\软件\Python\pythonw.exe",
+        r"D:\软件\Python\python.exe",
+        # 3) 当前解释器
+        sys.executable,
+    ]
     for c in candidates:
         if c and os.path.exists(c):
             # 验证依赖齐备
@@ -173,6 +181,115 @@ def backend_healthy():
             return resp.status == 200
     except Exception:
         return False
+
+
+def find_backend_pids(port=PORT):
+    """列出监听 port 的所有后端 PID（pythonw/python 可能多实例）。找不到则空。"""
+    try:
+        import psutil
+        pids = set()
+        for c in psutil.net_connections(kind="tcp"):
+            la = getattr(c, "laddr", None)
+            if la and len(la) >= 2 and la[1] == port and c.status == "LISTEN":
+                pid = getattr(c, "pid", 0)
+                if pid and pid > 0:
+                    pids.add(pid)
+        return sorted(pids)
+    except Exception:
+        return []
+
+
+def _kill_leftover_browsers():
+    """【二次清扫】按 cmdline 特征清掉 taskkill /T 可能漏掉的 XRZ 专属浏览器残留
+    （playwright node driver + xrz_data/playwright_browsers 下的 chrome renderer/gpu）。
+    只匹配含 'playwright_browsers' 的 chrome / 含 playwright+node.exe 的进程，
+    绝不碰用户系统 Chrome（路径不含 xrz_data/playwright_browsers）。"""
+    try:
+        import psutil
+    except Exception:
+        return 0
+    n = 0
+    me = os.getpid()
+    for p in psutil.process_iter(attrs=["pid", "name", "cmdline"]):
+        try:
+            pid = p.info.get("pid")
+            if not pid or pid == me:
+                continue
+            cl = " ".join(p.info.get("cmdline") or [])
+            nm = p.info.get("name") or ""
+            is_xrz_chrome = nm in ("chrome.exe", "chromium.exe") and "playwright_browsers" in cl
+            is_xrz_node = "node.exe" in nm and "playwright" in cl
+            if not (is_xrz_chrome or is_xrz_node):
+                continue
+            p.kill()
+            n += 1
+        except Exception:
+            pass
+    return n
+
+
+def shutdown_backend_and_children(dry_run=False):
+    """【2026-09-26 修复"关 GUI 没关连带进程"】关 GUI 时连带清理：
+    后端 8888 整棵进程树（含 playwright node driver + XRZ 专属 chrome + 子代理）。
+
+    后端**没有**可远程调用的优雅关闭端点（/exit、/quit、/shutdown 均 404），
+    故直接 taskkill /T /F 杀整棵 8888 监听进程树（/T 带出它派生的 node driver、
+    chrome 主进程、子代理；DETACHED_PROCESS 只脱离控制台、不影响父子树，仍杀得到）。
+    随后二次清扫残留 chrome renderer / gpu（/T 偶有漏网）。
+
+    安全：登录态是磁盘文件（cookies.json + browser_profiles/），强杀进程不丢，
+    重启后端会从磁盘 reload。taskkill 用 subprocess 列表直接调 taskkill.exe，
+    不经 MSYS shell，旗标 /T /F 不会被 Git Bash 吞。
+
+    dry_run=True 只列 8888 后端 PID 及其递归子进程，不执行任何 kill。
+    """
+    import time as _time
+    port = PORT
+    found = find_backend_pids(port)
+    log(("[dry-run] 8888 后端 PID: " if dry_run else "发现后端 PID: ") + repr(found))
+
+    if dry_run:
+        try:
+            import psutil
+            for pid in found:
+                try:
+                    p = psutil.Process(pid)
+                    kids = [(c.pid, c.name()) for c in p.children(recursive=True)]
+                    log("[dry-run] pid=%d %s 子进程数=%d" % (pid, p.name(), len(kids)))
+                    for cp, cn in kids[:30]:
+                        log("[dry-run]   child pid=%d %s" % (cp, cn))
+                except Exception as e:
+                    log("[dry-run]   pid %d 详情失败: %r" % (pid, e))
+        except Exception:
+            pass
+        return found
+
+    # ① 杀 8888 后端整棵进程树（带出 node driver + chrome 主进程 + 子代理）
+    for pid in found:
+        if pid == os.getpid():
+            continue
+        try:
+            subprocess.run(
+                ["taskkill", "/T", "/F", "/PID", str(pid)],
+                capture_output=True, text=True, timeout=15,
+            )
+            log("taskkill /T /F 后端进程树 PID=%d" % pid)
+        except Exception as e:
+            log("[WARN] taskkill PID=%d 失败: %r" % (pid, e))
+    _time.sleep(2.0)
+
+    # ② 二次清扫残留 chrome renderer / gpu（/T 偶有漏网）
+    leftover = _kill_leftover_browsers()
+    if leftover:
+        log("二次清扫残留浏览器/driver %d 个" % leftover)
+
+    # ③ 复查 8888 是否真的空了
+    after = find_backend_pids(port)
+    if after:
+        log("[WARN] 仍有 8888 监听残留: %r（可能属其它实例，不强杀）" % after)
+    else:
+        log("已关闭全部连带进程（后端 + chromium 浏览器 + playwright driver + 子代理）")
+    return found
 
 
 class TitleBar(QWidget):
@@ -368,7 +485,6 @@ class XianRenZhangWindow(QMainWindow):
         if backend_healthy():
             log("后端已在运行，跳过启动")
             return
-        py = _detect_pythonw() or sys.executable
         env = os.environ.copy()
         env["XRZ_NO_GUI"] = "1"
         env["PLAYWRIGHT_BROWSERS_PATH"] = str(PLAYWRIGHT_BROWSERS_PATH)
@@ -376,6 +492,25 @@ class XianRenZhangWindow(QMainWindow):
         if not os.path.exists(term):
             log("[错误] 找不到后端入口:", term)
             return
+        # 【#86 可迁移 2026-09-24】冻结模式（PyInstaller 包）：优先用包内自带的
+        # 后端可执行文件（XianRenZhangBackend.exe），整个文件夹拷到任意电脑/盘符
+        # 都能直接跑，不再依赖 D:\软件\Python 或系统里装了 playwright 的解释器。
+        if getattr(sys, "frozen", False):
+            backend_exe = os.path.join(APP_DIR, "XianRenZhangBackend.exe")
+            if os.path.exists(backend_exe):
+                py = backend_exe
+                # 包内解释器已含 playwright，直接起 exe；环境变量继承即可
+                subprocess.Popen(
+                    [py],
+                    cwd=APP_DIR,
+                    env=env,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    creationflags=subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.DETACHED_PROCESS,
+                )
+                log("已启动后端（包内 exe）:", py)
+                return
+        py = _detect_pythonw() or sys.executable
         try:
             self._backend_proc = subprocess.Popen(
                 [py, term],
@@ -424,10 +559,28 @@ class XianRenZhangWindow(QMainWindow):
             log("[错误] 找不到 gui.html:", gui)
 
     def closeEvent(self, ev):
-        # 关闭窗口只关面板；后端（agent）继续在后台运行。
-        # 若后端是我们拉起的且仍在跑，保持它运行。
-        log("窗口关闭，agent 继续在后台运行")
+        # 【2026-09-26 修复"关 GUI 没关连带进程"】
+        # 旧设计是「关窗只关面板，agent 后台继续跑」——于是关 GUI 后留下
+        # 后端 8888 + 它拉起的 chromium / playwright driver / 子代理子进程，
+        # 全成孤儿。现在默认关 GUI 就连带全清（见 shutdown_backend_and_children）：
+        #   ① POST /shutdown 优雅关后端（关浏览器 + 停子代理 + flush 登录态）
+        #   ② 兜底按 8888 端口 taskkill /T /F 杀残留整棵进程树
+        # 保留旧语义可回退：XRZ_KEEP_BACKEND_ON_CLOSE=1 时关窗不动后端。
+        # 用 QTimer.singleShot(0) 异步执行，让窗口先干净消失、不卡 UI。
+        keep = os.environ.get("XRZ_KEEP_BACKEND_ON_CLOSE") == "1"
+        if keep:
+            log("窗口关闭（XRZ_KEEP_BACKEND_ON_CLOSE=1，后端保持运行）")
+        else:
+            log("窗口关闭 → 连带清理后端 + 浏览器 + 子代理")
+            QTimer.singleShot(0, self._cleanup_on_close)
         ev.accept()
+
+    def _cleanup_on_close(self):
+        # Qt 事件循环里跑，closeEvent 已 accept 窗口已消失
+        try:
+            shutdown_backend_and_children(dry_run=False)
+        except Exception as e:
+            log("[WARN] 连带清理异常:", e)
 
     # ── 测试桥实现 ─────────────────────────────
     def _init_test_bridge(self):

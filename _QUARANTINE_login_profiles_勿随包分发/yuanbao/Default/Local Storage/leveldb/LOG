@@ -1,0 +1,20 @@
+2026/09/24-18:44:00.906 2db4 Reusing MANIFEST D:\软件\XianRenZhangAgent\xrz_data\.xianrenzhang_agent\browser_profiles\yuanbao\Default\Local Storage\leveldb/MANIFEST-000001
+2026/09/24-18:44:01.016 2db4 Recovering log #362
+2026/09/24-18:44:01.109 2db4 Level-0 table #364: started
+2026/09/24-18:44:01.222 2db4 Level-0 table #364: 12951 bytes OK
+2026/09/24-18:44:01.253 2db4 Delete type=0 #362
+2026/09/24-18:46:08.259 59e4 Level-0 table #367: started
+2026/09/24-18:46:08.272 59e4 Level-0 table #367: 56338 bytes OK
+2026/09/24-18:46:08.275 59e4 Delete type=0 #365
+2026/09/24-18:46:08.277 59e4 Compacting 4@0 + 1@1 files
+2026/09/24-18:46:08.294 59e4 Generated table #368@0: 76 keys, 60111 bytes
+2026/09/24-18:46:08.294 59e4 Compacted 4@0 + 1@1 files => 60111 bytes
+2026/09/24-18:46:08.296 59e4 compacted to: files[ 0 1 1 0 0 0 0 ]
+2026/09/24-18:46:08.298 59e4 Delete type=2 #356
+2026/09/24-18:46:08.299 59e4 Delete type=2 #358
+2026/09/24-18:46:08.299 59e4 Delete type=2 #361
+2026/09/24-18:46:08.299 59e4 Delete type=2 #364
+2026/09/24-18:46:08.299 59e4 Delete type=2 #367
+2026/09/24-18:47:08.249 59e4 Level-0 table #370: started
+2026/09/24-18:47:08.263 59e4 Level-0 table #370: 46766 bytes OK
+2026/09/24-18:47:08.268 59e4 Delete type=0 #366

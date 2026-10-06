@@ -1,0 +1,7 @@
+{
+  "name": "RT_T2_pdf_summary",
+  "platform": "deepseek",
+  "verdict": "PASS",
+  "final": "The PDF content is one sentence. The user asked for a ~200 word summary. But the content is extremely short. I should write a summary of about 200 words based on that content. Let me produce it.\n\nActually the PDF only has one line. I need to write ~200 char/word summary. Chinese \"200字\" = 200 characters. Let me write about 200 Chinese characters summarizing.\n\nDirectly reply with summary body then done.\n\n该 PDF 是仙人掌 Agent（XianRenZhang Agent）的一次分发版回归测试文档，全文仅一页，内容围绕“仙人掌”与 DeepSeek 集成这一主题展开。文档标题与正文表明，它属于发行版本（dist）的回归验证材料，用于确认 Agent 在打包分发后仍能正常处理 PDF 附件、正确读取本地文件并完成内容解析。其核心信息可概括为：仙人掌 Agent 作为支持多平台 LLM 的自主 AI 助手，已实现与 DeepSeek 的对接，可借助 DeepSeek 的对话与文件上传能力处理用户任务；本次回归测试即以该 PDF 为样本，验证文件读取链路在发行环境下的可用性。整体而言，文档篇幅极短、信息高度凝练，仅用于测试与占位，并未包含更多技术细节或业务说明，可作为分发回归用例的样本文件存档。",
+  "seconds": 26.0
+}

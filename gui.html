@@ -260,7 +260,9 @@ body {
 .chat-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
 /* 消息气泡 */
-.msg { max-width: 85%; padding: 10px 14px; border-radius: 12px; font-size: 14px; line-height: 1.6; word-break: break-word; }
+/* 【2026-10-05】与 .thinking-block 同因：父容器是 flex column + overflow-y:auto，
+   子项默认 flex-shrink:1，消息一多就会被纵向压扁（文字被裁）。统一禁止收缩。 */
+.msg { flex-shrink: 0; max-width: 85%; padding: 10px 14px; border-radius: 12px; font-size: 14px; line-height: 1.6; word-break: break-word; }
 .msg-user { align-self: flex-end; background: var(--green); color: #fff; }
 .msg-ai { align-self: flex-start; background: var(--bg3); border: 1px solid var(--border); }
 .msg-thought { align-self: flex-start; background: rgba(163,113,247,0.1); border: 1px solid rgba(163,113,247,0.3); color: var(--purple); font-style: italic; }
@@ -283,6 +285,8 @@ body {
 /* 子代理事件卡片：把子代理内部的多轮工具调用聚合进一张可折叠卡（带"链接"到子任务） */
 .subagent-block {
     align-self: flex-start; max-width: 95%;
+    /* 【2026-10-05】同 .thinking-block：禁纵向收缩，防消息一多被压扁成线 */
+    flex-shrink: 0;
     background: rgba(88,166,255,0.06);
     border: 1px solid rgba(88,166,255,0.35);
     border-radius: 12px; overflow: hidden; font-size: 13px;
@@ -305,6 +309,12 @@ body {
 /* 思考过程块（可折叠） */
 .thinking-block {
     align-self: flex-start;
+    /* 【2026-10-05 修"坍缩成紫色细线"】父容器 .chat-messages 是
+       display:flex; flex-direction:column，flex 子项默认 flex-shrink:1。
+       消息一多（overflow-y:auto 容器内内容超高），浏览器就把本块纵向压缩到
+       内容高度以下 —— head 文字被 overflow:hidden 裁掉，只剩一条紫色边框线，
+       点不开也浏览不了（用户实机截图）。禁止纵向压缩即可。 */
+    flex-shrink: 0;
     max-width: 90%;
     background: rgba(163,113,247,0.08);
     border: 1px solid rgba(163,113,247,0.3);
@@ -328,13 +338,23 @@ body {
     animation: pulse 1s infinite;
 }
 .thinking-block.done .think-head .dot { animation: none; background: var(--text2); }
+/* 【2026-09-24 #81】折叠/展开指示：箭头 + 状态化 head，消除"死缝"误导 */
+.thinking-block .think-head .chev {
+    font-size: 12px; opacity: .7; margin-left: 4px;
+    transition: transform .15s ease;
+}
+.thinking-block.collapsed .think-head {
+    background: rgba(163,113,247,0.12);   /* 折叠后保留可见底色，不再孤成一条死缝 */
+    min-height: 34px;
+}
+.thinking-block .think-hint { font-size: 11px; opacity: .6; }
 .thinking-block .think-body {
     padding: 0 12px 10px 12px;
     color: var(--text2);
     line-height: 1.6;
     white-space: pre-wrap;
     word-break: break-word;
-    max-height: 360px;
+    max-height: 480px;      /* 提高，长思考可滚动看完整（原 360px 易被误判成"看不了全"） */
     overflow-y: auto;
 }
 .thinking-block.collapsed .think-body { display: none; }
@@ -819,6 +839,8 @@ body {
 
 /* 工具结果卡（opencode 风格：可折叠 + diff 高亮） */
 .tool-result {
+    /* 【2026-10-05】同上：禁纵向收缩，防被压扁 */
+    flex-shrink: 0;
     margin: 6px 16px; border: 1px solid var(--border); border-radius: 8px;
     background: var(--bg2); overflow: hidden; font-size: 12.5px;
 }
@@ -859,6 +881,7 @@ body {
         <div class="section">🚀 快捷操作</div>
 <button onclick="showLocalPanel('status')" title="查看系统状态">📊 状态</button>
 <button onclick="showLocalPanel('help')" title="显示帮助信息">❓ 帮助</button>
+<button onclick="checkForUpdates()" title="检查并安装软件更新（只更新程序，不动你的数据/登录态）">🔄 检查更新</button>
 
         <div class="section">🌐 平台切换</div>
         <div id="platformList" style="display:flex;flex-direction:column;gap:4px;"><button id="pl-deepseek" class="active">💭 DeepSeek</button><button id="pl-tongyi">💬 通义千问</button><button id="pl-doubao">🤖 豆包</button><button id="pl-yuanbao">✨ 元宝</button></div>
@@ -1201,10 +1224,15 @@ function histThinkBlock(title) {
     const head = document.createElement('div');
     head.className = 'think-head';
     head.innerHTML = `<span class="dot"></span><span>${title}</span>`
-        + '<span style="margin-left:auto;font-size:11px;opacity:.6">点击折叠</span>';
+        + '<span class="think-hint" style="margin-left:auto">点击折叠</span><span class="chev">▾</span>';
     const body = document.createElement('div');
     body.className = 'think-body';
-    head.onclick = () => wrap.classList.toggle('collapsed');
+    head.onclick = () => {
+        wrap.classList.toggle('collapsed');
+        const c = wrap.classList.contains('collapsed');
+        head.querySelector('.think-hint').textContent = c ? '点击展开' : '点击折叠';
+        head.querySelector('.chev').textContent = c ? '▸' : '▾';
+    };
     wrap.appendChild(head); wrap.appendChild(body);
     msgDiv.appendChild(wrap);
     return body;
@@ -1354,10 +1382,15 @@ function showThinking(text) {
         wrap.className = 'thinking-block';
         const head = document.createElement('div');
         head.className = 'think-head';
-        head.innerHTML = '<span class="dot"></span><span>🧠 模型推理（深度思考）</span><span style="margin-left:auto;font-size:11px;opacity:.6">点击折叠</span>';
+        head.innerHTML = '<span class="dot"></span><span>🧠 模型推理（深度思考）</span><span class="think-hint" style="margin-left:auto">点击折叠</span><span class="chev">▾</span>';
         const body = document.createElement('div');
         body.className = 'think-body';
-        head.onclick = () => wrap.classList.toggle('collapsed');
+        head.onclick = () => {
+            wrap.classList.toggle('collapsed');
+            const c = wrap.classList.contains('collapsed');
+            head.querySelector('.think-hint').textContent = c ? '点击展开' : '点击折叠';
+            head.querySelector('.chev').textContent = c ? '▸' : '▾';
+        };
         wrap.appendChild(head);
         wrap.appendChild(body);
         const welcome = msgDiv.querySelector('.welcome');
@@ -1367,8 +1400,24 @@ function showThinking(text) {
         currentThinkingBody = body;
     }
     if (currentThinkingBody) {
-        currentThinkingBody.textContent = stripNoise(text);
-        msgDiv.scrollTop = msgDiv.scrollHeight;
+        // 【防坍缩 2026-09-25】平台思考流是「滚动快照」：只许变长不许变短。
+        // 【卡顿修复 2026-09-26】旧实现每帧 `textContent = cleaned` 全量重写整段
+        // pre-wrap 长文本 + 每帧强制滚底 → 反复 reflow，长思考时界面明显卡顿。
+        // 现在：
+        //   · cleaned 以 cur 为前缀（单调追加）→ 只 append 尾部增量 text node（局部 layout）；
+        //   · 非前缀（中途清洗导致整体替换）→ 才整体重写；
+        //   · 滚底仅在「用户贴底」时执行，避免上翻读历史被打回底（也是卡顿感之一）。
+        const cleaned = stripNoise(text);
+        const cur = currentThinkingBody.textContent || '';
+        if (cleaned.length >= cur.length && cleaned !== cur) {
+            if (cleaned.startsWith(cur)) {
+                currentThinkingBody.appendChild(document.createTextNode(cleaned.slice(cur.length)));
+            } else {
+                currentThinkingBody.textContent = cleaned;
+            }
+        }
+        const nearBottom = msgDiv.scrollHeight - msgDiv.scrollTop - msgDiv.clientHeight < 80;
+        if (nearBottom) msgDiv.scrollTop = msgDiv.scrollHeight;
     }
 }
 
@@ -1384,10 +1433,15 @@ function appendThinking(text) {
         wrap.className = 'thinking-block';
         const head = document.createElement('div');
         head.className = 'think-head';
-        head.innerHTML = '<span class="dot"></span><span>🧠 思考过程（Agent 计划）</span><span style="margin-left:auto;font-size:11px;opacity:.6">点击折叠</span>';
+        head.innerHTML = '<span class="dot"></span><span>🧠 思考过程（Agent 计划）</span><span class="think-hint" style="margin-left:auto">点击折叠</span><span class="chev">▾</span>';
         const body = document.createElement('div');
         body.className = 'think-body';
-        head.onclick = () => wrap.classList.toggle('collapsed');
+        head.onclick = () => {
+            wrap.classList.toggle('collapsed');
+            const c = wrap.classList.contains('collapsed');
+            head.querySelector('.think-hint').textContent = c ? '点击展开' : '点击折叠';
+            head.querySelector('.chev').textContent = c ? '▸' : '▾';
+        };
         wrap.appendChild(head);
         wrap.appendChild(body);
         const welcome = msgDiv.querySelector('.welcome');
@@ -1401,7 +1455,8 @@ function appendThinking(text) {
     p.className = 'think-step';
     p.textContent = stripNoise(text);
     currentPlanBody.appendChild(p);
-    msgDiv.scrollTop = msgDiv.scrollHeight;
+    const nearBottom2 = msgDiv.scrollHeight - msgDiv.scrollTop - msgDiv.clientHeight < 80;
+    if (nearBottom2) msgDiv.scrollTop = msgDiv.scrollHeight;
 }
 
 function endPlan() {
@@ -1589,6 +1644,13 @@ function handleGuiEvent(etype, data) {
     if (etype === 'task_started') {
         const tt = data || {};
         addTask(tt.task_id || '', tt.title || '', tt.platform || CURRENT_PLATFORM);
+        // 【产物栏修复 2026-09-25】实时任务一开始就把它设为「当前活跃任务」。
+        // 旧实现 activeTaskId 只在历史/恢复路径赋值 → 实时任务期间它一直是上一个
+        // 任务的值 → completeTask 判 mine=false 跳过刷新 → 右侧预览栏停在旧任务
+        // （常为空），用户看到「文件生成了但预览栏没出现」。
+        if (tt.task_id && !HIST_VIEW) {
+            try { activeTaskId = String(tt.task_id); } catch (e) {}
+        }
     }
     // 思考过程：实时渲染为可折叠的「思考过程」块
     if (etype === 'ai_thinking') {
@@ -1611,8 +1673,10 @@ function handleGuiEvent(etype, data) {
         }
         setStatus('online');
         sending = false;
-        // 完成任务
-        const tid = (data && data.task_id) ? String(data.task_id) : null;
+        // 完成任务（【修复】后端 ai_final_reply 偶尔不带 task_id → 旧代码直接跳过
+        // completeTask → 产物栏永不刷新。兜底用 task_started 时的当前任务 id）
+        const tid = (data && data.task_id) ? String(data.task_id)
+            : (CURRENT_TASK_ID || activeTaskId || null);
         if (tid) completeTask(tid, data.type === 'error' ? 'failed' : 'done');
         return;
     }
@@ -1922,6 +1986,54 @@ async function newConversation() {
     }
 }
 
+// ── 🔄 检查并安装软件更新（#87 自动更新，2026-09-24）──
+// 走后端 /check_update（热补丁挂载）。先只查（install:false）报版本，
+// 有新版本就确认安装（install:true：下载+覆盖程序文件，绝不动 xrz_data），
+// 装完调 /restart 让新版进程接管。全程不碰用户数据 / 登录态 / 历史。
+let UPDATING = false;
+async function checkForUpdates() {
+    if (UPDATING) return;
+    UPDATING = true;
+    addMsg('🔄 正在检查更新…', 'system');
+    try {
+        const r1 = await fetch(API + '/check_update', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ install: false }),
+            signal: AbortSignal.timeout(60000),
+        });
+        const chk = await safeJson(r1);
+        if (!chk || chk.reason || !chk.has_update) {
+            addMsg('✅ 已是最新版本' + (chk && chk.version ? '（' + chk.version + '）' : '') +
+                  (chk && chk.reason ? '（网络暂不可用）' : ''), 'system');
+            return;
+        }
+        addMsg('📦 发现新版本 ' + (chk.version || '新版') + '。' +
+               (chk.notes ? ' 更新说明：' + String(chk.notes).slice(0, 120) : '') +
+               '\n点「确认更新」将下载并替换程序文件（不会动你的登录态/历史/数据）。', 'system');
+        // 给用户一个 30s 的自动确认窗口；也可手动再点一次按钮触发安装
+        const go = confirm('发现新版本 ' + (chk.version || '') + '，现在下载安装吗？\n（只更新程序，不动数据）');
+        if (!go) { addMsg('已取消更新。', 'system'); return; }
+        addMsg('⬇️ 正在下载并安装 ' + (chk.version || '新版') + ' …', 'system');
+        const r2 = await fetch(API + '/check_update', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ install: true }),
+            signal: AbortSignal.timeout(300000),
+        });
+        const inst = await safeJson(r2);
+        if (inst && inst.ok && inst.need_restart) {
+            addMsg('✅ 更新完成，正在重启…', 'system');
+            await fetch(API + '/restart', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            addMsg('⚠️ 更新未完成：' + ((inst && inst.message) ? inst.message : '后端未确认'), 'error');
+        }
+    } catch (e) {
+        addMsg('检查更新失败: ' + e.message, 'error');
+    } finally {
+        UPDATING = false;
+    }
+}
+
 // ── 切回旧任务并继续聊（把某条历史任务的上下文还原成当前活动会话，接着发新消息）──
 // 后端 /command 原生支持「恢复对话 <id>」（restore_conversation：把该任务的会话 JSON
 // 载入为当前会话 + 导航回平台对应网页），这里做三件事：
@@ -1951,8 +2063,8 @@ async function resumeTask(taskId, fallbackTitle) {
             // 否则恢复完下一条消息又另开新任务，「怎么继续执行任务」就断了。
             try { CURRENT_TASK_ID = taskId; } catch (e) {}
             try { activeTaskId = taskId; if (typeof bindFileScope === 'function') bindFileScope(taskId); } catch (e) {}
-            addMsg('✅ 已切回任务「' + (fallbackTitle || taskId) + '」，其上下文已还原为当前会话（浏览器已同步跳回该对话页）。\n'
-                 + '直接在下面输入框发新消息即可继续这个任务；点「➕ 新建对话」可随时开全新上下文。', 'system');
+            addMsg('✅ 恢复指令已受理：正在把「' + (fallbackTitle || taskId) + '」的历史上下文载入当前会话，浏览器同步跳回该对话页（约几秒）。\n'
+                 + '看到浏览器回到该对话后，直接在下面输入框发新消息即可继续这个任务；点「➕ 新建对话」可随时开全新上下文。', 'system');
         } else {
             addMsg('⚠️ 恢复任务：' + ((d && d.text) ? d.text : '后端未确认') + '\n可点「📚 历史记录」回看该任务内容。', 'system');
         }
@@ -2069,23 +2181,6 @@ async function deleteTask(taskId) {
         }
     } catch (e) {
         addLocalCard('❌ 删除任务失败: ' + e.message, 12000);
-    }
-}
-
-async function deleteFile(filename) {
-    if (!confirm('确定要删除这个文件吗？')) return;
-    try {
-        const resp = await fetch(API + '/files/' + encodeURIComponent(filename), { method: 'DELETE' });
-        const data = await safeJson(resp);
-        if (data.type === 'ok') {
-            addLocalCard('🗑 已删除文件 ' + filename, 5000);
-            renderFileSidebar();
-            renderAttachments();
-        } else {
-            addLocalCard('❌ 删除文件失败：' + (data.text || '未知错误'), 12000);
-        }
-    } catch (e) {
-        addLocalCard('❌ 删除文件失败: ' + e.message, 12000);
     }
 }
 
@@ -2336,7 +2431,6 @@ function renderFileSidebar() {
                 <div class="file-size">${formatSize(f.size)}</div>
             </div>
             <div class="file-close" onclick="event.stopPropagation(); revealFile(${JSON.stringify(f.path).replace(/"/g,'&quot;')})" title="在资源管理器中显示位置">📂</div>
-            <div class="file-close" onclick="event.stopPropagation(); deleteFile('${escapeHtml(f.name)}')" title="删除">✕</div>
         `;
         container.appendChild(item);
     });
@@ -2352,6 +2446,15 @@ function formatSize(bytes) {
 async function previewFile(path) {
     const container = document.getElementById('filePreviewContainer');
     if (!container) return;
+    // 【2026-09-26 修"PPT 生成结束后预览不可用"】侧边栏处于 collapsed 时
+    // width=0 + overflow:hidden，预览容器被压成 0px 看不见 → 用户以为"预览坏了"。
+    // 点文件预览时自动展开 collapsed 的侧边栏，保证内容可见。
+    const sidebar = document.getElementById('fileSidebar');
+    if (sidebar && sidebar.classList.contains('collapsed')) {
+        sidebar.classList.remove('collapsed');
+        const btn = document.getElementById('fileSidebarToggle');
+        if (btn) btn.textContent = '›';
+    }
 
     try {
         const r = await fetch(API + '/preview?path=' + encodeURIComponent(path), {

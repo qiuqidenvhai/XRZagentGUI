@@ -1084,10 +1084,12 @@ class BrowserManager:
             raise
 
     async def wait_response(self, timeout: int = 120, on_thinking=None,
-                            thinking_selector: str = "") -> Optional[str]:
+                            thinking_selector: str = "", stop_check=None) -> Optional[str]:
         """等待 AI 回复（可选实时抓取「思考过程」并通过 on_thinking 回调上报）
 
         改进：每次循环都检测页面是否还活着。如果页面掉线/崩溃，立即返回而不是死等 timeout。
+        stop_check：可调用（无参），返回 True 则立即中止等待、返回已抓到的部分文本
+        （让「⏹ 中断 / 💬 插话」在等待 AI 期间也真正生效）。
         """
         if self._page is None:
             return None
@@ -1099,6 +1101,14 @@ class BrowserManager:
 
         for _ in range(timeout):
             await asyncio.sleep(1)
+            # 【#85】用户中断立即生效：每个 tick 查 stop_check，命中就中止等待
+            if stop_check is not None:
+                try:
+                    if stop_check():
+                        logger.info("等待回复中被 stop_check 中止（中断/插话）")
+                        return last_text or None
+                except Exception:
+                    pass
             try:
                 # 先检查页面是否还活着，如果死了立即返回
                 if self._page.is_closed():

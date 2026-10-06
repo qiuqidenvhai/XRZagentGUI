@@ -15,8 +15,48 @@ import os
 from pathlib import Path
 
 # ---- 数据根目录 ----
-# 可被环境变量 XRZ_DATA_DIR 覆盖（例如用户想把数据放到别的 D 盘目录）。
-DATA_ROOT = Path(os.environ.get("XRZ_DATA_DIR", r"D:\软件\XianRenZhangAgent\xrz_data")).resolve()
+# 优先级：环境变量 XRZ_DATA_DIR > 自动定位（本文件所在的项目根/xrz_data）> 内置回退。
+#
+# 【#86 2026-09-24 可迁移关键】旧实现把默认值写死成 D:\软件\XianRenZhangAgent\xrz_data，
+# 软件一旦被解压/复制到别的盘符（如 E:\XRZ、C:\tools\XRZ），登录态 / 对话历史 /
+# 浏览器 profile / 任务产物就全落在旧 D 盘，"解压即用" 名存实亡。
+# 现在默认改为「本文件（agent_core/xrz_paths.py）上溯两级的项目根 / xrz_data」：
+# 只要 Python 解释器在软件目录里（PyInstaller onedir 的 _internal、或同目录 pythonw.exe），
+# 数据目录就自动跟着软件走，解压到任意位置都能直接跑。
+# 仍保留 XRZ_DATA_DIR 环境变量强制覆盖（用户想把数据单独挪到某个盘时）。
+def _project_root() -> str:
+    """自动定位项目根 = 本文件（agent_core/xrz_paths.py）的上两级目录。
+
+    【#86 冻结模式 2026-09-24】PyInstaller onedir 布局下：
+        <软件根>/XianRenZhangAgent.exe        (GUI 壳)
+        <软件根>/XianRenZhangBackend.exe      (后端)
+        <软件根>/_internal/agent_core/xrz_paths.py
+        <软件根>/xrz_data/                    ← 数据目录应放【软件根】，跟着整个文件夹走
+    此时本文件上两级是 _internal，再上一级（exe 所在目录）才是「软件根」。
+    用 sys.executable 所在目录兜住，保证解压/拷贝到任意位置数据都跟软件走。
+    """
+    import sys
+    base = Path(__file__).resolve().parent.parent
+    if getattr(sys, "frozen", False):
+        # exe 与 _internal 同级；数据目录放在 exe 所在目录（整个软件文件夹可迁移）
+        try:
+            exe_dir = Path(sys.executable).resolve().parent
+            if exe_dir.exists():
+                base = exe_dir
+        except Exception:
+            pass
+    return str(base)
+
+
+def _default_data_root() -> str:
+    """项目根/xrz_data；定位失败时回退到旧 D 盘路径（兼容非标准布局）。"""
+    try:
+        return str(Path(_project_root()) / "xrz_data")
+    except Exception:
+        return r"D:\软件\XianRenZhangAgent\xrz_data"
+
+
+DATA_ROOT = Path(os.environ.get("XRZ_DATA_DIR", _default_data_root())).resolve()
 
 # ---- 仙人掌 Agent 私有目录（对应旧的 ~/.xianrenzhang_agent）----
 XRZ_AGENT_DIR = DATA_ROOT / ".xianrenzhang_agent"

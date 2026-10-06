@@ -86,6 +86,79 @@ TEMPLATE_CATALOG: Dict[str, Dict[str, Any]] = {
         "scenes": ["教学", "培训", "幼儿园"],
         "recommended_slides": [1, 2, 4, 6, 8, 10, 12, 14, 16, 17],
     },
+    # ── 【2026-09-25 模板目录补全】磁盘上这 10 套模板一直存在（templates/*/detail.json
+    #    齐全、build_pptx 直接可用），但不在目录里 → AI 看不见、永远选不到。
+    #    用户明确要求「PPT 模板要多样」——补全后 catalog 与磁盘 19 套一一对应。
+    "operations-deck": {
+        "name": "运营PPT合辑",
+        "slides": 52,
+        "style": "运营数据看板",
+        "scenes": ["运营汇报", "活动复盘", "增长分析"],
+        "recommended_slides": [1, 3, 5, 9, 13, 17, 21, 25, 29, 33, 37, 41, 45, 49, 52],
+    },
+    "premium-corp": {
+        "name": "高级感大厂PPT合辑",
+        "slides": 35,
+        "style": "高端商务质感",
+        "scenes": ["品牌发布", "产品介绍", "融资路演"],
+        "recommended_slides": [1, 2, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 35],
+    },
+    "quarterly-illust": {
+        "name": "蓝灰酸性插画季度总结",
+        "slides": 19,
+        "style": "酸性插画风",
+        "scenes": ["季度总结", "创意汇报"],
+        "recommended_slides": [1, 2, 4, 6, 8, 10, 12, 14, 16, 19],
+    },
+    "red-patriot-general": {
+        "name": "红色爱国主题教育通用",
+        "slides": 25,
+        "style": "党政红大气",
+        "scenes": ["主题教育", "党建汇报", "党课"],
+        "recommended_slides": [1, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 25],
+    },
+    "report-massive-charts": {
+        "name": "汇报合辑·数据图表与业绩",
+        "slides": 38,
+        "style": "全场景图表",
+        "scenes": ["业绩汇报", "数据复盘", "经营分析"],
+        "recommended_slides": [1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 33, 35, 38],
+    },
+    "report-massive-models": {
+        "name": "汇报合辑·思维模型与复盘",
+        "slides": 38,
+        "style": "方法论图示",
+        "scenes": ["复盘", "方法论分享", "战略汇报"],
+        "recommended_slides": [1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 33, 35, 38],
+    },
+    "report-massive-reports": {
+        "name": "汇报合辑·工作汇报与竞聘",
+        "slides": 37,
+        "style": "全场景汇报",
+        "scenes": ["工作汇报", "竞聘", "述职"],
+        "recommended_slides": [1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 33, 35, 37],
+    },
+    "thesis-formula": {
+        "name": "开题报告万能公式",
+        "slides": 39,
+        "style": "学术答辩风",
+        "scenes": ["开题答辩", "毕业答辩", "学术汇报"],
+        "recommended_slides": [1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 33, 35, 39],
+    },
+    "thesis-novice": {
+        "name": "多专业开题方法论库",
+        "slides": 32,
+        "style": "学术绿清新",
+        "scenes": ["开题报告", "论文答辩"],
+        "recommended_slides": [1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 32],
+    },
+    "top-thesis": {
+        "name": "名校开题报告合辑",
+        "slides": 39,
+        "style": "名校学术风",
+        "scenes": ["开题答辩", "名校风格学术汇报"],
+        "recommended_slides": [1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 33, 35, 39],
+    },
 }
 
 # 主题名 → 推荐模板 slug 映射（模糊匹配）
@@ -277,8 +350,17 @@ def _split_long_slides(slides: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
 
 # ── 模板选择 ──────────────────────────────────────────────────────────────
 
-def select_template(theme_name: str = "blue", context_hint: str = "") -> str:
-    """根据主题名和上下文提示，选择最适合的模板 slug。"""
+def select_template(theme_name: str = "blue", context_hint: str = "",
+                    explicit_slug: str = "") -> str:
+    """根据主题名/上下文/显式 slug，选择最适合的模板 slug。
+
+    优先级：显式 slug（AI 直接点名某套模板）> theme 关键词映射 > 默认。
+    这是 #82 的核心：让 AI 能从 10 套模板里挑，而不永远落到
+    minimal-business-summary。
+    """
+    # 1) AI 显式指定模板 slug → 直接用（catalog 里有就用，没有就退回映射）
+    if explicit_slug and explicit_slug in TEMPLATE_CATALOG:
+        return explicit_slug
     hint = (theme_name + " " + context_hint).lower()
 
     if theme_name in TEMPLATE_CATALOG:
@@ -288,7 +370,19 @@ def select_template(theme_name: str = "blue", context_hint: str = "") -> str:
         if keyword in hint:
             return slug
 
-    return "minimal-business-summary"
+    # 兜底：若显式 slug 给的是「不在 catalog 但像 slug」的串，仍尝试采用（容错）
+    if explicit_slug:
+        return explicit_slug
+    # 【#84 2026-09-26】不再永远落 minimal-business-summary，而是随机选一套，
+    # 保证「AI 不指定 template」时每次生成的 PPT 风格也不同。
+    import random as _rnd
+    return _rnd.choice(list(TEMPLATE_CATALOG.keys()))
+
+
+# ── 模板目录简报（给 AI 看，便于它挑模板）─────────────────────────────
+TEMPLATE_CATALOG_BRIEF: str = "；".join(
+    f"{slug}={meta['name']}" for slug, meta in TEMPLATE_CATALOG.items()
+)
 
 
 # ── 构建 edits.json ───────────────────────────────────────────────────────
@@ -330,22 +424,48 @@ def build_edits_json(
 
     cover_page = next((p for p in all_pages if p["slide_number"] == cover_s), None)
     if cover_page:
-        for slot in cover_page.get("text_slots", []):
-            role = slot.get("role", "")
-            slot_id = slot["slot_id"]
-            # 判断英文副标还是中文主标题
-            if "英文" in role or "副标" in role:
-                new_text = subtitle[: slot.get("max_chars", 14)] if subtitle else ""
-            elif "中文" in role or "主标题" in role:
-                new_text = deck_title[: slot.get("max_chars", 20)]
+        # 【治封面标题碎片铺满】data-viz-deck 等模板第 1 页 60+ 个装饰微槽
+        # （cap 2~14，多重复同标题槽）全铺标题 → 渲染成一片"新能 / 新能源市场趋…"
+        # 碎片水印。只挑 cap 最大的 1 个"主标题"槽放 deck_title、
+        # cap 次大的 1 个"副标题"槽放 subtitle，其余一律清空（保持原 demo 装饰样式）。
+        _cover_slots = [s for s in cover_page.get("text_slots", [])]
+        _main_slot = None
+        _sub_slot = None
+        # 先找角色明确的 主标题/副标题 槽（cap>=8）
+        for s in _cover_slots:
+            r = s.get("role", "")
+            cap = int(s.get("max_chars", 0) or 0)
+            if cap < 8:
+                continue
+            if ("主标题" in r or "中文" in r) and _main_slot is None:
+                _main_slot = s
+            elif ("副标" in r or "英文" in r) and _sub_slot is None:
+                _sub_slot = s
+        # 若没找到角色明确的，按 cap 降序：最大的当主标题，次大的当副标题
+        if _main_slot is None:
+            _sorted_caps = sorted(_cover_slots,
+                                  key=lambda s: int(s.get("max_chars", 0) or 0),
+                                  reverse=True)
+            _eligible = [s for s in _sorted_caps if int(s.get("max_chars", 0) or 0) >= 8]
+            if _eligible:
+                _main_slot = _eligible[0]
+                if len(_eligible) > 1:
+                    _sub_slot = _sub_slot or _eligible[1]
+        _cover_write = {}
+        if _main_slot is not None:
+            _cover_write[_main_slot["slot_id"]] = deck_title
+        if _sub_slot is not None:
+            _cover_write[_sub_slot["slot_id"]] = (subtitle or "")
+        for s in _cover_slots:
+            sid = s["slot_id"]
+            if sid in _cover_write:
+                _cap = int(s.get("max_chars", 0) or 0)
+                txt = _cover_write[sid]
+                edits.append({"slide": cover_s, "slot_id": sid,
+                              "new_text": txt[:_cap] if _cap else txt})
             else:
-                # 根据位置判断：第一个槽位放英文，第二个放中文
-                slot_idx = next((i for i, s in enumerate(cover_page["text_slots"]) if s["slot_id"] == slot_id), 0)
-                if slot_idx == 0:
-                    new_text = subtitle[: slot.get("max_chars", 14)] if subtitle else ""
-                else:
-                    new_text = deck_title[: slot.get("max_chars", 20)]
-            edits.append({"slide": cover_s, "slot_id": slot_id, "new_text": new_text})
+                # 封面其余装饰微槽一律清空（防标题碎片重复铺满 + 防 demo 残留）
+                edits.append({"slide": cover_s, "slot_id": sid, "new_text": ""})
 
     # ── 2. 目录页（如果有多个章节） ──
     if len(slides) > 2 and agenda_slides:
@@ -375,6 +495,18 @@ def build_edits_json(
                                       "new_text": ch[: slot.get("max_chars", 10)]})
 
     # ── 3. 内容页：按章节分配 ──
+    # 【治"图解小标签页挤字"】architecture-deck / report-savior 等内容页混着大量
+    # "最大槽 cap<12"的图解/小标签页（如 arch s1 最大才 13）。40 字 bullet 落到这类
+    # 页只能塞进 13 字小槽 → autofit 缩到 2pt → 黑块挤字。按"每页最大槽容量"降序重排
+    # content_slides：大字槽页（cap 大、能装整句）排前，小标签页排后兜底；
+    # requested_count 较少时优先选到能装下内容的页。
+    _page_max_cap = {p.get("slide_number"):
+                     max([int(s.get("max_chars", 0) or 0)
+                          for s in p.get("text_slots", [])] or [0])
+                     for p in all_pages}
+    content_slides = sorted(content_slides,
+                            key=lambda sn: _page_max_cap.get(sn, 0),
+                            reverse=True)
     content_used = 0
     section_idx = 0
 
@@ -425,15 +557,65 @@ def build_edits_json(
                     elif "面包屑章节英文" in role:
                         edits.append({"slide": cont_s, "slot_id": sid,
                                       "new_text": heading[: slot.get("max_chars", 14)]})
-                # 把 bullets 填入 title 槽位（body 保持原样）
-                # 提取所有非 body 的 slot（title/num 类）
-                content_slots = [s for s in cont_page.get("text_slots", [])
-                                 if "body" not in s.get("role", "").lower()
-                                 and "面包屑" not in s.get("role", "")]
-                for ci, bullet_text in enumerate(chunk):
-                    if ci < len(content_slots):
-                        edits.append({"slide": cont_s, "slot_id": content_slots[ci]["slot_id"],
-                                      "new_text": bullet_text[: content_slots[ci].get("max_chars", 72)]})
+                # 【2026-09-26 修复】按「槽位角色 + 容量」分配 bullet，治"黑块很小、
+                # 字挤在一起/被挤到外面"。旧代码把整条 40~70 字 bullet 按槽位顺序硬塞进
+                # 该页全部槽（连 0.5in 高、max_chars=12/15 的深色小标题条、装饰符号、
+                # max_chars=6 的百分比数字槽都塞），autofit 一缩 → 字全挤进小黑框。
+                # 现在：整句只进大容量"正文段落/正文短句"槽；溢出才进"标题"小槽且只放
+                # 短语；装饰/数字小槽不塞业务文本（保持原样）；未覆盖的正文/标题槽清空
+                # （防模板 demo 残留文字）。若槽无任何角色标注 → 兜底回退全量按序塞。
+                _all_slots = [s for s in cont_page.get("text_slots", [])
+                              if "面包屑" not in s.get("role", "")]
+                _role_kw_body = ("正文", "body", "paragraph", "短句")
+                _role_kw_head = ("标题", "title", "heading")
+
+                def _has_kw(s, kws):
+                    role = s.get("role", "") or ""
+                    rlow = role.lower()
+                    return any(k in role or k in rlow for k in kws)
+
+                _body_slots = [s for s in _all_slots if _has_kw(s, _role_kw_body)]
+                _body_ids = {s["slot_id"] for s in _body_slots}
+                _head_slots = [s for s in _all_slots
+                               if _has_kw(s, _role_kw_head) and s["slot_id"] not in _body_ids]
+                _used_slot_ids = set()
+                # 【治"黑块挤字 + 碎片截断"】核心原则：bullet 一律「整句放、绝不截断」。
+                # 旧逻辑按 max_chars 硬截断，会把 40 字 bullet 砍成 "全球新能源汽车
+                # 销量2025"（13字中途断句）这类碎片，比 autofit 缩字丑得多。
+                # 现在：只挑 cap>=20 的「大字槽」整句放正文；cap 过小的槽（深色小标题条/
+                # 装饰符号/百分比，cap<12）autofit 会把长句缩到 2-3pt 看不见，一律跳过，
+                # 留给下方「清空未分配槽」逻辑（防 demo 残留）。
+                _big = sorted(
+                    [s for s in (_body_slots + _head_slots)
+                     if int(s.get("max_chars", 0) or 0) >= 20],
+                    key=lambda s: int(s.get("max_chars", 0) or 0), reverse=True)
+                _bi = 0
+                for s in _big:
+                    if _bi >= len(chunk):
+                        break
+                    edits.append({"slide": cont_s, "slot_id": s["slot_id"],
+                                  "new_text": chunk[_bi]})  # 整句，不截断
+                    _used_slot_ids.add(s["slot_id"]); _bi += 1
+                # 本页没有 cap>=20 的大字槽（全是微型槽，如 architecture-deck s1/s2）→
+                # 把第一条 bullet 整句放进本页 cap>=12 的最大槽（仍避开 cap<12 的纯装饰槽），
+                # autofit 负责缩字，保证该页不空白、句子完整不断片。
+                if _bi == 0:
+                    _pool = [s for s in _all_slots
+                             if int(s.get("max_chars", 0) or 0) >= 12]
+                    _pool.sort(key=lambda s: int(s.get("max_chars", 0) or 0),
+                               reverse=True)
+                    if _pool:
+                        edits.append({"slide": cont_s, "slot_id": _pool[0]["slot_id"],
+                                      "new_text": chunk[0]})
+                        _used_slot_ids.add(_pool[0]["slot_id"])
+                # 3)【根治 demo 残留】该页所有「未被本次分配写入」的文本槽一律清空。
+                #    覆盖 正文/标题 之外残留的 辅助文本 / 英文标签 / 装饰序号 / 百分比 /
+                #    模板自带英文样例（如 "E-commerce in 2023…"）——这些都会串进用户 PPT。
+                #    注意：只清 _all_slots（已排除面包屑槽；面包屑在上方单独赋值，不能动）。
+                for s in _all_slots:
+                    if s["slot_id"] not in _used_slot_ids:
+                        edits.append({"slide": cont_s, "slot_id": s["slot_id"],
+                                      "new_text": ""})
                 content_used += 1
 
     # ── 3.5 补齐：只有标题、没有正文要点的页不能被整页丢掉 ──
@@ -505,8 +687,13 @@ def build_edits_json(
 # ── 主入口 ────────────────────────────────────────────────────────────────
 
 def build_pptx(out_path, raw_content: Any, deck_title: str = "演示文稿",
-               theme_name: str = "blue", subtitle: str = "") -> Dict[str, Any]:
-    """生成 PPT 文件。返回统计信息 dict。"""
+               theme_name: str = "blue", subtitle: str = "",
+               template: str = "") -> Dict[str, Any]:
+    """生成 PPT 文件。返回统计信息 dict。
+
+    template: 显式指定模板 slug（10 套任选，见 TEMPLATE_CATALOG）。留空则按
+    theme_name 模糊映射（#82：让 AI 能挑模板，而非永远落 default）。
+    """
     from pathlib import Path as _P
 
     out_path = _P(out_path)
@@ -530,33 +717,64 @@ def build_pptx(out_path, raw_content: Any, deck_title: str = "演示文稿",
         if len(slides) > 1:
             slides = slides[1:]
 
-    template_slug = select_template(theme_name)
+    template_slug = select_template(theme_name, explicit_slug=template)
     print(f"[pptx_builder] 选用模板: {template_slug} ({TEMPLATE_CATALOG.get(template_slug, {}).get('name', '?')})")
 
+    # 【便携版修复 2026-09-25】build_edits_json 任何失败（模板缺失/JSON损坏/权限）
+    # 都必须回退纯色绘制 —— 旧代码只捕 FileNotFoundError，别的异常直接上抛，
+    # 工具报错、模型却口头宣称「已生成」→ 用户拿到「显示生成实则没有」。
     try:
         edits_spec = build_edits_json(template_slug, slides, deck_title, subtitle,
                                       requested_count=_requested_count)
-    except FileNotFoundError as e:
-        print(f"[pptx_builder] ⚠ 模板文件缺失，回退到纯色绘制: {e}")
+    except BaseException as e:  # noqa: BLE001 - 兜底优先于报错
+        print(f"[pptx_builder] ⚠ 模板编辑方案构建失败({type(e).__name__})，回退纯色绘制: {e}")
         return _fallback_build(out_path, slides, deck_title, theme_name, subtitle)
 
     tmp_edits = out_path.with_suffix(".edits.json")
     try:
         tmp_edits.write_text(json.dumps(edits_spec, ensure_ascii=False, indent=2), encoding="utf-8")
 
-        py_path = "D:/软件/Python/python.exe"
-        result = subprocess.run(
-            [py_path, str(BUILD_SCRIPT),
-             str(TEMPLATES_DIR / template_slug / "template.pptx"),
-             str(tmp_edits),
-             str(out_path),
-             "--detail", str(TEMPLATES_DIR / template_slug / "detail.json"),
-             "--no-lint"],
-            capture_output=True, text=True, timeout=60,
-        )
+        # 【#86 可迁移】用「当前运行本进程的 Python 解释器」而非写死的 D:/软件/Python。
+        # PyInstaller onedir 打包后 sys.executable 就是便携包内的解释器，
+        # 自带 python-pptx，build_pptx.py 子进程才不会找不到依赖。
+        import sys as _sys
+        py_path = _sys.executable
+        # 【便携版修复 2026-09-25】在别人的电脑上这套子进程有三个坑，全部堵死：
+        #   1) 旧 text=True 按本机 ACP 解码：对方电脑代码页不同（GBK / UTF-8 beta）
+        #      时中文输出直接 UnicodeDecodeError → 异常上抛 → 工具报错，
+        #      模型却照样口头「已生成」→「显示生成实则没有」。现在双端固定
+        #      PYTHONIOENCODING=utf-8 + encoding="utf-8" + errors="replace"，永不炸。
+        #   2) timeout=60 冷机 + 杀软首次全盘扫描会被击穿，且 TimeoutExpired 没被
+        #      捕获（旧代码只捕 FileNotFoundError）→ 同样上抛假失败。提到 240s，
+        #      并捕获【一切】异常 → 回退纯色绘制，保证必有文件落盘。
+        #   3) CREATE_NO_WINDOW 防控制台黑框在用户桌面上闪烁。
+        import os as _os
+        _env = dict(_os.environ)
+        _env["PYTHONIOENCODING"] = "utf-8"
+        try:
+            result = subprocess.run(
+                [py_path, str(BUILD_SCRIPT),
+                 str(TEMPLATES_DIR / template_slug / "template.pptx"),
+                 str(tmp_edits),
+                 str(out_path),
+                 "--detail", str(TEMPLATES_DIR / template_slug / "detail.json"),
+                 "--no-lint"],
+                capture_output=True, text=True, encoding="utf-8", errors="replace",
+                timeout=240, env=_env,
+                creationflags=0x08000000,  # CREATE_NO_WINDOW
+            )
+        except BaseException as _sub_e:  # noqa: BLE001 - TimeoutExpired 等一律回退
+            print(f"[pptx_builder] ⚠ 模板子进程失败({type(_sub_e).__name__})，回退纯色绘制: {_sub_e}")
+            return _fallback_build(out_path, slides, deck_title, theme_name, subtitle)
 
         if result.returncode != 0:
             print(f"[pptx_builder] build_pptx.py 失败: {result.stderr}")
+            return _fallback_build(out_path, slides, deck_title, theme_name, subtitle)
+
+        # 【便携版修复】子进程「成功」但文件没落盘（杀软拦截写入/路径映射差异）
+        # 也必须回退 —— 绝不允许「返回成功、磁盘无文件」的状态存在。
+        if not out_path.exists() or out_path.stat().st_size <= 0:
+            print("[pptx_builder] ⚠ 子进程返回成功但产物缺失，回退纯色绘制")
             return _fallback_build(out_path, slides, deck_title, theme_name, subtitle)
 
         _titles = [str(deck_title)] + [str(s.get("heading", "") or "") for s in slides]

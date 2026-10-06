@@ -1,16 +1,16 @@
 # 仙人掌 Agent 端到端测试总报告
 
-生成时间：2026-08-26 18:20:04
+生成时间：2026-09-25 18:55:05
 
 ## 结果汇总
 
 - [PASS] T1 DeepSeek 生成Word
-- [PASS] T2 DeepSeek PDF摘要
-- [FAIL] T3 Qwen file_edit
-- [PASS] T4 Qwen 多轮对话
-- [PASS] T5 思考过程事件管线(共51条thinking)
+- [FAIL] T2 DeepSeek PDF摘要
+- [PASS] T3 Qwen file_edit
+- [FAIL] T4 Qwen 多轮对话
+- [PASS] T5 思考过程事件管线(共259条thinking)
 
-**通过 4/5**
+**通过 3/5**
 
 ## 偷懒检查（禁止 ask/question）
 - 全任务 ask/question 工具调用次数: **0**（应为 0） ✅ agent 未把任务踢回给用户

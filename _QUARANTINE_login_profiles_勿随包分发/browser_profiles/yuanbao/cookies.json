@@ -1,0 +1,142 @@
+[
+  {
+    "name": "_TDID_CK",
+    "value": "1789360585884",
+    "domain": "yuanbao.tencent.com",
+    "path": "/chat",
+    "expires": -1,
+    "httpOnly": false,
+    "secure": false,
+    "sameSite": "Lax"
+  },
+  {
+    "name": "_qimei_uuid42",
+    "value": "1a81b0c36051007b4c031501ebd6c982988eae028d",
+    "domain": ".tencent.com",
+    "path": "/",
+    "expires": 1819342445,
+    "httpOnly": false,
+    "secure": false,
+    "sameSite": "Lax"
+  },
+  {
+    "name": "_qimei_i_3",
+    "value": "4ce664d49c5d05d994c4fd305ad571b1a5ecf0f212090b80bd8f2c5921952369656065943989e2a6a78d",
+    "domain": ".tencent.com",
+    "path": "/",
+    "expires": 1819342452,
+    "httpOnly": false,
+    "secure": false,
+    "sameSite": "Lax"
+  },
+  {
+    "name": "_qimei_h38",
+    "value": "fc15e7114c031501ebd6c98202000006b1a81b",
+    "domain": ".tencent.com",
+    "path": "/",
+    "expires": 1821782402,
+    "httpOnly": false,
+    "secure": false,
+    "sameSite": "Lax"
+  },
+  {
+    "name": "_ga",
+    "value": "GA1.1.710931724.1787806485",
+    "domain": ".tencent.com",
+    "path": "/",
+    "expires": 1824805276.357069,
+    "httpOnly": false,
+    "secure": false,
+    "sameSite": "Lax"
+  },
+  {
+    "name": "_qimei_fingerprint",
+    "value": "19d975490a4ed83f26147f120b223d7e",
+    "domain": ".tencent.com",
+    "path": "/",
+    "expires": 1820806560,
+    "httpOnly": false,
+    "secure": false,
+    "sameSite": "Lax"
+  },
+  {
+    "name": "hy_user",
+    "value": "910b51348c6d4537bd47a16e950e11a3",
+    "domain": ".tencent.com",
+    "path": "/",
+    "expires": 1795424755.084473,
+    "httpOnly": false,
+    "secure": true,
+    "sameSite": "None"
+  },
+  {
+    "name": "hy_token",
+    "value": "8tE8bq6InCxff5mUqQZfc9aGHP6NPD80Cr/k258SiLJ0SRKVmpnUylkLLyDfCVTFIz3TVqT9ZkiPmm3AiYxIaiRvQwPY/KhNIfzg2AcljeH5a0YavjSyBhpXunLkEwFMmv8HB/1+dKUrI5ec836CowtH0nwm74yYU/ST9yGt3MDT+WtELMUMAy/hqvNMEBPLRPt6+sXNb47FgpzJeMLjjox22MHVpKHksu+kTj3sEyxIvKSTWeAAKO82mjzFU8My9fa4Urn03h+Q4AP7wBeYrk8xmQ/SmXg48iO0PpZbD6C7oESTvJ+NzNn1jVNrYeFOZsgGHO6vATLYnMPowTYX+oawHnLxdcnaGndAJHZZMHIwebeauFLckT/wIT6bdfg/faaNO9DRtc40VezvhrowNDo27a7B7qmbuZakMRah/108ooCXI/YnzUmrh5SAEmXJcBX9pjg68g/fPmf/nlAIcEj1K+p2VXVavv37GT5s0yjGI/qVqOj0rDzLqe8yLBzoA58WikEsWYa3t5yUmy34WqCUwXJzGgRC++oKv73cvzRq/gxVyAzrd7ZpA9H+kYrccInrDezePcxCeCMUDUP4JA==",
+    "domain": ".tencent.com",
+    "path": "/",
+    "expires": 1795424755.084521,
+    "httpOnly": true,
+    "secure": true,
+    "sameSite": "None"
+  },
+  {
+    "name": "hy_source",
+    "value": "web",
+    "domain": ".tencent.com",
+    "path": "/",
+    "expires": 1795424755.084582,
+    "httpOnly": true,
+    "secure": true,
+    "sameSite": "None"
+  },
+  {
+    "name": "_gcl_au",
+    "value": "1.1.153678225.1790244234",
+    "domain": ".tencent.com",
+    "path": "/",
+    "expires": 1798020234,
+    "httpOnly": false,
+    "secure": false,
+    "sameSite": "Lax"
+  },
+  {
+    "name": "_ga_6P1G7NCG3R",
+    "value": "GS2.1.s1790240724$o26$g1$t1790245276$j60$l0$h1054419072",
+    "domain": ".tencent.com",
+    "path": "/",
+    "expires": 1824805276.655728,
+    "httpOnly": false,
+    "secure": false,
+    "sameSite": "Lax"
+  },
+  {
+    "name": "_qimei_i_1",
+    "value": "73c37dd4c65b558ec696ff34088470e1f2eea5a4400f05d1bd872a582493206c616331c739d8eadd849cfce3",
+    "domain": ".tencent.com",
+    "path": "/",
+    "expires": 1821782402,
+    "httpOnly": false,
+    "secure": false,
+    "sameSite": "Lax"
+  },
+  {
+    "name": "_TDID_CK",
+    "value": "1790246652361",
+    "domain": "yuanbao.tencent.com",
+    "path": "/",
+    "expires": -1,
+    "httpOnly": false,
+    "secure": false,
+    "sameSite": "Lax"
+  },
+  {
+    "name": "561553b295037d16",
+    "value": "EU5UuK2MxbfhPFhhZEGhKBbT1mgYIWmM0jIB%2B2mmYdEGErrzEQg1Mj7zWxItWjLY5ONNcSW2nxRO8v2Czrs731VetM8n%2FDEBq2Ig3g7wNMVH4xz4ga5vPkA5c19JsYKdZvnAWMQu90BkC6ltmHkn9XOdr7MResewcpL%2Fl%2BhouMTcHJbvi%2Bd1Xb%2BOR7oiTKUxePN%2F9CdG1pvgRcuvhJUmYEDujIu8BrfqTisDvO0lBYevWbmyJDiV1Zn7fSIB4cqYpb%2BC6FG7ftQRBWoI3OtyuCFZ4Tv%2BQw%2Bdtb%2BVXtOyawRaYhthfzK7%2Bg%3D%3D",
+    "domain": "yuanbao.tencent.com",
+    "path": "/",
+    "expires": -1,
+    "httpOnly": false,
+    "secure": false,
+    "sameSite": "Lax"
+  }
+]

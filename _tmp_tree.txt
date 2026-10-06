@@ -1,0 +1,3 @@
+﻿PID=24976 PPID=40620 NAME=python.exe CMD=D:\软件\Python\python.exe terminal.py
+PID=28108 PPID=4048 NAME=python.exe CMD=D:\软件\Python\python.exe -u desktop_app.py
+DONE
