@@ -1,0 +1,13 @@
+[1] commander.py 语法 OK
+[1] user_paths.py 语法 OK
+[2] 代码(非注释)里残留的硬编码开发者用户名: 1 处
+    agent_core/user_paths.py:4  旧代码把 `C:\\Users\\X.LAPTOP-CA1GJQE3\\Desktop` 写死在系统提示词示例和若干
+[3] Commander._build_system_prompt 缺失: 无
+[4] 提示词长度: 6322
+[4] 提示词路径 == 本机真实桌面 —— PASS
+[4] 提示词里的示例 report.docx 路径: C:\\Users\\X.LAPTOP-CA1GJQE3\\Desktop
+[4] 提示词里的 pptx 示例路径: 未找到(工具说明按需生成)
+[5] XRZ_DESKTOP=D:\张三的桌面                               -> D:\张三的桌面  PASS
+[5] XRZ_DESKTOP=C:\Users\zhangsan\OneDrive\Desktop     -> C:\Users\zhangsan\OneDrive\Desktop  PASS
+[5] XRZ_DESKTOP=\\NAS\share\desktop                    -> \\NAS\share\desktop  PASS
+[5] 清除覆盖后回到本机真实桌面: C:\Users\X.LAPTOP-CA1GJQE3\Desktop (PASS)

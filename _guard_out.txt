@@ -1,0 +1,30 @@
+== 1) 保护代码存在性 ==
+  [PASS] browser_research 有空 query 保护                   
+  [PASS] browser_visit 有空 url 保护                        
+  [PASS] research 保护在派子代理【之前】                           
+  [PASS] visit 保护在派子代理【之前】                              
+
+== 2) 保护逻辑行为（等价代码执行）==
+  [PASS] research 无 query → 拦下不派子代理                     {'ok': False, 'error': 'browser_research 缺少 query 参数（研究主题）。'}
+  [PASS] research query='' → 拦下                         {'ok': False, 'error': 'browser_research 缺少 query 参数（研究主题）。'}
+  [PASS] research query='   '（纯空白）→ 拦下                  {'ok': False, 'error': 'browser_research 缺少 query 参数（研究主题）。'}
+  [PASS] visit 无 url → 拦下                               {'ok': False, 'error': 'browser_visit 缺少 url 参数（目标网址）。'}
+  [PASS] visit url='' → 拦下                              {'ok': False, 'error': 'browser_visit 缺少 url 参数（目标网址）。'}
+  [PASS] research 正常 query → 放行派子代理                     {'ok': True, 'dispatch': 'spawn_subagent', 'query': '2026 年新能源汽车市场趋势'}
+  [PASS] research URL 型 query → 放行                      {'ok': True, 'dispatch': 'spawn_subagent', 'query': 'https://example.com 页面标题'}
+  [PASS] visit 正常 url → 放行                              {'ok': True, 'dispatch': 'navigate', 'url': 'https://example.com'}
+
+== 3) 错误提示可操作性（要让模型知道怎么改）==
+  AST 取到 research 返回字典: 1 个
+  AST 取到 visit   返回字典: 1 个
+  真实文案(research): browser_research 缺少 query 参数（研究主题）。请重新调用并明确给出 query，例如 query='2026 年新能源汽车市场趋势'。
+  真实文案(visit)  : browser_visit 缺少 url 参数（目标网址）。请重新调用并明确给出 url，例如 url='https://example.com'。
+
+  [PASS] AST 成功提取 research error                        browser_research 缺少 query 参数（研究主题）。请重新调用并明确给出 query，例如 query
+  [PASS] AST 成功提取 visit error                           browser_visit 缺少 url 参数（目标网址）。请重新调用并明确给出 url，例如 url='https:/
+  [PASS] research 提示含字段名 query                          browser_research 缺少 query 参数（研究主题）。请重新调用并明确给出 query，例如 query
+  [PASS] research 提示含可复制示例 query='…'                    browser_research 缺少 query 参数（研究主题）。请重新调用并明确给出 query，例如 query='2026 年新能源汽车市场趋势'。
+  [PASS] visit 提示含字段名 url                               browser_visit 缺少 url 参数（目标网址）。请重新调用并明确给出 url，例如 url='https:/
+  [PASS] visit 提示含可复制示例 url='…'                         browser_visit 缺少 url 参数（目标网址）。请重新调用并明确给出 url，例如 url='https://example.com'。
+
+== 结论 ==  PASS 18 / FAIL 0

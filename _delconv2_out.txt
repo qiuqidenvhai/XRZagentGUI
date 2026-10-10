@@ -1,0 +1,30 @@
+产物索引里会话数: 192
+产物最多的前 5 个会话: [(8, 'deepseek_20260914_212859'), (6, 'deepseek_20260913_161207'), (6, 'deepseek_20260913_152938'), (5, 'deepseek_20260913_160615'), (4, 'deepseek_20260913_205337')]
+
+== 目标对话: deepseek_20260914_212859 ==
+  名下产物 8 个:
+     xrz_pdf_probe.pdf (存在=True)
+     prod_word.docx (存在=True)
+     prod_ppt.pptx (存在=True)
+     prod_pdf.pdf (存在=True)
+     prod_code.py (存在=True)
+     notepad_test.txt (存在=True)
+     报告.docx (存在=True)
+     子代理报告.docx (存在=True)
+
+  实际存在的产物文件: 8 个
+
+== DELETE /conversations/deepseek_20260914_212859 ==
+  HTTP 200  {"type": "ok", "deleted": "deepseek_20260914_212859", "removed": ["历史上下文 conv_deepseek_20260914_212859.json", "产物索引登记"], "text": "已删除对话元信息（产物文件全部保留）"}
+
+== 断言 ==
+  [PASS] HTTP 200                                     200
+  [PASS] type == ok                                   ok
+  [PASS] 该对话已从索引移除                                    False
+  [PASS] 历史上下文 JSON 已删                                []
+  [PASS] 该对话名下产物【一个都没被删】                              丢失 0 个: []
+  [PASS] 产物内容大小未变                                     变化: []
+  核对产物: 8 个
+
+== 结论 ==  PASS 6 / FAIL 0
+（本轮验证的是'有产物的对话被删后产物必须完好'这个关键场景）

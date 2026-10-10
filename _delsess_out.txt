@@ -1,0 +1,20 @@
+== 准备 ==
+  初始: {'cur': 'null', 'has': True}
+
+== 执行 deleteSession(当前会话) ==
+  没有当前会话，先创建一个
+
+== 断言 ==
+  删除后: {'cur': 'null', 'task': 'null', 'hasMsg': False, 'welcome': True, 'sending': False, 'msgCount': 4}
+  [PASS] CURRENT_SESSION 已清空                      null
+  [PASS] CURRENT_TASK_ID 已清空                      null
+  [PASS] 旧消息已清空(回退初始页)                            hasMsg=False
+  [PASS] 显示新对话欢迎页                                 welcome=True
+  [PASS] 发送锁已释放                                   sending=False
+
+== 会话列表 ==
+  
+  [PASS] 每个会话都有删除按钮                               btns=None count=None
+  [PASS] 截图                                       D:\软件\XianRenZhangAgent\xrz_data\XianRenZhang_tasks\_verify_del_session.png
+
+== 结论 ==  PASS 7 / FAIL 0

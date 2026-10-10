@@ -1,0 +1,50 @@
+扫描文件数: 336
+
+=== 产品代码(会发给用户/随包分发) 硬编码开发者用户名: 28 处 ===
+  _deepseek_dom_after.html:134  @@@@{"tool":"docx_create","params":{"content":"# 仙人掌 Agent 自测报告\n一、功能概览\n...","path":"C:\\Users\\X.LAPTOP-CA1G
+  _deepseek_dom_after.html:136  @@@@{"tool":"file_edit","params":{"path":"C:\\Users\\X.LAPTOP-CA1GJQE3\\Desktop\\test\\note.txt","mode":"appen
+  _deepseek_dom_after.html:320  @@@@{"tool":"docx_create","params":{"content":"# 仙人掌 Agent 自测报告\n一、功能概览\n...","path":"C:\\Users\\X.LAPTOP-CA1G
+  _deepseek_dom_after.html:322  @@@@{"tool":"file_edit","params":{"path":"C:\\Users\\X.LAPTOP-CA1GJQE3\\Desktop\\test\\note.txt","mode":"appen
+  _deepseek_dom_after.html:512  @@@@{"tool":"docx_create","params":{"content":"# 仙人掌 Agent 自测报告\n一、功能概览\n...","path":"C:\\Users\\X.LAPTOP-CA1G
+  _deepseek_dom_after.html:514  @@@@{"tool":"file_edit","params":{"path":"C:\\Users\\X.LAPTOP-CA1GJQE3\\Desktop\\test\\note.txt","mode":"appen
+  _deepseek_dom_after.html:698  @@@@{"tool":"docx_create","params":{"content":"# 仙人掌 Agent 自测报告\n一、功能概览\n...","path":"C:\\Users\\X.LAPTOP-CA1G
+  _deepseek_dom_after.html:700  @@@@{"tool":"file_edit","params":{"path":"C:\\Users\\X.LAPTOP-CA1GJQE3\\Desktop\\test\\note.txt","mode":"appen
+  _fix_hardcoded_paths.py:28  'OUT = Path(r"C:\\Users\\X.LAPTOP-CA1GJQE3\\Desktop\\test")',
+  _fix_hardcoded_paths.py:37  'TEST_ROOT = Path(r"C:\\Users\\X.LAPTOP-CA1GJQE3\\Desktop\\test")',
+  _fix_hardcoded_paths.py:60  left = s.count("X.LAPTOP-CA1GJQE3")
+  _fix_hardcoded_paths.py:69  if "X.LAPTOP-CA1GJQE3" in l:
+  _live_dom.html:134  @@@@{"tool":"docx_create","params":{"content":"# 仙人掌 Agent 自测报告\n一、功能概览\n...","path":"C:\\Users\\X.LAPTOP-CA1G
+  _live_dom.html:136  @@@@{"tool":"file_edit","params":{"path":"C:\\Users\\X.LAPTOP-CA1GJQE3\\Desktop\\test\\note.txt","mode":"appen
+  _live_dom.html:323  @@@@{"tool":"docx_create","params":{"content":"# 仙人掌 Agent 自测报告\n一、功能概览\n...","path":"C:\\Users\\X.LAPTOP-CA1G
+  _live_dom.html:325  @@@@{"tool":"file_edit","params":{"path":"C:\\Users\\X.LAPTOP-CA1GJQE3\\Desktop\\test\\note.txt","mode":"appen
+  _live_dom.html:518  @@@@{"tool":"docx_create","params":{"content":"# 仙人掌 Agent 自测报告\n一、功能概览\n...","path":"C:\\Users\\X.LAPTOP-CA1G
+  _live_dom.html:520  @@@@{"tool":"file_edit","params":{"path":"C:\\Users\\X.LAPTOP-CA1GJQE3\\Desktop\\test\\note.txt","mode":"appen
+  _live_dom.html:707  @@@@{"tool":"docx_create","params":{"content":"# 仙人掌 Agent 自测报告\n一、功能概览\n...","path":"C:\\Users\\X.LAPTOP-CA1G
+  _live_dom.html:709  @@@@{"tool":"file_edit","params":{"path":"C:\\Users\\X.LAPTOP-CA1GJQE3\\Desktop\\test\\note.txt","mode":"appen
+  _scan_hardcoded.py:37  if "X.LAPTOP-CA1GJQE3" not in line:
+  _scan_hardcoded.py:74  if "X.LAPTOP-CA1GJQE3" in st:
+  _verify_prompt_path.py:31  if 'X.LAPTOP-CA1GJQE3' in l:
+  _vp_ctx.py:30  idx = p.find('X.LAPTOP-CA1GJQE3', idx + 1)
+  运行测试.bat:52  echo [仙人掌自测] 输出目录:    C:\Users\X.LAPTOP-CA1GJQE3\Desktop\test
+  运行测试.bat:56  if not exist "C:\Users\X.LAPTOP-CA1GJQE3\Desktop\test" (
+  运行测试.bat:57  mkdir "C:\Users\X.LAPTOP-CA1GJQE3\Desktop\test"
+  运行测试.bat:68  echo [仙人掌自测] 运行结束。报告：C:\Users\X.LAPTOP-CA1GJQE3\Desktop\test\report.md
+
+=== 开发期自测脚本 硬编码: 4 处 ===
+  _check_embedded_js.py:10  NODE = r"C:\Users\X.LAPTOP-CA1GJQE3\.workbuddy\binaries\node\versions\22.22.2-3\node.exe"
+  _check_gui_js.py:14  NODE = r"C:\Users\X.LAPTOP-CA1GJQE3\.workbuddy\binaries\node\versions\22.22.2-3\node.exe"
+  _lint_gui_js.py:13  NODE = "C:/Users/X.LAPTOP-CA1GJQE3/.workbuddy/binaries/node/versions/22.22.2-3/node.exe"
+  _verify_gui_fixes.py:203  node = r"C:\Users\X.LAPTOP-CA1GJQE3\.workbuddy\binaries\node\versions\22.22.2-3\node.exe"
+
+=== 其它固定 C:\Users\ 引用（非本机用户名，疑似写死） ===
+  _scan_hardcoded.py:56  # 额外：扫固定 C:\Users\ 但不是本机用户名的（那种才是真正的"写死别人电脑"）
+  _scan_hardcoded.py:72  if "C:\\Users\\" in line or "C:/Users/" in line:
+  _verify_prompt_path.py:81  for fake in (r'D:\张三的桌面', r'C:\Users\zhangsan\OneDrive\Desktop',
+  agent_core\browser.py:28  # 全部落在 D 盘项目目录内，绝不写 C:\Users\...（见 agent_core/xrz_paths.py）
+  agent_core\commander.py:2087  # 旧代码把 C:\Users\<开发者用户名>\Desktop 硬编码在提示词示例里发给
+  agent_core\platform_browser.py:123  # 浏览器数据目录（全部落在 D 盘项目目录内，绝不写 C:\Users\...）
+  agent_core\session.py:22  # 对话历史索引（全局持久化）—— 全部落在 D 盘项目目录内，绝不写 C:\Users\...
+  agent_core\subagent_manager.py:46  # 浏览器数据目录（全部落在 D 盘项目目录内，绝不写 C:\Users\...）
+  agent_core\xrz_paths.py:8  **绝不**写入 C 盘用户目录（如 C:/Users/... 或 AppData）。
+  agent_core\xrz_paths.py:102  # 这样无论上游是否设置过环境变量，浏览器都不会落到 C:\Users\...\AppData。
+  合计: 10

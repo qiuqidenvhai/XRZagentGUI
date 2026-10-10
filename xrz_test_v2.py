@@ -7,9 +7,17 @@ import sys
 import time
 from pathlib import Path
 
-PROJ = Path("/d/软件/XianRenZhangAgent")
-TEST_ROOT = Path("/c/Users/X.LAPTOP-CA1GJQE3/Desktop/test")
+# 【2026-10-06】项目目录也动态化：装在 D 盘 / C 盘 / 任意路径都能跑
+PROJ = Path(__file__).resolve().parent
 sys.path.insert(0, str(PROJ))
+# 【2026-10-06 修"写死桌面位置"】原来写死开发者桌面路径，换台电脑就跑到
+# 别人桌面上去、还可能目录不存在。改为按本机真实桌面解析。
+try:
+    from agent_core.user_paths import desktop_dir as _up_desktop
+    TEST_ROOT = Path(_up_desktop(create=True)) / "test"
+except Exception:
+    import os
+    TEST_ROOT = Path(os.path.expanduser("~")) / "Desktop" / "test"
 
 import requests
 
@@ -38,9 +46,11 @@ def main():
     overall = []
 
     # T1 DeepSeek Word
+    # 【2026-10-06】提示词里的路径用本机真实测试目录，不写死任何用户名
+    _t1_path = str(TEST_ROOT / "report.docx").replace("\\", "\\\\")
     ok, _, _, _, _ = run_task(
         "T1_DeepSeek_Word", "deepseek",
-        "请生成一份Word报告保存到C:\\Users\\X.LAPTOP-CA1GJQE3\\Desktop\\test\\report.docx，标题《测试报告》",
+        f"请生成一份Word报告保存到{_t1_path}，标题《测试报告》",
         lambda: (True, "report.docx exists") if (TEST_ROOT / "report.docx").exists() else (False, "report.docx missing")
     )
     overall.append(("T1 DeepSeek Word", ok))
@@ -51,7 +61,7 @@ def main():
 
     ok, _, _, _, extra = run_task(
         "T3_Qwen_FileEdit", "tongyi",
-        "请用file_edit工具在C:\\Users\\X.LAPTOP-CA1GJQE3\\Desktop\\test\\note.txt末尾追加：TEST_OK_仙人掌自测",
+        f"请用file_edit工具在{str(note).replace(chr(92), chr(92) * 2)}末尾追加：TEST_OK_仙人掌自测",
         lambda: ("TEST_OK_仙人掌自测" in note.read_text(encoding="utf-8", errors="replace"), "note.txt 含 TEST_OK")
     )
     overall.append(("T3 Qwen file_edit", ok))

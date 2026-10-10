@@ -1329,6 +1329,21 @@ class Commander:
             max_pages = params.get("max_pages", 5)
             timeout = params.get("timeout", 600)
 
+            # 【2026-10-10 修"空 query 派子代理跑偏"】实测 DeepSeek 偶尔调用
+            # browser_research 时【不传 query】→ full_query 变成
+            # "深度研究: (最多访问 5 个页面)"，子代理拿不到研究主题，只能自己瞎猜
+            # （实测它猜成"AI Agent 技术发展趋势"），browser_search 反复返回不相关
+            # 的 IBM 页面，白白烧 token 还产出无用报告。
+            # 做法：query 为空/纯空白时**不派子代理**，直接回一句让模型重���参数，
+            # 而不是让它自由发挥。
+            if not str(query).strip():
+                return {
+                    "ok": False,
+                    "error": "browser_research 缺少 query 参数（研究主题）。"
+                             "请重新调用并明确给出 query，例如 "
+                             "query='2026 年新能源汽车市场趋势'。",
+                }
+
             # 构建完整查询
             full_query = f"深度研究: {query} (最多访问 {max_pages} 个页面)"
 
@@ -1374,6 +1389,15 @@ class Commander:
 
             url = params.get("url", "")
             timeout = params.get("timeout", 300)
+
+            # 【2026-10-10】同 _browser_research：url 为空时不派子代理，
+            # 避免子代理拿不到目标网址就自由发挥。
+            if not str(url).strip():
+                return {
+                    "ok": False,
+                    "error": "browser_visit 缺少 url 参数（目标网址）。"
+                             "请重新调用并明确给出 url，例如 url='https://example.com'。",
+                }
 
             # 构建完整查询
             full_query = f"访问并分析网页: {url}"
@@ -1511,6 +1535,12 @@ class Commander:
             doc = f"【{name}】{info['description']}\n"
             if name.startswith("pptx"):
                 from agent_core.pptx_builder import TEMPLATE_CATALOG as _C
+                # 【2026-10-06】示例路径用本机真实桌面，别再让用户看到陌生用户名
+                try:
+                    from agent_core.user_paths import desktop_dir as _up_dd
+                    _ppt_desk = _up_dd()
+                except Exception:
+                    _ppt_desk = ""
                 # 【#84 2026-09-26】每次调用都把 19 套模板随机打乱顺序发给 AI，
                 # 并注明「风格/页数/场景」，避免 AI 永远点第一个或永远落默认模板。
                 _items = list(_C.items())
@@ -1533,7 +1563,9 @@ class Commander:
                     "- content（必填）：逐页给出，格式 第1页「标题」\\n第2页「标题」…"
                     "每页可另起行写要点；或 Markdown（# 一级标题分段）；或结构化 "
                     "{\"title\":\"…\",\"slides\":[{\"heading\":\"…\",\"items\":[…]}]}\n"
-                    "- path（强烈建议）：输出绝对路径，如 C:\\Users\\<用户名>\\Desktop\\xx.pptx\n"
+                    "- path（强烈建议）：输出绝对路径，如 "
+                    + (_ppt_desk or "C:\\Users\\<用户名>\\Desktop")
+                    + "\\xx.pptx\n"
                     "- filename：文件名（可与 path 配合）\n"
                     "- template：模板 slug（见上表，强烈建议每轮换一套不同风格的模板）\n"
                     "- theme：主题模糊映射（blue/green/purple/架构图…），不指定 template 时生效\n"
@@ -2075,6 +2107,26 @@ class Commander:
         else:
             platforms_block = "- DeepSeek（https://chat.deepseek.com，默认平台）"
 
+        # 【2026-10-06 修"提示词里写死开发者桌面路径"】
+        # 旧代码把 C:\Users\<开发者用户名>\Desktop 硬编码在提示词示例里发给
+        # 每个用户的 AI —— 别人电脑上必然指向一个不属于他的路径。
+        # 现在按【当前这台电脑的真实桌面】动态解析（含 OneDrive 重定向 / 非英文 /
+        # 自定义盘 / 域账号都能正确），并序列化成 JSON 字符串值直接嵌进示例。
+        # 解析失败时退回"桌面"两字占位，绝不出现陌生用户名。
+        try:
+            from .user_paths import desktop_dir, json_path as _up_json_path
+            _desk = desktop_dir()
+        except Exception:
+            try:
+                from user_paths import desktop_dir, json_path as _up_json_path
+                _desk = desktop_dir()
+            except Exception:
+                _desk = ""
+                _up_json_path = json.dumps        # 空路径时示例退化成相对路径提示，不出现任何绝对用户路径
+        # 注意：这里存的是【已做 JSON 字符串转义、但不含外层引号】的路径正文，
+        # 因为它会被嵌进 '"path":"…"' 里；再自行加引号会造成双引号嵌套。
+        _djson = _up_json_path(_desk)[1:-1] if _desk else '桌面\\\\'
+
         # RAW 命令格式：仅在「本机 shell 真实可用」时宣传。
         # 网页聊天平台（通义/豆包/元宝…）上的模型会照抄这个格式、反复发同一条 shell 命令，
         # 而该命令在本机要么不存在、要么输出乱码 → 模型看不懂就无限重发 → 死循环卡死。
@@ -2197,11 +2249,12 @@ class Commander:
    【真实执行】，会在用户电脑上真的生成或修改文件。当用户要求生成 Word / PPT / 文本文件、
    或在某文件末尾追加内容时，你必须调用对应工具并传入完整参数，【绝不要】输出
    「我无法在您的电脑上创建文件，请复制以下内容到 Word」之类的话——那是错误的，
-   你其实可以创建。示例：
-   - 生成 Word 报告到指定路径：
-     @@@@{{"tool":"docx_create","params":{{"content":"# 仙人掌 Agent 自测报告\\n一、功能概览\\n...","path":"C:\\\\Users\\\\X.LAPTOP-CA1GJQE3\\\\Desktop\\\\test\\\\report.docx"}},"id":"1"}}@@@@
+    你其实可以创建。示例（下面的路径是【当前这台电脑真实的桌面路径】，
+   已按你的实际环境解析，直接照抄用即可）：
+   - 生成 Word 报告到桌面：
+     @@@@{{"tool":"docx_create","params":{{"content":"# 仙人掌 Agent 自测报告\\n一、功能概览\\n...","path":"{_djson}\\\\test\\\\report.docx"}},"id":"1"}}@@@@
    - 在文件末尾追加一行：
-     @@@@{{"tool":"file_edit","params":{{"path":"C:\\\\Users\\\\X.LAPTOP-CA1GJQE3\\\\Desktop\\\\test\\\\note.txt","mode":"append","new":"TEST_OK_仙人掌自测"}},"id":"2"}}@@@@
+     @@@@{{"tool":"file_edit","params":{{"path":"{_djson}\\\\test\\\\note.txt","mode":"append","new":"TEST_OK_仙人掌自测"}},"id":"2"}}@@@@
    - 注意工具名必须是上面「可用工具」里列的真名（docx_create / file_edit 等）；
      若你一时想不起准确名，本地运行时会自动把相近的名字映射到正确工具，但请尽量用真名。
 

@@ -1369,6 +1369,102 @@ def _delete_allowed_roots():
         return []
 
 
+def _delete_conversation_meta(cid, main_module):
+    """删除一条对话的【元信息】，保留全部产物文件。
+
+    【2026-10-06 修复"历史对话删不掉"】
+    现象：GUI 历史面板点 ✕ → DELETE /conversations/<id> → 报
+      「文件名无法定位到允许删除的应用产物目录内」（HTTP 403）。
+    根因：terminal.pyc 原生的 do_DELETE 把 /conversations/<id> 也当成了
+      "删除产物文件"来处理 —— 它把 <id> 拿去找产物目录里的文件，找不到就 403。
+      也就是说**历史对话的删除从来没有正确实现过**，一直被当成删文件在跑。
+
+    用户明确要求（勿改）：
+      删对话 = 只删"我们保存的那些信息"，即
+        · 对话索引里的一条记录（tasks.json）——网址/平台/标题/时间
+        · 该对话的历史上下文 JSON（conv_*.json）
+      **不要删产物文件**（用户生成的 pptx/docx/pdf 等必须原样保留）。
+
+    返回 (ok: bool, detail: str, removed: list)
+    """
+    import json
+    import shutil
+    removed = []
+    try:
+        from agent_core import xrz_paths
+    except Exception:
+        xrz_paths = None
+
+    if not cid:
+        return False, "缺少对话 id", removed
+
+    # ── 1) 从 tasks.json 索引里删掉这条记录（元信息，含 url/platform/title）──
+    try:
+        if xrz_paths is not None:
+            tj = Path(xrz_paths.TASKS_INDEX_PATH)
+            if tj.exists():
+                data = json.loads(tj.read_text(encoding="utf-8"))
+                tasks = data.get("tasks") if isinstance(data, dict) else data
+                if isinstance(tasks, list):
+                    before = len(tasks)
+                    kept = [t for t in tasks
+                            if not (isinstance(t, dict) and str(t.get("id")) == str(cid))]
+                    if len(kept) != before:
+                        removed.append("索引条目")
+                        if isinstance(data, dict):
+                            data["tasks"] = kept
+                        else:
+                            data = kept
+                        tj.write_text(json.dumps(data, ensure_ascii=False, indent=2),
+                                      encoding="utf-8")
+    except Exception as e:
+        return False, "索引写入失败: %r" % (e,), removed
+
+    # ── 2) 删该对话的历史上下文 JSON（conv_*.json）──
+    # 【重要】这里【绝不能】碰 TASKS_DIR / gui_session 等产物目录。
+    try:
+        if xrz_paths is not None:
+            cdir = Path(xrz_paths.CONVERSATIONS_DIR)
+            if cdir.is_dir():
+                for name in _conv_id_variants(cid):
+                    for cand in (name + ".json", "conv_" + name + ".json"):
+                        p = cdir / cand
+                        try:
+                            if p.is_file():
+                                p.unlink()
+                                removed.append("历史上下文 " + p.name)
+                        except (AttributeError, RuntimeError, OSError):
+                            pass
+    except Exception as e:
+        return False, "历史上下文删除失败: %r" % (e,), removed
+
+    # ── 3) 从产物索引里摘掉该会话的登记（只是索引，不删文件本身）──
+    try:
+        ap = _conversation_artifacts_path()
+        if ap is not None and Path(ap).is_file():
+            reg = json.loads(ap.read_text(encoding="utf-8"))
+            if isinstance(reg, dict):
+                hit = False
+                for k in list(reg.keys()):
+                    if k == str(cid) or k in set(_conv_id_variants(cid)):
+                        reg.pop(k, None)
+                        hit = True
+                if hit:
+                    try:
+                        shutil.copy2(ap, str(ap) + ".bak")
+                    except Exception:
+                        pass
+                    ap.write_text(json.dumps(reg, ensure_ascii=False, indent=2),
+                                  encoding="utf-8")
+                    removed.append("产物索引登记")
+    except Exception:
+        pass
+
+    if not removed:
+        return False, "未找到该对话的元信息（可能已删除）", removed
+    return True, "已删除对话元信息（产物文件全部保留）", removed
+
+
 def _patched_do_DELETE(self, main_module, orig, app_dir):
     """DELETE /files/<filename>（或 ?path=<绝对路径>）：删除应用产物文件。
 
@@ -1388,6 +1484,33 @@ def _patched_do_DELETE(self, main_module, orig, app_dir):
 
     path = getattr(self, "path", "") or ""
     parsed = urlparse(path)
+
+    # ─────────────────────────────────────────────────────────────
+    # 【2026-10-06】DELETE /conversations/<id>：删对话【元信息】
+    # 必须在这里【先行拦截】。旧实现漏了它，落到下面的"删产物文件"分支：
+    # 把 <id> 拿去找产物目录里的文件 → 找不到 → 403
+    # 「文件名无法定位到允许删除的应用产物目录内」→ 历史对话永远删不掉。
+    # 用户要求：只删保存的信息（网址/平台/历史上下文），**产物文件保留**。
+    # ─────────────────────────────────────────────────────────────
+    if parsed.path.startswith("/conversations"):
+        cid = unquote(parsed.path[len("/conversations"):]).strip("/")
+        cid = cid.split("/")[-1] if cid else ""
+        if not cid:
+            self._send_json(400, {"type": "error", "text": "缺少对话 id"})
+            return
+        ok, detail, removed = _delete_conversation_meta(cid, main_module)
+        if ok:
+            self._send_json(200, {"type": "ok", "deleted": cid,
+                                  "removed": removed, "text": detail})
+        else:
+            # "未找到" 属陈旧条目（早已删过）→ 用 ok 型返回，前端会静默刷新列表
+            if "未找到" in detail:
+                self._send_json(200, {"type": "ok", "deleted": cid, "removed": [],
+                                      "text": "该对话已不存在，列表已刷新"})
+            else:
+                self._send_json(500, {"type": "error", "text": detail})
+        return
+
     fname = unquote(parsed.path[len("/files/"):]) if parsed.path.startswith("/files/") else ""
     qs = parse_qs(parsed.query)
     explicit = unquote((qs.get("path") or [""])[0]).strip()

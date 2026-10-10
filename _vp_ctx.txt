@@ -1,0 +1,9 @@
+总命中: 2
+=== 命中 #1 @ 3860 ===
+d」之类的话——那是错误的，\n    你其实可以创建。示例（下面的路径是【当前这台电脑真实的桌面路径】，\n   已按你的实际环境解析，直接照抄用即可）：\n   - 生成 Word 报告到桌面：\n     @@@@{"tool":"docx_create","params":{"content":"# 仙人掌 Agent 自测报告\n一、功能概览\n...","path":""C:\\Users\\X.LAPTOP-CA1GJQE3\\Desktop"\\test\\report.docx"},"id":"1"}@@@@\n   - 在文件末尾追加一行：\n     @@@@{"tool":"file_edit","params":{"path":""C:\\Users\\X.LAPTOP-CA1GJQE3\\Desktop"\\test\\note.txt","mode":"append","
+
+=== 命中 #2 @ 3998 ===
+"content":"# 仙人掌 Agent 自测报告\n一、功能概览\n...","path":""C:\\Users\\X.LAPTOP-CA1GJQE3\\Desktop"\\test\\report.docx"},"id":"1"}@@@@\n   - 在文件末尾追加一行：\n     @@@@{"tool":"file_edit","params":{"path":""C:\\Users\\X.LAPTOP-CA1GJQE3\\Desktop"\\test\\note.txt","mode":"append","new":"TEST_OK_仙人掌自测"},"id":"2"}@@@@\n   - 注意工具名必须是上面「可用工具」里列的真名（docx_create / file_edit 等）；\n     若你一时想不起准确名，本地运行时会自动把相近的名字映射到正确工具，但请尽量用真名。\n
+
+--- 是否含 report.docx: True
+--- 是否含 Desktop: True

@@ -10,8 +10,12 @@ import subprocess
 import sys
 import tempfile
 
-ROOT = r"D:\软件\XianRenZhangAgent"
-NODE = r"C:\Users\X.LAPTOP-CA1GJQE3\.workbuddy\binaries\node\versions\22.22.2-3\node.exe"
+ROOT = os.path.dirname(os.path.abspath(__file__))
+# 【2026-10-06 修"写死本机路径"】原来写死某个 node 版本/用户目录的绝对路径，
+# 换机器或 node 升级就失效。改为动态查找（NODE 环境变量 -> PATH -> 常见位置）。
+sys.path.insert(0, ROOT)
+from _find_node import find_node
+NODE = find_node()
 
 
 def main():

@@ -1,0 +1,9 @@
+[1] 后端 /health: 200 PASS
+[2] GUI DOM: {"title": "", "plat_count": 0, "plats": [], "messages_ok": true, "body_len": 581}
+    界面有内容: PASS
+    平台列表: 0 FAIL
+[3] 本机真实桌面: C:\Users\X.LAPTOP-CA1GJQE3\Desktop
+[3] 提示词含本机桌面(转义后): PASS
+[3] 提示词含开发者路径写法 D:\\软件\\: PASS
+[3] 提示词示例 JSON 可解析且路径正确: FAIL (C:\Users\X.LAPTOP-CA1GJQE3\Desktop)
+[4] 截图失败: ConnectionResetError(10054, '远程主机强迫关闭了一个现有的连接。', None, 10054, None)

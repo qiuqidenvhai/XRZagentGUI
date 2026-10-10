@@ -7,7 +7,10 @@ import ast, subprocess, sys
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 SRC = r"D:\软件\XianRenZhangAgent\agent_core\platform_browser.py"
-NODE = r"C:\Users\X.LAPTOP-CA1GJQE3\.workbuddy\binaries\node\versions\22.22.2-3\node.exe"
+# 【2026-10-06 修"写死本机路径"】改为动态查找 node
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from _find_node import find_node
+NODE = find_node()
 TMP = r"D:\软件\XianRenZhangAgent\_embedded_check.js"
 
 tree = ast.parse(open(SRC, encoding="utf-8").read())

@@ -45,7 +45,9 @@ _lock_by_dir: "Dict[str, Any]" = {}          # 目录str -> 保护该目录 laun
 _owner_by_dir: "Dict[str, Any]" = {}         # 目录str -> 已持有该目录 context 的 manager 实例
 _dir_identity: "Dict[str, Path]" = {}        # manager id -> 其 user_data_dir（动态跟踪 fresh_profile 等）
 
-_DIAG_FILE = r"D:\软件\XianRenZhangAgent\_xrz_dom_dump.jsonl"
+# 【2026-10-06 修"写死项目路径"】原来写死 D:\软件\XianRenZhangAgent，
+# 换机器/换盘符就写到陌生目录去了。改为按本文件位置动态定位项目根。
+_DIAG_FILE = str(Path(__file__).resolve().parent.parent / "_xrz_dom_dump.jsonl")
 
 
 def _write_diag(platform_name: str, tag: str, data) -> None:
@@ -3534,7 +3536,9 @@ class PlatformSession:
                 return
             from pathlib import Path as _P
             from datetime import datetime as _dt
-            base = _P(r"D:\软件\XianRenZhangAgent\xrz_data\XianRenZhang_tasks\ui_dumps")
+            # 【2026-10-06 修"写死项目路径"】按项目根动态定位，不写死盘符/用户名
+            _proj = _P(__file__).resolve().parent.parent
+            base = _proj / "xrz_data" / "XianRenZhang_tasks" / "ui_dumps"
             d = base / (getattr(self._bm.profile, "platform", None) or "unknown")
             d.mkdir(parents=True, exist_ok=True)
             ts = _dt.now().strftime("%Y%m%d_%H%M%S")

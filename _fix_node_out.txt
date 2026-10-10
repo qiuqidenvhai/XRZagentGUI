@@ -1,0 +1,4 @@
+_check_gui_js.py         已替换 | 剩余硬编码 0
+_lint_gui_js.py          已替换 | 剩余硬编码 0
+_check_embedded_js.py    已替换 | 剩余硬编码 0
+_verify_gui_fixes.py     已替换 | 剩余硬编码 0

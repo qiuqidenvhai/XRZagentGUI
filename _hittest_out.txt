@@ -1,0 +1,28 @@
+窗口 1180x800  margin=6  caption_h=38  btn_zone=134
+
+-- 四边 --
+  左边缘中点                              got=10   want=10   PASS
+  右边缘中点                              got=11   want=11   PASS
+  上边缘中点                              got=12   want=12   PASS
+  下边缘中点                              got=15   want=15   PASS
+-- 四角 --
+  左上                                 got=13   want=13   PASS
+  右上                                 got=14   want=14   PASS
+  左下                                 got=16   want=16   PASS
+  右下                                 got=17   want=17   PASS
+-- 标题栏 --
+  标题栏左区(拖动)                          got=2    want=2    PASS
+  标题栏中区(拖动)                          got=2    want=2    PASS
+  标题栏图标处                             got=2    want=2    PASS
+-- 按钮区必须让给 Qt --
+  最右(关闭按钮)                           got=1    want=1    PASS
+  最大化按钮                              got=1    want=1    PASS
+  最小化按钮                              got=1    want=1    PASS
+  按钮区左界外(应可拖)                        got=2    want=2    PASS
+-- 内容区 --
+  正中                                 got=1    want=1    PASS
+  内容区靠下                              got=1    want=1    PASS
+  标题栏下方1px                           got=1    want=1    PASS
+
+失败 0 项
+结论: 全部 PASS

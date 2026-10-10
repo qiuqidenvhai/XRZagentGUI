@@ -1,0 +1,38 @@
+[前置] health: {"status": "ok", "agent_ready": true, "browser": "connected", "commander": "ready", "platform": "deepseek", "port": 8888}
+  [PASS] commander 已 ready（否则发不出消息）                   ready
+[SSE] 已连接: True
+
+== A. 前端代码完整性 ==
+  {'upsert': 'function', 'handle': 'function', 'cards': 'object'}
+  [PASS] upsertSubagentCard 存在                        function
+  [PASS] SUBAGENT_CARDS 容器存在                          object
+
+== B. 触发子代理 ==
+  /command 返回: {"type": "accepted", "text": "命令已接收，正在处理...", "async_task": true}
+  [PASS] 命令已受理（非 400 空命令）                             {"type": "accepted", "text": "命令已接收，正在处理...", "async_task": true}
+
+== C. 等 SSE 子代理事件（最多 200s）==
+  [20s] 累计事件 3 条
+  [40s] 累计事件 4 条
+  [60s] 累计事件 4 条
+  [80s] 累计事件 7 条
+  [100s] 累计事件 18 条
+  抓到带 subagent_task_id 的事件: 2 条
+  [PASS] SSE 有 subagent_task_id 事件（卡片的数据源）            共 20 条 SSE 事件但无一含 subagent_task_id
+     subagent_task_id: ['subagent_1791625759427']
+     事件类型分布: {'?': 2}
+  [PASS] 子代理事件带 task_id                               {'subagent_1791625759427'}
+
+== D. 前端 DOM 卡片节点 ==
+  {'total': 2, 'found': {'.subagent-block': 1, '[class*="subagent"]': 1}, 'cards': [{'cls': 'subagent-block', 'h': 126, 'w': 631}]}
+  [PASS] DOM 里有子代理卡节点                                 {'total': 2, 'found': {'.subagent-block': 1, '[class*="subagent"]': 1}, 'cards': [{'cls': 'subagent-block', 'h': 126, 'w': 631}]}
+
+== E. 截图 ==
+  [PASS] 截图已保存                                        D:\软件\XianRenZhangAgent\xrz_data\XianRenZhang_tasks\_verify_subagent.png
+
+== 汇总 ==
+  SSE 总事件数: 21
+  subagent 事件: 2
+  DOM 卡片节点: 2
+
+== 结论 ==  PASS 8 / FAIL 0

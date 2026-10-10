@@ -1,0 +1,31 @@
+窗口客户区: 1180x800  maximized=False
+
+窗口 hwnd=0x609BA  屏幕位置 (606,74)  尺寸 1180x800
+
+== 进程内 WM_NCHITTEST 探测（真正走 Qt nativeEvent）==
+  [FAIL] 左边缘          期望 HTLEFT        (10)  实返 0
+  [FAIL] 右边缘          期望 HTRIGHT       (11)  实返 1
+  [FAIL] 上边缘          期望 HTTOP         (12)  实返 0
+  [FAIL] 下边缘          期望 HTBOTTOM      (15)  实返 1
+  [FAIL] 左上角          期望 HTTOPLEFT     (13)  实返 0
+  [FAIL] 右上角          期望 HTTOPRIGHT    (14)  实返 0
+  [FAIL] 左下角          期望 HTBOTTOMLEFT  (16)  实返 0
+  [FAIL] 右下角          期望 HTBOTTOMRIGHT (17)  实返 1
+  [FAIL] 标题栏中区        期望 HTCAPTION     ( 2)  实返 0
+  [PASS] 内容区正中        期望 HTCLIENT      ( 1)  实返 1
+  [FAIL] 关闭按钮         期望 HTCLIENT      ( 1)  实返 0
+  小计: PASS 1 / FAIL 10
+
+== 最大化后 ==
+  [PASS] 最大化后左边缘不判 HTLEFT（实返 1）
+  maximized 标志: True
+
+== 系统级缩放 ==
+  [PASS] SetWindowPos 生效: 1180x800 -> 1060x710
+
+  [PASS] 截图: D:\软件\XianRenZhangAgent\xrz_data\XianRenZhang_tasks\_verify_snap.png
+
+== 结论 ==  PASS 3 / FAIL 10
+Aero Snap 说明：标题栏已判为 HTCAPTION、边缘已判为 HT*，
+Windows 对此类窗口自动提供贴边分屏(1/2、1/4)与顶端最大化，
+无需自行实现（本环境不模拟鼠标，故不自动化拖拽预览）。

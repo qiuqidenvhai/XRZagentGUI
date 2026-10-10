@@ -1,0 +1,40 @@
+屏幕可用区: 1920x1040  边缘阈值=12
+
+== 1) 热区判定（鼠标停在各边缘）==
+  贴左边缘                           got=left                   want=left                   PASS
+  贴右边缘                           got=right                  want=right                  PASS
+  贴上边缘                           got=max                    want=max                    PASS
+  左上角                            got=tl                     want=tl                     PASS
+  右上角                            got=tr                     want=tr                     PASS
+  左下角                            got=bl                     want=bl                     PASS
+  右下角                            got=br                     want=br                     PASS
+
+== 2) 非热区应返回 None（不能乱吸附）==
+  正中                             got=None                   want=None                   PASS
+  靠下但不贴边                         got=None                   want=None                   PASS
+  靠上但不贴边                         got=None                   want=None                   PASS
+  靠左但不贴边                         got=None                   want=None                   PASS
+  靠右但不贴边                         got=None                   want=None                   PASS
+
+== 3) 布局几何（是否精确半屏/1/4）==
+  left  左半屏                      got=(0, 0, 960, 1040)      want=(0, 0, 960, 1040)      PASS
+  right 右半屏                      got=(960, 0, 960, 1040)    want=(960, 0, 960, 1040)    PASS
+  max   最大化                      got=(0, 0, 1920, 1040)     want=(0, 0, 1920, 1040)     PASS
+  tl    左上1/4                    got=(0, 0, 960, 520)       want=(0, 0, 960, 520)       PASS
+  tr    右上1/4                    got=(960, 0, 960, 520)     want=(960, 0, 960, 520)     PASS
+  bl    左下1/4                    got=(0, 520, 960, 520)     want=(0, 520, 960, 520)     PASS
+  br    右下1/4                    got=(960, 520, 960, 520)   want=(960, 520, 960, 520)   PASS
+
+== 4) 多显示器/副屏偏移（几何应随 area 平移）==
+  副屏贴左→左半屏                       got=(1920, 0, 640, 960)    want=(1920, 0, 640, 960)    PASS
+  副屏左上角                          got=(1920, 0, 640, 480)    want=(1920, 0, 640, 480)    PASS
+  副屏贴左判定                         got=left                   want=left                   PASS
+  副屏正中不吸附                        got=None                   want=None                   PASS
+
+== 5) 非法输入 ==
+  area=None 不崩                   got=None                   want=None                   PASS
+  layout=None 几何                 got=None                   want=None                   PASS
+  未知 layout                      got=None                   want=None                   PASS
+
+失败 0 项
+结论: 全部 PASS

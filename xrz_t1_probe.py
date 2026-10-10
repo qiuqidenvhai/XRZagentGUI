@@ -3,7 +3,15 @@ import json, os, sys, time, urllib.request, urllib.error
 from pathlib import Path
 
 HOST, PORT = "127.0.0.1", 8888
-OUT = Path(r"C:\Users\X.LAPTOP-CA1GJQE3\Desktop\test")
+# 【2026-10-06 修"写死桌面位置"】原来写死开发者桌面路径，换台电脑就跑到
+# 别人桌面上去、还可能目录不存在。改为按本机真实环境解析。
+try:
+    from agent_core.user_paths import desktop_dir as _up_desktop
+    OUT = Path(_up_desktop(create=True)) / "test"
+except Exception:
+    import os as _os
+    OUT = Path(_os.path.expanduser("~")) / "Desktop" / "test"
+
 REPORT = OUT / "report.docx"
 
 
@@ -31,7 +39,9 @@ def main():
     time.sleep(1)
     print("new chat:", command("新对话").get("type"))
     time.sleep(1)
-    instr = ("请生成一份 Word 报告，保存到 C:\\Users\\X.LAPTOP-CA1GJQE3\\Desktop\\test\\report.docx，"
+    # 【2026-10-06】提示词里的路径用本机真实测试目录，不写死开发者用户名
+    _p = str(OUT / "report.docx").replace("\\", "\\\\")
+    instr = (f"请生成一份 Word 报告，保存到 {_p}，"
              "标题为《仙人掌 Agent 自测报告》，下面包含3个小节：一、功能概览；二、测试结论；三、下一步计划。")
     print("post:", command(instr).get("type"))
     # 轮询产物

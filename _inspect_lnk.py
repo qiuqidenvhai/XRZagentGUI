@@ -1,7 +1,14 @@
 import os
 import struct
+import sys
 
-LNK = r'C:\Users\X.LAPTOP-CA1GJQE3\Desktop\启动仙人掌.lnk'
+# 【2026-10-06 修"写死桌面位置"】原来写死开发者桌面路径，换台电脑直接 FileNotFound
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+try:
+    from agent_core.user_paths import desktop_dir as _up_desktop
+    LNK = os.path.join(_up_desktop(), '启动仙人掌.lnk')
+except Exception:
+    LNK = os.path.join(os.path.expanduser('~'), 'Desktop', '启动仙人掌.lnk')
 
 data = open(LNK, 'rb').read()
 print('LNK size:', len(data))

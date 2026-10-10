@@ -1,0 +1,6 @@
+python  : 3.13.12
+cwd     : D:\软件\XianRenZhangAgent
+profile : C:\Users\X.LAPTOP-CA1GJQE3
+reg Desktop(raw)   : %USERPROFILE%\Desktop
+reg Desktop(expanded): C:\Users\X.LAPTOP-CA1GJQE3\Desktop
+exists             : True

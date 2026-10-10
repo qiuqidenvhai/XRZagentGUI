@@ -1,0 +1,39 @@
+[A] 本机默认      : C:\Users\X.LAPTOP-CA1GJQE3\Desktop
+    存在: True
+[B 别人的电脑(OneDrive+不同用户名)]
+    设置     : C:\Users\zhangsan\OneDrive\Desktop
+    解析     : C:\Users\zhangsan\OneDrive\Desktop  PASS
+    prompt转义: C:\\Users\\zhangsan\\OneDrive\\Desktop
+    JSON     : "C:\\Users\\zhangsan\\OneDrive\\Desktop"
+    JSON可解析: C:\Users\zhangsan\OneDrive\Desktop (PASS)
+    拼进JSON  : C:\Users\zhangsan\OneDrive\Desktop\test\report.docx
+    路径正确  : PASS
+
+[C 非ASCII自定义盘]
+    设置     : D:\我的桌面\项目产物
+    解析     : D:\我的桌面\项目产物  PASS
+    prompt转义: D:\\我的桌面\\项目产物
+    JSON     : "D:\\我的桌面\\项目产物"
+    JSON可解析: D:\我的桌面\项目产物 (PASS)
+    拼进JSON  : D:\我的桌面\项目产物\test\report.docx
+    路径正确  : PASS
+
+[D 网络桌面]
+    设置     : \\NAS\share\desktop
+    解析     : \\NAS\share\desktop  PASS
+    prompt转义: \\\\NAS\\share\\desktop
+    JSON     : "\\\\NAS\\share\\desktop"
+    JSON可解析: \\NAS\share\desktop (PASS)
+    拼进JSON  : \\NAS\share\desktop\test\report.docx
+    路径正确  : PASS
+
+[E 带空格/中文]
+    设置     : C:\Users\李 明\OneDrive\桌面
+    解析     : C:\Users\李 明\OneDrive\桌面  PASS
+    prompt转义: C:\\Users\\李 明\\OneDrive\\桌面
+    JSON     : "C:\\Users\\李 明\\OneDrive\\桌面"
+    JSON可解析: C:\Users\李 明\OneDrive\桌面 (PASS)
+    拼进JSON  : C:\Users\李 明\OneDrive\桌面\test\report.docx
+    路径正确  : PASS
+
+[F] 清除覆盖后回到本机: C:\Users\X.LAPTOP-CA1GJQE3\Desktop

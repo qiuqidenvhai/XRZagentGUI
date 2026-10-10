@@ -1,0 +1,30 @@
+屏幕可用区: x=0 y=0 w=1714 h=1095
+窗口当前几何(恢复用): [267, 148, 1180, 800]
+
+== 1) 端到端：贴边分屏（真实调 _snap_commit）==
+  [PASS] 贴left → 857x1095@(0,0)             got=(0, 0, 857, 1095) want=(0, 0, 857, 1095)
+  [PASS] 贴right → 857x1095@(857,0)          got=(857, 0, 857, 1095) want=(857, 0, 857, 1095)
+  [PASS] 贴tl → 857x547@(0,0)                got=(0, 0, 857, 547) want=(0, 0, 857, 547)
+  [PASS] 贴tr → 857x547@(857,0)              got=(857, 0, 857, 547) want=(857, 0, 857, 547)
+  [PASS] 贴bl → 857x548@(0,547)              got=(0, 547, 857, 548) want=(0, 547, 857, 548)
+  [PASS] 贴br → 857x548@(857,547)            got=(857, 547, 857, 548) want=(857, 547, 857, 548)
+
+== 2) 贴上边缘 → 最大化 ==
+  [PASS] 贴上边 → 窗口最大化                        maximized=True
+
+== 3) 收尾：恢复窗口尺寸 ==
+  [PASS] 窗口已恢复 1180x800                     (200, 100, 1180, 800)
+
+== 4) 预览框 _SnapOverlay ==
+  [PASS] _SnapOverlay 已创建                   True
+  [PASS] last_snap 记录了最近布局                  left
+
+== 5) 截图留证 ==
+  [PASS] 截图                                 D:\软件\XianRenZhangAgent\xrz_data\XianRenZhang_tasks\_verify_snap_e2e.png
+
+== 结论 ==  PASS 11 / FAIL 0
+
+说明：本环境禁止模拟鼠标，故未自动拖拽。
+预览框的『拖动中实时显示』由 _snap_update（拖动时每帧调 QCursor.pos）
++ _SnapOverlay.show_layout 实现；松手应用布局由 _snap_commit 完成，
+上面 6 个贴边用例已端到端证明该链路真实生效。

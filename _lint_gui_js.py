@@ -6,11 +6,15 @@ node --check 只做语法解析（不检查 await 位置），所以漏掉了 ne
 """
 import re
 import subprocess
+import sys
 import tempfile
 import os
 import json
 
-NODE = "C:/Users/X.LAPTOP-CA1GJQE3/.workbuddy/binaries/node/versions/22.22.2-3/node.exe"
+# 【2026-10-06 修"写死本机路径"】改为动态查找 node
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from _find_node import find_node
+NODE = find_node()
 HERE = os.path.dirname(os.path.abspath(__file__))
 GUI = os.path.join(HERE, "gui.html")
 

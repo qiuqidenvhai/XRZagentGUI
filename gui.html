@@ -833,9 +833,19 @@ body {
 .session-item.active { background:rgba(63,185,80,0.12); color:var(--green); }
 .session-item .si-dot { font-size:10px; }
 .session-item .si-name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; }
-.session-item .si-delete { font-size:14px; color:var(--text2); opacity:0; transition:opacity 0.15s; cursor:pointer; flex-shrink:0; }
+/* 【2026-10-06 修"删除会话按钮看不见"】原来 opacity:0、只在 .session-item:hover
+   时才 opacity:1 —— 不把鼠标悬停在会话上就完全看不见，用户以为没有删除功能。
+   改成常驻可见（弱化色，不抢眼），hover 变红 + 放大，给足点击提示。 */
+.session-item .si-delete {
+    font-size:14px; color:var(--text2); opacity:.55;
+    transition:opacity .15s, color .15s; cursor:pointer; flex-shrink:0;
+    padding:0 2px; border-radius:4px; line-height:1;
+}
 .session-item:hover .si-delete { opacity:1; }
-.session-item .si-delete:hover { color:var(--red); }
+.session-item .si-delete:hover { color:var(--red); opacity:1; background:rgba(248,81,73,0.15); }
+/* 【2026-10-06】当前会话【也允许删除】——用户要的就是删掉后回退到初始页面。
+   之前我给当前会话加了"禁删"限制，属于自己加需求、且让功能不完整，已撤销。 */
+.session-item.active .si-delete { color:var(--text2); opacity:.7; cursor:pointer; }
 
 /* 工具结果卡（opencode 风格：可折叠 + diff 高亮） */
 .tool-result {
@@ -2569,9 +2579,13 @@ function renderSessionBar() {
         const el = document.createElement('div');
         el.className = 'session-item' + (s.id === CURRENT_SESSION ? ' active' : '');
         el.onclick = () => switchSession(s.id);
-        el.innerHTML = `<span class="si-dot">${s.id === CURRENT_SESSION ? '●' : '○'}</span>` +
+        // 【2026-10-06】所有会话（含当前会话）都可删 —— 删掉当前会话时
+        // 由 deleteSession 负责回退到初始页面。之前我给当前会话加了"禁删"限制，
+        // 那是自己加需求、没问过用户，已撤销。
+        const _isCur = s.id === CURRENT_SESSION;
+        el.innerHTML = `<span class="si-dot">${_isCur ? '●' : '○'}</span>` +
             `<span class="si-name">${escapeHtml(s.name || ('会话 ' + s.id))}</span>` +
-            `<span class="si-delete" onclick="event.stopPropagation(); deleteSession(${s.id})" title="删除会话">×</span>`;
+            `<span class="si-delete" onclick="event.stopPropagation(); deleteSession(${s.id})" title="${_isCur ? '删除当前会话' : '删除会话'}">✕</span>`;
         box.appendChild(el);
     });
 }
@@ -2603,9 +2617,21 @@ async function switchSession(id) {
     } catch (e) { addLocalCard('切换会话失败: ' + e.message); }
 }
 async function deleteSession(id) {
-    if (!confirm('确定删除这个会话吗？')) return;
+    const isCurrent = (id === CURRENT_SESSION);
+    if (!confirm('确定删除这个会话吗？' + (isCurrent ? '\n（这是当前会话，删除后会回到初始页面）' : ''))) return;
     try {
         const d = await sessionCmd('delete', id);
+        // 【2026-10-06】删掉【当前会话】时要回退到初始页面。
+        // 之前我给当前会话加了"禁删"限制来回避这个问题 —— 那是自己加需求、
+        // 也没问用户。正确做法就是用户说的：删了回退到初始页面。
+        // 用 resetChatView()：它会清空消息区、显示新对话欢迎页、清子代理卡、
+        // 清附件、释放发送锁 —— 正是"回到初始页面"。
+        // （不能用 clearMessages/closeFileSidebar，这两个函数不存在。）
+        if (isCurrent) {
+            CURRENT_SESSION = null;
+            CURRENT_TASK_ID = null;
+            try { resetChatView(); } catch (e) { console.warn('resetChatView', e); }
+        }
         addLocalCard('🗂 ' + ((d && d.text) ? d.text : ('已删除会话 ' + id)));
         loadSessions();
     } catch (e) { addLocalCard('删除会话失败: ' + e.message); }

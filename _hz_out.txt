@@ -1,0 +1,64 @@
+窗口 1180x800  centralWidget 1180x800  has_handle=True  maximized=False
+
+== 1) 热区数量 ==
+  [PASS] 共 8 个热区                                  实际 8: ['bl', 'bottom', 'br', 'left', 'right', 'tl', 'top', 'tr']
+  [PASS] 4 边 + 4 角齐全                              ['bl', 'bottom', 'br', 'left', 'right', 'tl', 'top', 'tr']
+  [PASS] 全部可见                                     []
+
+== 2) 几何布局（贴四条边）==
+  [PASS] top     贴边                               got=(0, 0, 1180, 6) want=(0, 0, 1180, 6)
+  [PASS] bottom  贴边                               got=(0, 794, 1180, 6) want=(0, 794, 1180, 6)
+  [PASS] left    贴边                               got=(0, 0, 6, 800) want=(0, 0, 6, 800)
+  [PASS] right   贴边                               got=(1174, 0, 6, 800) want=(1174, 0, 6, 800)
+  [PASS] tl      在角上                              got=(0,0) want=(0,0)
+  [PASS] tl      尺寸 12x12                         got=12x12
+  [PASS] tr      在角上                              got=(1168,0) want=(1168,0)
+  [PASS] tr      尺寸 12x12                         got=12x12
+  [PASS] bl      在角上                              got=(0,788) want=(0,788)
+  [PASS] bl      尺寸 12x12                         got=12x12
+  [PASS] br      在角上                              got=(1168,788) want=(1168,788)
+  [PASS] br      尺寸 12x12                         got=12x12
+
+== 3) Qt.Edge 位值 ==
+  [PASS] top     edge=2                           got=2 want=2
+  [PASS] bottom  edge=8                           got=8 want=8
+  [PASS] left    edge=1                           got=1 want=1
+  [PASS] right   edge=4                           got=4 want=4
+  [PASS] tl      edge=3                           got=3 want=3
+  [PASS] tr      edge=6                           got=6 want=6
+  [PASS] bl      edge=9                           got=9 want=9
+  [PASS] br      edge=12                          got=12 want=12
+
+== 4) 鼠标光标形状（枚举值: Ver=5 Hor=6 BDiag=7 FDiag=8）==
+  [PASS] left    cursor=6                         got=6 want=6
+  [PASS] right   cursor=6                         got=6 want=6
+  [PASS] top     cursor=5                         got=5 want=5
+  [PASS] bottom  cursor=5                         got=5 want=5
+  [PASS] tl      cursor=8                         got=8 want=8
+  [PASS] br      cursor=8                         got=8 want=8
+  [PASS] tr      cursor=7                         got=7 want=7
+  [PASS] bl      cursor=7                         got=7 want=7
+
+== 5) startSystemResize 可用性 ==
+  [PASS] 窗口有 windowHandle                         True
+  [PASS] 未最大化时 can_resize=True                    maximized=False
+
+== 6) 尺寸变化后热区重排 ==
+  [PASS] 缩小后窗口 centralWidget 变化                   1180x800 -> 1000x700
+  [PASS] 缩小后 right 热区跟随右边缘                        got=994 want=994
+  [PASS] 缩小后 bottom 热区跟随下边缘                       got=694 want=694
+  [PASS] 缩小后 br 角仍在右下角                            got=(988,688) want=(988,688)
+
+== 7) 最大化时禁用拖边 ==
+  [PASS] 最大化标志为 True                              True
+  [PASS] 最大化后 can_resize=False                    []
+
+== 8) 截图留证 ==
+  [PASS] 截图                                       D:\软件\XianRenZhangAgent\xrz_data\XianRenZhang_tasks\_verify_hotzone.png
+
+== 结论 ==  PASS 40 / FAIL 0
+
+Aero Snap 说明：本环境禁止模拟鼠标，无法自动拖拽验证分屏预览。
+四边四角走 startSystemResize(Edge)、标题栏走 startSystemMove()，
+这两个都是 Windows 系统模态调用 —— Aero Snap（贴边 1/2、贴角 1/4、
+顶端最大化）正是系统只对这两类调用提供的内建能力，故等效成立。

@@ -1,0 +1,23 @@
+[1] 语法 OK
+[2] 类 XianRenZhangWindow 方法数: 16
+    必需方法缺失: 无  PASS
+[2] 类 TitleBar 方法数: 8
+    必需方法缺失: 无  PASS
+    !! XianRenZhangWindow._check_ready 内含嵌套函数 ['_try']（可能被误吞）
+    !! XianRenZhangWindow._init_test_bridge 内含嵌套函数 ['_drain', 'do_POST', 'log_message', '_pdf_done', '_check', '_do_hit', '_shot', '_cb', '_raster']（可能被误吞）
+
+[3] WM_NCHITTEST 常量        PASS
+[3] HT* 常量组                PASS
+[3] _hit_test 纯函数          PASS
+[3] nativeEvent 实现         PASS
+[3] 最大化时不误判                PASS
+[3] 按钮区排除                  PASS
+[3] startSystemMove        PASS
+[3] ctypes.wintypes 导入     PASS
+[3] _hit_test_enabled 开关   PASS
+[3] _last_hit 记录           PASS
+
+[4] QSizeGrip 实例化已移除: PASS
+    仍 import QSizeGrip（无害，可留）: import 处 6
+
+[5] _hit_test 单测: 全部 PASS

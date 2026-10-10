@@ -13,7 +13,7 @@ xrz_func_test.py — 仙人掌 Agent 端到端功能测试（后端驱动，无�
   T3 Qwen：file_edit 追加文件
   T4 Qwen：多轮连贯对话
   T5 跨任务：验证 THINKING/ai_thinking 事件（GUI 「思考过程」块的数据源）是否发射
-产物落 C:\\Users\\X.LAPTOP-CA1GJQE3\\Desktop\\test
+产物落【本机真实桌面】\\test（按当前用户环境动态解析，不写死任何用户名）
 """
 import json
 import os
@@ -30,7 +30,7 @@ from xrz_selftest import Backend, make_minimal_pdf
 
 APP_HOST = "127.0.0.1"
 APP_PORT = 8888
-# 用项目内可写目录，绕过沙箱对 C:\Users\...\Desktop 的拦截
+# 用项目内可写目录（不写死任何用户桌面路径，换机器也能跑）
 TEST_ROOT = Path(__file__).parent / "test_output"
 TEST_ROOT.mkdir(parents=True, exist_ok=True)
 EVENT_TIMEOUT_S = 86400  # 单条 AI 回复最长等 1 天；任务自身轮数由 commander.max_turns=99999999999 控制
@@ -293,7 +293,7 @@ def main():
                  "需在用户真实显示器上验证（你双击启动仙人掌.bat 即可看到）。")
     (TEST_ROOT / "report.md").write_text("\n".join(lines), encoding="utf-8")
     print("\n" + "\n".join(lines), flush=True)
-    print("\n全部任务完成，报告已写入 Desktop\\test\\report.md", flush=True)
+    print(f"\n全部任务完成，报告已写入 {TEST_ROOT / 'report.md'}", flush=True)
 
 
 if __name__ == "__main__":

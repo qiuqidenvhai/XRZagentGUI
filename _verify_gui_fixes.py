@@ -17,9 +17,25 @@ import urllib.request
 _urlib = urllib.request
 _urlib.install_opener(_urlib.build_opener(_urlib.ProxyHandler({})))  # 绕过沙箱代理
 
-ROOT = r"D:\软件\XianRenZhangAgent"
-PY = os.path.join(ROOT, "..", "..", "Python", "python.exe")
-PY = r"D:\软件\Python\python.exe"
+# 【2026-10-06 修"写死本机路径"】项目根与解释器都动态解析，换机器/换盘符都能跑
+ROOT = os.path.dirname(os.path.abspath(__file__))
+# 解释器：优先本项目可用的 python（XRZ_PYTHON / PATH / 常见位置）
+def _find_py():
+    import shutil
+    for c in (os.environ.get("XRZ_PYTHON", "").strip(),):
+        if c and os.path.isfile(c):
+            return c
+    p = shutil.which("python")
+    if p:
+        return p
+    for c in (os.path.join(ROOT, "runtime", "python.exe"),
+              r"D:\软件\Python\python.exe",
+              r"C:\Python313\python.exe", r"C:\Python312\python.exe"):
+        if os.path.isfile(c):
+            return c
+    return sys.executable
+
+PY = _find_py()
 DUMP = os.path.join(ROOT, "xrz_data", "XianRenZhang_tasks", "gui_dumps")
 os.makedirs(DUMP, exist_ok=True)
 BRIDGE = "http://127.0.0.1:9333"
@@ -200,7 +216,9 @@ def run_frontend_only_checks():
     import re, shutil
     s = open(os.path.join(ROOT, "gui.html"), encoding="utf-8").read()
     scripts = re.findall(r"<script[^>]*>(.*?)</script>", s, re.S)
-    node = r"C:\Users\X.LAPTOP-CA1GJQE3\.workbuddy\binaries\node\versions\22.22.2-3\node.exe"
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    from _find_node import find_node
+    node = find_node()
     # 造一个能在 node 里跑的最小 DOM 桩
     harness = """
 const msgs=[];const doc={};

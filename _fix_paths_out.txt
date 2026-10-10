@@ -1,0 +1,6 @@
+xrz_t1_probe.py        已替换一处
+xrz_t1_probe.py        剩余硬编码: 1
+xrz_selftest.py        已替换一处
+xrz_selftest.py        剩余硬编码: 0
+_inspect_lnk.py        L4: LNK = r'C:\Users\X.LAPTOP-CA1GJQE3\Desktop\启动仙人掌.lnk'
+xrz_func_test.py       L16: 产物落 C:\\Users\\X.LAPTOP-CA1GJQE3\\Desktop\\test

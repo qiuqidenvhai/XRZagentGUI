@@ -1,0 +1,52 @@
+[PASS] class _ResizeHotZone 
+[PASS] startSystemResize 
+[PASS] _install_resize_hotzones 
+[PASS] _layout_hotzones 
+[PASS] mouseDoubleClickEvent 
+[PASS] zone "top" 
+[PASS] zone "bottom" 
+[PASS] zone "left" 
+[PASS] zone "right" 
+[PASS] zone "tl" 
+[PASS] zone "tr" 
+[PASS] zone "bl" 
+[PASS] zone "br" 
+[PASS] _compute_snap_layout 
+[PASS] _snap_geometry 
+[PASS] class _SnapOverlay 
+[PASS] method _snap_begin 
+[PASS] method _snap_update 
+[PASS] method _snap_commit 
+[PASS] method _snap_clear_min 
+[PASS] method _screen_area_at 
+[PASS] setMinimumSize(0, 0) 
+[PASS] _snap_min_saved 
+[PASS] startSystemMove 已删(代码层) 
+[PASS] _hit_test 函数已删(代码层) 
+[PASS] _min_win_size() 
+[PASS] _snap_min_saved = _min_win_size() 
+[PASS] _snap_min_pending 
+[PASS] _snap_restore_geo 
+[PASS] shutdown_backend_and_children 
+[PASS] taskkill 
+[PASS] _cleanup_on_close 
+[PASS] si-delete 常驻可见(opacity:.55) 
+[PASS] 当前会话也可删(无禁删限制) 
+[PASS] 所有会话都绑 deleteSession 
+[PASS] 删当前会话后回退初始页 
+[PASS] gui flex-shrink 
+[PASS] gui nearBottom 
+[PASS] gui 预览自动展开 
+[PASS] user_paths.desktop_dir 
+[PASS] user_paths 注册表 
+[PASS] commander 动态桌面 
+[PASS] commander 无写死用户名(代码层) 
+[PASS] bat 动态桌面 
+[PASS] bat 包内 runtime 
+[PASS] research 空参保护 
+[PASS] visit 空参保护 
+[PASS] 事件转发器两处都在 3
+[PASS] upsertSubagentCard 在前端 
+[PASS] handleGuiEvent 判 subagent_task_id 
+
+PASS 50 / FAIL 0

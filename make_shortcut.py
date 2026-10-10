@@ -38,7 +38,17 @@ def _newest_icon():
 
 
 DESKTOP_APP = os.path.join(HERE, "desktop_app.py")
-DESKTOP = os.path.join(os.path.expanduser("~"), "Desktop")
+# 【2026-10-06 修"写死桌面位置"】原来用 expanduser("~")+"\Desktop"，
+# 在别人电脑上会因 OneDrive 重定向 / 非英文 / 自定义盘而指向错误位置
+# （快捷方式被创建到不存在的目录）。改用统一解析，认系统真实桌面。
+# 本脚本是独立运行的（不作为包内模块），故先把项目根塞进 sys.path。
+if HERE not in sys.path:
+    sys.path.insert(0, HERE)
+try:
+    from agent_core.user_paths import desktop_dir as _up_desktop_dir
+    DESKTOP = _up_desktop_dir(create=True)
+except Exception:
+    DESKTOP = os.path.join(os.path.expanduser("~"), "Desktop")
 LNK_DESKTOP = os.path.join(DESKTOP, "启动仙人掌.lnk")
 APP_ID = "XianRenZhang.Agent.Desktop.1"
 

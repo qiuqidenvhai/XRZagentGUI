@@ -40,7 +40,15 @@ except ImportError:
 APP_HOST = "127.0.0.1"
 APP_PORT = 8888              # terminal.py HTTP 服务端口
 CDP_PORT = 9222              # QtWebEngine 远程调试端口（启动仙人掌.bat 已设置）
-TEST_ROOT = Path(r"C:\Users\X.LAPTOP-CA1GJQE3\Desktop\test")
+# 【2026-10-06 修"写死桌面位置"】原来写死开发者桌面路径，换台电脑就跑到
+# 别人桌面上去、还可能目录不存在。改为按本机真实环境解析。
+try:
+    from agent_core.user_paths import desktop_dir as _up_desktop
+    TEST_ROOT = Path(_up_desktop(create=True)) / "test"
+except Exception:
+    import os as _os
+    TEST_ROOT = Path(_os.path.expanduser("~")) / "Desktop" / "test"
+
 TEST_ROOT.mkdir(parents=True, exist_ok=True)
 
 EVENT_TIMEOUT_S = 180        # 单任务等 ai_final_reply 的最长时间
